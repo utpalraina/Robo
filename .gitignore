@@ -1,0 +1,51 @@
+# Environment
+.env
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Data
+*.db
+data/*.db
+data/*.csv
+
+# Models
+models/*.joblib
+models/*.pkl
+
+# Logs
+logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Results
+*.png
+backtest_results/
+Kraken_Api_Key
+.env.production
+.env
+*.db
+__pycache__/
+*.pyc

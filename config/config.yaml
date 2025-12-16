@@ -1,0 +1,77 @@
+# Robo Trader Configuration
+
+# Exchange settings
+exchange:
+  name: "kraken"   # Exchange to use (binance, coinbase, kraken, etc.)
+  testnet: false   # Kraken doesn't have testnet, use paper trading instead
+  rate_limit: true # Respect rate limits
+
+# Trading pairs
+trading:
+  symbols:
+    - "BTC/USD"
+    - "ETH/USD"
+  timeframe: "1h"  # Candle timeframe: 1m, 5m, 15m, 1h, 4h, 1d
+
+# Risk management
+risk:
+  max_position_size: 0.1      # Max 10% of portfolio per trade
+  stop_loss_pct: 0.02         # 2% stop loss
+  take_profit_pct: 0.04       # 4% take profit
+  max_open_positions: 3       # Maximum concurrent positions
+  daily_loss_limit: 0.05      # Stop trading if 5% daily loss
+
+# ML Model settings
+model:
+  type: "xgboost"             # xgboost, lightgbm, random_forest
+  lookback_periods: 100       # Number of candles for feature generation
+  train_test_split: 0.8       # 80% train, 20% test
+  retrain_interval: 168       # Retrain every 168 hours (1 week)
+
+# Feature engineering
+features:
+  technical_indicators:
+    - rsi
+    - macd
+    - bollinger_bands
+    - ema
+    - atr
+    - volume_sma
+  price_features:
+    - returns
+    - volatility
+    - momentum
+
+# Backtesting
+backtest:
+  start_date: "2024-01-01"
+  end_date: "2024-12-01"
+  initial_capital: 10000      # Starting capital in USDT
+  commission: 0.001           # 0.1% trading fee
+
+# Paper trading
+paper_trading:
+  initial_capital: 10000
+
+# Scalping Bot Configuration
+scalping:
+  enabled: true
+  mode: "paper"                    # "paper" or "live"
+  symbol: "BTC/USD"
+  timeframe: "1m"                  # 1m recommended for scalping
+  initial_capital: 1000            # Starting capital
+  check_interval: 5                # Seconds between checks
+  risk_per_trade: 0.01             # 1% risk per trade
+  max_daily_loss: 0.05             # 5% max daily loss (auto-pause)
+  max_positions: 1                 # Usually 1 for scalping
+  strategy:
+    take_profit_pct: 0.0015        # 0.15% take profit
+    stop_loss_pct: 0.001           # 0.1% stop loss
+    min_confidence: 60             # Min signal confidence (0-100)
+    cooldown_seconds: 30           # Seconds between trades
+    max_trades_per_hour: 10        # Rate limit
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/trading.log"

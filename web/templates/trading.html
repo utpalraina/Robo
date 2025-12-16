@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robo Trader Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- CodeMirror for Pine Script Editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <link rel="stylesheet" href="/static/css/trading.css">
+    <link rel="stylesheet" href="/static/css/tars.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#8358ff"/>
+                            <stop offset="100%" style="stop-color:#5b3cc4"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="32" height="32" rx="8" fill="url(#logoGradient)"/>
+                    <path d="M8 12h4v8H8v-8zm6-4h4v12h-4V8zm6 6h4v6h-4v-6z" fill="white" opacity="0.9"/>
+                    <circle cx="24" cy="10" r="3" fill="#0ecb81"/>
+                </svg>
+                <span class="logo-text">ROBO<span class="logo-pro">PRO</span></span>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-item active" data-page="trade">
+                    <span class="nav-icon">&#128200;</span>
+                    <span>Trade</span>
+                </a>
+                <a href="/dashboard" class="nav-item" data-page="dashboard">
+                    <span class="nav-icon">&#127968;</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="markets">
+                    <span class="nav-icon">&#128202;</span>
+                    <span>Markets</span>
+                </a>
+                <a href="#" class="nav-item" data-page="portfolio">
+                    <span class="nav-icon">&#128188;</span>
+                    <span>Portfolio</span>
+                </a>
+                <a href="#" class="nav-item" data-page="history">
+                    <span class="nav-icon">&#128337;</span>
+                    <span>History</span>
+                </a>
+                <a href="#" class="nav-item" data-page="analytics">
+                    <span class="nav-icon">&#128201;</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="/strategies" class="nav-item" data-page="strategies">
+                    <span class="nav-icon">&#128218;</span>
+                    <span>Strategies</span>
+                </a>
+                <a href="/simulation" class="nav-item" data-page="simulation">
+                    <span class="nav-icon">&#128300;</span>
+                    <span>Simulator</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="connection-status">
+                    <span class="status-dot" id="wsStatus"></span>
+                    <span id="wsStatusText">Connecting...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="symbol-selector">
+                    <button class="symbol-btn" id="symbolBtn">
+                        <span class="symbol-icon">&#8383;</span>
+                        <span class="symbol-name" id="currentSymbol">BTC/USD</span>
+                        <span class="dropdown-arrow">&#9662;</span>
+                    </button>
+                    <div class="symbol-dropdown" id="symbolDropdown">
+                        <div class="symbol-search-wrapper">
+                            <input type="text" class="symbol-search" id="symbolSearch" placeholder="Search pairs...">
+                        </div>
+                        <div class="symbol-list" id="symbolList">
+                            <!-- Major Cryptocurrencies -->
+                            <div class="symbol-category">Major</div>
+                            <div class="symbol-option" data-symbol="BTC/USD">BTC/USD</div>
+                            <div class="symbol-option" data-symbol="ETH/USD">ETH/USD</div>
+                            <div class="symbol-option" data-symbol="XRP/USD">XRP/USD</div>
+                            <div class="symbol-option" data-symbol="SOL/USD">SOL/USD</div>
+                            <div class="symbol-option" data-symbol="ADA/USD">ADA/USD</div>
+                            <div class="symbol-option" data-symbol="DOGE/USD">DOGE/USD</div>
+                            <div class="symbol-option" data-symbol="DOT/USD">DOT/USD</div>
+                            <div class="symbol-option" data-symbol="AVAX/USD">AVAX/USD</div>
+                            <div class="symbol-option" data-symbol="LINK/USD">LINK/USD</div>
+                            <div class="symbol-option" data-symbol="MATIC/USD">MATIC/USD</div>
+                            <div class="symbol-option" data-symbol="LTC/USD">LTC/USD</div>
+                            <div class="symbol-option" data-symbol="BCH/USD">BCH/USD</div>
+                            <div class="symbol-option" data-symbol="ATOM/USD">ATOM/USD</div>
+                            <div class="symbol-option" data-symbol="UNI/USD">UNI/USD</div>
+                            <div class="symbol-option" data-symbol="XLM/USD">XLM/USD</div>
+                            <div class="symbol-option" data-symbol="ETC/USD">ETC/USD</div>
+                            <div class="symbol-option" data-symbol="ALGO/USD">ALGO/USD</div>
+                            <div class="symbol-option" data-symbol="FIL/USD">FIL/USD</div>
+                            <div class="symbol-option" data-symbol="TRX/USD">TRX/USD</div>
+                            <div class="symbol-option" data-symbol="NEAR/USD">NEAR/USD</div>
+
+                            <!-- Layer 2 & Scaling -->
+                            <div class="symbol-category">Layer 2</div>
+                            <div class="symbol-option" data-symbol="ARB/USD">ARB/USD</div>
+                            <div class="symbol-option" data-symbol="OP/USD">OP/USD</div>
+                            <div class="symbol-option" data-symbol="IMX/USD">IMX/USD</div>
+                            <div class="symbol-option" data-symbol="LRC/USD">LRC/USD</div>
+                            <div class="symbol-option" data-symbol="MINA/USD">MINA/USD</div>
+
+                            <!-- DeFi -->
+                            <div class="symbol-category">DeFi</div>
+                            <div class="symbol-option" data-symbol="AAVE/USD">AAVE/USD</div>
+                            <div class="symbol-option" data-symbol="MKR/USD">MKR/USD</div>
+                            <div class="symbol-option" data-symbol="SNX/USD">SNX/USD</div>
+                            <div class="symbol-option" data-symbol="CRV/USD">CRV/USD</div>
+                            <div class="symbol-option" data-symbol="COMP/USD">COMP/USD</div>
+                            <div class="symbol-option" data-symbol="YFI/USD">YFI/USD</div>
+                            <div class="symbol-option" data-symbol="SUSHI/USD">SUSHI/USD</div>
+                            <div class="symbol-option" data-symbol="1INCH/USD">1INCH/USD</div>
+                            <div class="symbol-option" data-symbol="BAL/USD">BAL/USD</div>
+                            <div class="symbol-option" data-symbol="RUNE/USD">RUNE/USD</div>
+                            <div class="symbol-option" data-symbol="DYDX/USD">DYDX/USD</div>
+                            <div class="symbol-option" data-symbol="GMX/USD">GMX/USD</div>
+                            <div class="symbol-option" data-symbol="INJ/USD">INJ/USD</div>
+                            <div class="symbol-option" data-symbol="FXS/USD">FXS/USD</div>
+                            <div class="symbol-option" data-symbol="PENDLE/USD">PENDLE/USD</div>
+
+                            <!-- Gaming & Metaverse -->
+                            <div class="symbol-category">Gaming & Metaverse</div>
+                            <div class="symbol-option" data-symbol="MANA/USD">MANA/USD</div>
+                            <div class="symbol-option" data-symbol="SAND/USD">SAND/USD</div>
+                            <div class="symbol-option" data-symbol="AXS/USD">AXS/USD</div>
+                            <div class="symbol-option" data-symbol="ENJ/USD">ENJ/USD</div>
+                            <div class="symbol-option" data-symbol="GALA/USD">GALA/USD</div>
+                            <div class="symbol-option" data-symbol="APE/USD">APE/USD</div>
+                            <div class="symbol-option" data-symbol="ILV/USD">ILV/USD</div>
+                            <div class="symbol-option" data-symbol="BLUR/USD">BLUR/USD</div>
+
+                            <!-- Infrastructure -->
+                            <div class="symbol-category">Infrastructure</div>
+                            <div class="symbol-option" data-symbol="GRT/USD">GRT/USD</div>
+                            <div class="symbol-option" data-symbol="FET/USD">FET/USD</div>
+                            <div class="symbol-option" data-symbol="RNDR/USD">RNDR/USD</div>
+                            <div class="symbol-option" data-symbol="AR/USD">AR/USD</div>
+                            <div class="symbol-option" data-symbol="OCEAN/USD">OCEAN/USD</div>
+                            <div class="symbol-option" data-symbol="STORJ/USD">STORJ/USD</div>
+                            <div class="symbol-option" data-symbol="ANKR/USD">ANKR/USD</div>
+                            <div class="symbol-option" data-symbol="API3/USD">API3/USD</div>
+                            <div class="symbol-option" data-symbol="BAND/USD">BAND/USD</div>
+
+                            <!-- Privacy -->
+                            <div class="symbol-category">Privacy</div>
+                            <div class="symbol-option" data-symbol="XMR/USD">XMR/USD</div>
+                            <div class="symbol-option" data-symbol="ZEC/USD">ZEC/USD</div>
+                            <div class="symbol-option" data-symbol="SCRT/USD">SCRT/USD</div>
+
+                            <!-- Meme Coins -->
+                            <div class="symbol-category">Meme</div>
+                            <div class="symbol-option" data-symbol="SHIB/USD">SHIB/USD</div>
+                            <div class="symbol-option" data-symbol="PEPE/USD">PEPE/USD</div>
+                            <div class="symbol-option" data-symbol="FLOKI/USD">FLOKI/USD</div>
+                            <div class="symbol-option" data-symbol="BONK/USD">BONK/USD</div>
+                            <div class="symbol-option" data-symbol="WIF/USD">WIF/USD</div>
+
+                            <!-- Stablecoins -->
+                            <div class="symbol-category">Stablecoins</div>
+                            <div class="symbol-option" data-symbol="USDT/USD">USDT/USD</div>
+                            <div class="symbol-option" data-symbol="USDC/USD">USDC/USD</div>
+                            <div class="symbol-option" data-symbol="DAI/USD">DAI/USD</div>
+
+                            <!-- Other Popular -->
+                            <div class="symbol-category">Other</div>
+                            <div class="symbol-option" data-symbol="XTZ/USD">XTZ/USD</div>
+                            <div class="symbol-option" data-symbol="EOS/USD">EOS/USD</div>
+                            <div class="symbol-option" data-symbol="KAVA/USD">KAVA/USD</div>
+                            <div class="symbol-option" data-symbol="FLOW/USD">FLOW/USD</div>
+                            <div class="symbol-option" data-symbol="EGLD/USD">EGLD/USD</div>
+                            <div class="symbol-option" data-symbol="FTM/USD">FTM/USD</div>
+                            <div class="symbol-option" data-symbol="HBAR/USD">HBAR/USD</div>
+                            <div class="symbol-option" data-symbol="ICP/USD">ICP/USD</div>
+                            <div class="symbol-option" data-symbol="VET/USD">VET/USD</div>
+                            <div class="symbol-option" data-symbol="THETA/USD">THETA/USD</div>
+                            <div class="symbol-option" data-symbol="NEO/USD">NEO/USD</div>
+                            <div class="symbol-option" data-symbol="WAVES/USD">WAVES/USD</div>
+                            <div class="symbol-option" data-symbol="ZRX/USD">ZRX/USD</div>
+                            <div class="symbol-option" data-symbol="BAT/USD">BAT/USD</div>
+                            <div class="symbol-option" data-symbol="CHZ/USD">CHZ/USD</div>
+                            <div class="symbol-option" data-symbol="CRO/USD">CRO/USD</div>
+                            <div class="symbol-option" data-symbol="DASH/USD">DASH/USD</div>
+                            <div class="symbol-option" data-symbol="ENS/USD">ENS/USD</div>
+                            <div class="symbol-option" data-symbol="KSM/USD">KSM/USD</div>
+                            <div class="symbol-option" data-symbol="QTUM/USD">QTUM/USD</div>
+                            <div class="symbol-option" data-symbol="OMG/USD">OMG/USD</div>
+                            <div class="symbol-option" data-symbol="MASK/USD">MASK/USD</div>
+                            <div class="symbol-option" data-symbol="LDO/USD">LDO/USD</div>
+                            <div class="symbol-option" data-symbol="RPL/USD">RPL/USD</div>
+                            <div class="symbol-option" data-symbol="STX/USD">STX/USD</div>
+                            <div class="symbol-option" data-symbol="APT/USD">APT/USD</div>
+                            <div class="symbol-option" data-symbol="SUI/USD">SUI/USD</div>
+                            <div class="symbol-option" data-symbol="SEI/USD">SEI/USD</div>
+                            <div class="symbol-option" data-symbol="TIA/USD">TIA/USD</div>
+                            <div class="symbol-option" data-symbol="JUP/USD">JUP/USD</div>
+                            <div class="symbol-option" data-symbol="PYTH/USD">PYTH/USD</div>
+                            <div class="symbol-option" data-symbol="WLD/USD">WLD/USD</div>
+
+                            <!-- BTC Pairs -->
+                            <div class="symbol-category">BTC Pairs</div>
+                            <div class="symbol-option" data-symbol="ETH/BTC">ETH/BTC</div>
+                            <div class="symbol-option" data-symbol="XRP/BTC">XRP/BTC</div>
+                            <div class="symbol-option" data-symbol="SOL/BTC">SOL/BTC</div>
+                            <div class="symbol-option" data-symbol="ADA/BTC">ADA/BTC</div>
+                            <div class="symbol-option" data-symbol="DOT/BTC">DOT/BTC</div>
+                            <div class="symbol-option" data-symbol="LINK/BTC">LINK/BTC</div>
+                            <div class="symbol-option" data-symbol="LTC/BTC">LTC/BTC</div>
+
+                            <!-- EUR Pairs -->
+                            <div class="symbol-category">EUR Pairs</div>
+                            <div class="symbol-option" data-symbol="BTC/EUR">BTC/EUR</div>
+                            <div class="symbol-option" data-symbol="ETH/EUR">ETH/EUR</div>
+                            <div class="symbol-option" data-symbol="XRP/EUR">XRP/EUR</div>
+                            <div class="symbol-option" data-symbol="SOL/EUR">SOL/EUR</div>
+                            <div class="symbol-option" data-symbol="ADA/EUR">ADA/EUR</div>
+                            <div class="symbol-option" data-symbol="DOT/EUR">DOT/EUR</div>
+                            <div class="symbol-option" data-symbol="DOGE/EUR">DOGE/EUR</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="price-info">
+                    <div class="current-price" id="currentPrice">
+                        <span class="price-value">$0.00</span>
+                    </div>
+                    <div class="price-stats">
+                        <div class="stat">
+                            <span class="stat-label">24h Change</span>
+                            <span class="stat-value" id="priceChange">0.00%</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">24h High</span>
+                            <span class="stat-value" id="highPrice">$0.00</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">24h Low</span>
+                            <span class="stat-value" id="lowPrice">$0.00</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">24h Volume</span>
+                            <span class="stat-value" id="volume24h">0.00</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="ohlc-stats">
+                            <div class="ohlc-item">
+                                <span class="ohlc-label">O</span>
+                                <span class="ohlc-value" id="ohlcOpen">$0.00</span>
+                            </div>
+                            <div class="ohlc-item">
+                                <span class="ohlc-label">H</span>
+                                <span class="ohlc-value" id="ohlcHigh">$0.00</span>
+                            </div>
+                            <div class="ohlc-item">
+                                <span class="ohlc-label">L</span>
+                                <span class="ohlc-value" id="ohlcLow">$0.00</span>
+                            </div>
+                            <div class="ohlc-item">
+                                <span class="ohlc-label">C</span>
+                                <span class="ohlc-value" id="ohlcClose">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="trading-mode" id="tradingMode">
+                        <span class="mode-indicator paper">PAPER</span>
+                    </div>
+                    <button class="btn btn-icon" title="Settings">&#9881;</button>
+                </div>
+            </header>
+
+            <!-- Chart and Order Book Area -->
+            <div class="trading-area">
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <!-- Chart Toolbar -->
+                    <div class="chart-toolbar">
+                        <div class="timeframe-selector">
+                            <button class="tf-btn" data-tf="1m">1m</button>
+                            <button class="tf-btn" data-tf="2m">2m</button>
+                            <button class="tf-btn" data-tf="5m">5m</button>
+                            <button class="tf-btn" data-tf="15m">15m</button>
+                            <button class="tf-btn" data-tf="30m">30m</button>
+                            <button class="tf-btn active" data-tf="1h">1h</button>
+                            <button class="tf-btn" data-tf="4h">4h</button>
+                            <button class="tf-btn" data-tf="1d">1D</button>
+                            <div class="tf-dropdown">
+                                <button class="tf-btn tf-dropdown-btn" id="tfDropdownBtn">
+                                    <span id="tfDropdownLabel">More</span>
+                                    <span class="dropdown-arrow">&#9662;</span>
+                                </button>
+                                <div class="tf-dropdown-menu" id="tfDropdownMenu">
+                                    <div class="tf-dropdown-item" data-tf="1w">1W</div>
+                                    <div class="tf-dropdown-item" data-tf="1M">1M</div>
+                                    <div class="tf-dropdown-item" data-tf="1y">1Y</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-tools">
+                            <button class="tool-btn" id="indicatorsBtn" title="Indicators">
+                                <span>&#128200;</span> Indicators
+                            </button>
+                            <label class="volume-toggle" title="Toggle Volume">
+                                <input type="checkbox" id="volumeToggle" checked>
+                                <span class="volume-label">Vol</span>
+                            </label>
+                            <div class="chart-type-selector">
+                                <button class="tool-btn" id="chartTypeBtn" title="Chart Type">
+                                    <svg class="chart-type-icon" id="chartTypeIcon" width="14" height="14" viewBox="0 0 14 14">
+                                        <rect x="1" y="2" width="2" height="10" fill="currentColor"/>
+                                        <rect x="4" y="5" width="2" height="7" fill="currentColor"/>
+                                        <rect x="7" y="1" width="2" height="11" fill="currentColor"/>
+                                        <rect x="10" y="4" width="2" height="8" fill="currentColor"/>
+                                    </svg>
+                                    <span id="chartTypeLabel">Candles</span>
+                                    <span class="dropdown-arrow">&#9662;</span>
+                                </button>
+                                <div class="chart-type-dropdown" id="chartTypeDropdown">
+                                    <div class="chart-type-option active" data-type="candlestick">
+                                        <svg width="16" height="16" viewBox="0 0 16 16">
+                                            <rect x="3" y="2" width="2" height="12" fill="currentColor"/>
+                                            <rect x="7" y="5" width="2" height="9" fill="currentColor"/>
+                                            <rect x="11" y="1" width="2" height="11" fill="currentColor"/>
+                                        </svg>
+                                        <span>Candles</span>
+                                    </div>
+                                    <div class="chart-type-option" data-type="hollow">
+                                        <svg width="16" height="16" viewBox="0 0 16 16">
+                                            <rect x="3" y="2" width="2" height="12" fill="none" stroke="currentColor" stroke-width="1"/>
+                                            <rect x="7" y="5" width="2" height="9" fill="none" stroke="currentColor" stroke-width="1"/>
+                                            <rect x="11" y="1" width="2" height="11" fill="none" stroke="currentColor" stroke-width="1"/>
+                                        </svg>
+                                        <span>Hollow candles</span>
+                                    </div>
+                                    <div class="chart-type-option" data-type="bar">
+                                        <svg width="16" height="16" viewBox="0 0 16 16">
+                                            <line x1="4" y1="2" x2="4" y2="14" stroke="currentColor" stroke-width="1.5"/>
+                                            <line x1="2" y1="4" x2="4" y2="4" stroke="currentColor" stroke-width="1.5"/>
+                                            <line x1="4" y1="12" x2="6" y2="12" stroke="currentColor" stroke-width="1.5"/>
+                                            <line x1="10" y1="1" x2="10" y2="12" stroke="currentColor" stroke-width="1.5"/>
+                                            <line x1="8" y1="3" x2="10" y2="3" stroke="currentColor" stroke-width="1.5"/>
+                                            <line x1="10" y1="10" x2="12" y2="10" stroke="currentColor" stroke-width="1.5"/>
+                                        </svg>
+                                        <span>Bars</span>
+                                    </div>
+                                    <div class="chart-type-option" data-type="line">
+                                        <svg width="16" height="16" viewBox="0 0 16 16">
+                                            <polyline points="1,12 5,6 9,9 15,3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                        </svg>
+                                        <span>Line</span>
+                                    </div>
+                                    <div class="chart-type-option" data-type="area">
+                                        <svg width="16" height="16" viewBox="0 0 16 16">
+                                            <polygon points="1,14 1,12 5,6 9,9 15,3 15,14" fill="currentColor" opacity="0.3"/>
+                                            <polyline points="1,12 5,6 9,9 15,3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                        </svg>
+                                        <span>Area</span>
+                                    </div>
+                                    <div class="chart-type-option" data-type="baseline">
+                                        <svg width="16" height="16" viewBox="0 0 16 16">
+                                            <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2"/>
+                                            <polyline points="1,10 4,6 7,11 10,5 13,9 15,4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                        </svg>
+                                        <span>Baseline</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="tool-btn" id="orderBookToggle" title="Order Book">
+                                <span>&#9776;</span> Order Book
+                            </button>
+                            <button class="tool-btn" id="tarsToggle" title="TARS AI Assistant">
+                                <span>&#129302;</span> TARS
+                            </button>
+                            <button class="tool-btn active" id="orderFormToggle" title="Order Form">
+                                <span>&#128179;</span> Order Form
+                            </button>
+                            <button class="tool-btn" id="goToDateBtn" title="Go to Date">
+                                <span>&#128197;</span> Go to
+                            </button>
+                            <button class="tool-btn" id="marketSummaryBtn" title="Market Summary">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                    <path d="M1 12L5 8L9 10L15 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M11 4H15V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Summary</span>
+                            </button>
+                            <div class="layout-selector">
+                                <button class="layout-btn active" data-layout="1" title="Single Chart">
+                                    <svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="currentColor" rx="1"/></svg>
+                                </button>
+                                <button class="layout-btn" data-layout="2h" title="2 Charts Horizontal">
+                                    <svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="14" fill="currentColor" rx="1"/><rect x="9" y="1" width="6" height="14" fill="currentColor" rx="1"/></svg>
+                                </button>
+                                <button class="layout-btn" data-layout="2v" title="2 Charts Vertical">
+                                    <svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="6" fill="currentColor" rx="1"/><rect x="1" y="9" width="14" height="6" fill="currentColor" rx="1"/></svg>
+                                </button>
+                                <button class="layout-btn" data-layout="4" title="4 Charts Grid">
+                                    <svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" fill="currentColor" rx="1"/><rect x="9" y="1" width="6" height="6" fill="currentColor" rx="1"/><rect x="1" y="9" width="6" height="6" fill="currentColor" rx="1"/><rect x="9" y="9" width="6" height="6" fill="currentColor" rx="1"/></svg>
+                                </button>
+                                <button class="layout-btn" data-layout="6" title="6 Charts Grid">
+                                    <svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="4" height="6" fill="currentColor" rx="0.5"/><rect x="6" y="1" width="4" height="6" fill="currentColor" rx="0.5"/><rect x="11" y="1" width="4" height="6" fill="currentColor" rx="0.5"/><rect x="1" y="9" width="4" height="6" fill="currentColor" rx="0.5"/><rect x="6" y="9" width="4" height="6" fill="currentColor" rx="0.5"/><rect x="11" y="9" width="4" height="6" fill="currentColor" rx="0.5"/></svg>
+                                </button>
+                            </div>
+                            <!-- Layout Manager -->
+                            <div class="layout-manager">
+                                <button class="tool-btn" id="layoutManagerBtn" title="Manage Layouts">
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                        <rect x="1" y="1" width="6" height="6" stroke="currentColor" stroke-width="1.5" rx="1"/>
+                                        <rect x="9" y="1" width="6" height="6" stroke="currentColor" stroke-width="1.5" rx="1"/>
+                                        <rect x="1" y="9" width="6" height="6" stroke="currentColor" stroke-width="1.5" rx="1"/>
+                                        <rect x="9" y="9" width="6" height="6" stroke="currentColor" stroke-width="1.5" rx="1"/>
+                                    </svg>
+                                    <span id="currentLayoutName">Default</span>
+                                    <span class="dropdown-arrow">&#9662;</span>
+                                </button>
+                                <div class="layout-manager-dropdown" id="layoutManagerDropdown">
+                                    <div class="layout-dropdown-header">Your Layouts</div>
+                                    <div class="saved-layouts-list" id="savedLayoutsList">
+                                        <!-- Saved layouts will be populated here -->
+                                    </div>
+                                    <div class="layout-dropdown-divider"></div>
+                                    <div class="layout-dropdown-actions">
+                                        <button class="layout-action-btn" id="saveLayoutBtn">
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <path d="M13 16H3a2 2 0 01-2-2V2a2 2 0 012-2h7l4 4v10a2 2 0 01-2 2z" stroke="currentColor" stroke-width="1.5"/>
+                                                <path d="M10 1v4h4M5 9h6M5 12h6" stroke="currentColor" stroke-width="1.5"/>
+                                            </svg>
+                                            Save current layout
+                                        </button>
+                                        <button class="layout-action-btn" id="createLayoutBtn">
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                                <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+                                                <path d="M8 4v8M4 8h8" stroke="currentColor" stroke-width="1.5"/>
+                                            </svg>
+                                            Create new layout
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time Scale Context Menu (appears on right-click) -->
+                    <div class="timescale-context-menu" id="timescaleContextMenu">
+                        <div class="context-menu-item" id="resetTimeScale">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                <path d="M3 3v5h5"/>
+                            </svg>
+                            <span>Reset time scale</span>
+                        </div>
+                        <div class="context-menu-item has-submenu" id="timezoneMenuItem">
+                            <span>Time zone</span>
+                            <span class="submenu-arrow">&#9656;</span>
+                        </div>
+                        <div class="context-menu-item" id="sessionBreaks">
+                            <span>Session breaks</span>
+                        </div>
+                    </div>
+
+                    <!-- Timezone Submenu (appears when hovering Time zone) -->
+                    <div class="timezone-submenu" id="timezoneSubmenu">
+                        <div class="timezone-search">
+                            <input type="text" id="timezoneSearch" placeholder="Search timezone...">
+                        </div>
+                        <div class="timezone-list" id="timezoneList">
+                            <div class="timezone-option active" data-tz="UTC" data-offset="0">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">UTC</span>
+                            </div>
+                            <div class="timezone-group-label">North America</div>
+                            <div class="timezone-option" data-tz="Pacific/Honolulu" data-offset="-10">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-10) Honolulu</span>
+                            </div>
+                            <div class="timezone-option" data-tz="America/Anchorage" data-offset="-9">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-9) Anchorage</span>
+                            </div>
+                            <div class="timezone-option" data-tz="America/Los_Angeles" data-offset="-8">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-8) Los Angeles</span>
+                            </div>
+                            <div class="timezone-option" data-tz="America/Denver" data-offset="-7">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-7) Denver</span>
+                            </div>
+                            <div class="timezone-option" data-tz="America/Phoenix" data-offset="-7">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-7) Phoenix</span>
+                            </div>
+                            <div class="timezone-option" data-tz="America/Chicago" data-offset="-6">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-6) Chicago</span>
+                            </div>
+                            <div class="timezone-option" data-tz="America/New_York" data-offset="-5">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-5) New York</span>
+                            </div>
+                            <div class="timezone-option" data-tz="America/Toronto" data-offset="-5">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-5) Toronto</span>
+                            </div>
+                            <div class="timezone-option" data-tz="America/Sao_Paulo" data-offset="-3">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC-3) Sao Paulo</span>
+                            </div>
+                            <div class="timezone-group-label">Europe</div>
+                            <div class="timezone-option" data-tz="Europe/London" data-offset="0">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+0) London</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Europe/Paris" data-offset="1">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+1) Paris</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Europe/Berlin" data-offset="1">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+1) Berlin</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Europe/Zurich" data-offset="1">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+1) Zurich</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Europe/Moscow" data-offset="3">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+3) Moscow</span>
+                            </div>
+                            <div class="timezone-group-label">Asia / Pacific</div>
+                            <div class="timezone-option" data-tz="Asia/Dubai" data-offset="4">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+4) Dubai</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Asia/Kolkata" data-offset="5.5">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+5:30) Mumbai</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Asia/Singapore" data-offset="8">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+8) Singapore</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Asia/Hong_Kong" data-offset="8">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+8) Hong Kong</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Asia/Shanghai" data-offset="8">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+8) Shanghai</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Asia/Tokyo" data-offset="9">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+9) Tokyo</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Asia/Seoul" data-offset="9">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+9) Seoul</span>
+                            </div>
+                            <div class="timezone-group-label">Australia / Oceania</div>
+                            <div class="timezone-option" data-tz="Australia/Sydney" data-offset="10">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+10) Sydney</span>
+                            </div>
+                            <div class="timezone-option" data-tz="Pacific/Auckland" data-offset="12">
+                                <span class="tz-check">&#10003;</span>
+                                <span class="tz-name">(UTC+12) Auckland</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Market Summary Panel -->
+                    <div class="market-summary-panel" id="marketSummaryPanel" style="display: none;">
+                        <div class="market-summary-header">
+                            <button class="summary-close-btn" id="closeSummaryBtn" title="Close">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Stats & Performance Grid -->
+                        <div class="stats-performance-grid">
+                            <!-- Global Stats Section (Left) -->
+                            <div class="global-stats-section">
+                                <div class="stats-row">
+                                    <span class="stats-label">24H volume</span>
+                                    <span class="stats-value" id="globalVolume24h">--</span>
+                                </div>
+                                <div class="stats-divider">
+                                    <span class="divider-label">GLOBAL STATS</span>
+                                </div>
+                                <div class="stats-row">
+                                    <span class="stats-label">Market rank</span>
+                                    <span class="stats-value" id="marketRank">#--</span>
+                                </div>
+                                <div class="stats-row">
+                                    <span class="stats-label">Market cap</span>
+                                    <span class="stats-value" id="marketCap">--</span>
+                                </div>
+                                <div class="stats-row">
+                                    <span class="stats-label">Global volume</span>
+                                    <span class="stats-value" id="globalVolumeTotal">--</span>
+                                </div>
+                                <div class="stats-row">
+                                    <span class="stats-label">Circulating supply</span>
+                                    <span class="stats-value" id="circulatingSupply">--</span>
+                                </div>
+                                <div class="stats-row">
+                                    <span class="stats-label">Max supply</span>
+                                    <span class="stats-value" id="maxSupply">--</span>
+                                </div>
+                                <div class="stats-row">
+                                    <span class="stats-label">All-time high</span>
+                                    <span class="stats-value" id="allTimeHigh">--</span>
+                                </div>
+                                <div class="stats-row">
+                                    <span class="stats-label">All-time low</span>
+                                    <span class="stats-value" id="allTimeLow">--</span>
+                                </div>
+                            </div>
+
+                            <!-- Performance Cards (Right - 2x2 Grid) -->
+                            <div class="performance-cards">
+                                <div class="performance-card" data-period="24h">
+                                    <div class="perf-header">
+                                        <span class="perf-period">24H</span>
+                                        <span class="perf-change" id="perf24hChange">0.00%</span>
+                                    </div>
+                                    <div class="perf-sparkline">
+                                        <canvas id="sparkline24h" width="140" height="40"></canvas>
+                                    </div>
+                                    <div class="perf-range">
+                                        <span class="perf-low" id="perf24hLow">0.00</span>
+                                        <span class="perf-high" id="perf24hHigh">0.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="performance-card" data-period="1w">
+                                    <div class="perf-header">
+                                        <span class="perf-period">1W</span>
+                                        <span class="perf-change" id="perf1wChange">0.00%</span>
+                                    </div>
+                                    <div class="perf-sparkline">
+                                        <canvas id="sparkline1w" width="140" height="40"></canvas>
+                                    </div>
+                                    <div class="perf-range">
+                                        <span class="perf-low" id="perf1wLow">0.00</span>
+                                        <span class="perf-high" id="perf1wHigh">0.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="performance-card" data-period="1m">
+                                    <div class="perf-header">
+                                        <span class="perf-period">1M</span>
+                                        <span class="perf-change" id="perf1mChange">0.00%</span>
+                                    </div>
+                                    <div class="perf-sparkline">
+                                        <canvas id="sparkline1m" width="140" height="40"></canvas>
+                                    </div>
+                                    <div class="perf-range">
+                                        <span class="perf-low" id="perf1mLow">0.00</span>
+                                        <span class="perf-high" id="perf1mHigh">0.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="performance-card" data-period="1y">
+                                    <div class="perf-header">
+                                        <span class="perf-period">1Y</span>
+                                        <span class="perf-change" id="perf1yChange">0.00%</span>
+                                    </div>
+                                    <div class="perf-sparkline">
+                                        <canvas id="sparkline1y" width="140" height="40"></canvas>
+                                    </div>
+                                    <div class="perf-range">
+                                        <span class="perf-low" id="perf1yLow">0.00</span>
+                                        <span class="perf-high" id="perf1yHigh">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aggressor Ratio Section -->
+                        <div class="aggressor-ratio-section">
+                            <div class="stats-divider">
+                                <span class="divider-label">AGGRESSOR RATIO</span>
+                            </div>
+
+                            <div class="aggressor-content-grid">
+                                <!-- Left Column: Metrics -->
+                                <div class="aggressor-metrics-column">
+                                    <!-- Sentiment Indicator -->
+                                    <div class="aggressor-sentiment" id="aggressorSentiment">
+                                        <div class="sentiment-badge neutral">
+                                            <span class="sentiment-icon">⚖️</span>
+                                            <span class="sentiment-text" id="aggressorSentimentText">NEUTRAL</span>
+                                        </div>
+                                        <span class="sentiment-strength" id="aggressorStrength">50%</span>
+                                    </div>
+
+                                    <!-- Visual Ratio Bar -->
+                                    <div class="aggressor-bar-container">
+                                        <div class="aggressor-bar">
+                                            <div class="aggressor-buy" id="aggressorBuyBar" style="width: 50%">
+                                                <span class="bar-label">BUY</span>
+                                            </div>
+                                            <div class="aggressor-sell" id="aggressorSellBar" style="width: 50%">
+                                                <span class="bar-label">SELL</span>
+                                            </div>
+                                        </div>
+                                        <div class="aggressor-labels">
+                                            <span class="buy-pct" id="aggressorBuyPct">50%</span>
+                                            <span class="sell-pct" id="aggressorSellPct">50%</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Key Metrics -->
+                                    <div class="aggressor-metrics">
+                                        <div class="metric-row">
+                                            <span class="metric-label">Volume Ratio</span>
+                                            <span class="metric-value" id="aggressorVolumeRatio">--</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Buy Volume</span>
+                                            <span class="metric-value positive" id="aggressorBuyVolume">--</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Sell Volume</span>
+                                            <span class="metric-value negative" id="aggressorSellVolume">--</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Total Trades</span>
+                                            <span class="metric-value" id="aggressorTotalTrades">--</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Time Span</span>
+                                            <span class="metric-value" id="aggressorTimeSpan">--</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Avg Buy Size</span>
+                                            <span class="metric-value" id="aggressorAvgBuySize">--</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Avg Sell Size</span>
+                                            <span class="metric-value" id="aggressorAvgSellSize">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Interpretation -->
+                                <div class="aggressor-interpretation">
+                                    <h4>📊 What is Aggressor Ratio?</h4>
+                                    <p class="interpretation-text">
+                                        The <strong>aggressor ratio</strong> measures who is initiating trades in the market.
+                                        When a market order hits the ask price, it's a <span class="positive">buy aggressor</span>.
+                                        When it hits the bid, it's a <span class="negative">sell aggressor</span>.
+                                    </p>
+
+                                    <h4>💡 Key Insights</h4>
+                                    <ul class="insights-list" id="aggressorInsights">
+                                        <li>Loading analysis...</li>
+                                    </ul>
+
+                                    <h4>🔗 Correlations</h4>
+                                    <div class="correlation-panel" id="aggressorCorrelations">
+                                        <p>Analyzing correlations...</p>
+                                    </div>
+
+                                    <h4>📈 How to Use This</h4>
+                                    <div class="usage-tips">
+                                        <div class="tip">
+                                            <span class="tip-icon">1️⃣</span>
+                                            <span><strong>Confirm Trends:</strong> High buy aggression during uptrends confirms momentum</span>
+                                        </div>
+                                        <div class="tip">
+                                            <span class="tip-icon">2️⃣</span>
+                                            <span><strong>Spot Reversals:</strong> Divergence between price and aggression can signal reversals</span>
+                                        </div>
+                                        <div class="tip">
+                                            <span class="tip-icon">3️⃣</span>
+                                            <span><strong>Gauge Sentiment:</strong> Extreme ratios (>1.5 or <0.7) indicate strong conviction</span>
+                                        </div>
+                                        <div class="tip">
+                                            <span class="tip-icon">4️⃣</span>
+                                            <span><strong>Volume Weight:</strong> Large trades matter more than small ones</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Analysis Section -->
+                        <div class="technical-analysis-section">
+                            <div class="stats-divider">
+                                <span class="divider-label">TECHNICAL ANALYSIS</span>
+                            </div>
+
+                            <div class="ta-container">
+                                <!-- Overall Strength -->
+                                <div class="ta-overall-strength">
+                                    <div class="ta-strength-header">
+                                        <span class="ta-strength-label">Overall Strength</span>
+                                        <span class="ta-strength-signal" id="taOverallSignal">--</span>
+                                    </div>
+                                    <div class="ta-strength-bar">
+                                        <div class="ta-bar-segment sell" id="taSellBar"></div>
+                                        <div class="ta-bar-segment neutral" id="taNeutralBar"></div>
+                                        <div class="ta-bar-segment buy" id="taBuyBar"></div>
+                                    </div>
+                                    <div class="ta-strength-counts">
+                                        <span class="sell-count" id="taSellCount">0 Sell</span>
+                                        <span class="neutral-count" id="taNeutralCount">0 Neutral</span>
+                                        <span class="buy-count" id="taBuyCount">0 Buy</span>
+                                    </div>
+                                </div>
+
+                                <!-- Accordion Sections -->
+                                <div class="ta-accordion">
+                                    <!-- Oscillators Section -->
+                                    <div class="ta-accordion-item">
+                                        <div class="ta-accordion-header" onclick="MarketSummary.toggleTASection('oscillators')">
+                                            <span class="ta-section-title">Oscillators</span>
+                                            <span class="ta-section-summary" id="taOscSummary">--</span>
+                                            <span class="ta-accordion-icon" id="taOscIcon">▼</span>
+                                        </div>
+                                        <div class="ta-accordion-content" id="taOscContent">
+                                            <table class="ta-indicator-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Indicator</th>
+                                                        <th>Value</th>
+                                                        <th>Signal</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="taOscillators">
+                                                    <tr><td colspan="3" class="loading">Loading...</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Moving Averages Section -->
+                                    <div class="ta-accordion-item">
+                                        <div class="ta-accordion-header" onclick="MarketSummary.toggleTASection('ma')">
+                                            <span class="ta-section-title">Moving Averages</span>
+                                            <span class="ta-section-summary" id="taMASummary">--</span>
+                                            <span class="ta-accordion-icon" id="taMAIcon">▼</span>
+                                        </div>
+                                        <div class="ta-accordion-content" id="taMAContent">
+                                            <table class="ta-indicator-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Indicator</th>
+                                                        <th>Value</th>
+                                                        <th>Signal</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="taMovingAverages">
+                                                    <tr><td colspan="3" class="loading">Loading...</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Key Levels -->
+                                <div class="ta-key-levels">
+                                    <h4>Key Price Levels</h4>
+                                    <div class="ta-levels-grid">
+                                        <div class="ta-level-item resistance">
+                                            <span class="level-label">Resistance 2</span>
+                                            <span class="level-value" id="taResistance2">--</span>
+                                        </div>
+                                        <div class="ta-level-item resistance">
+                                            <span class="level-label">Resistance 1</span>
+                                            <span class="level-value" id="taResistance1">--</span>
+                                        </div>
+                                        <div class="ta-level-item current">
+                                            <span class="level-label">Current Price</span>
+                                            <span class="level-value" id="taCurrentPrice">--</span>
+                                        </div>
+                                        <div class="ta-level-item support">
+                                            <span class="level-label">Support 1</span>
+                                            <span class="level-value" id="taSupport1">--</span>
+                                        </div>
+                                        <div class="ta-level-item support">
+                                            <span class="level-label">Support 2</span>
+                                            <span class="level-value" id="taSupport2">--</span>
+                                        </div>
+                                    </div>
+                                    <div class="ta-ma-levels">
+                                        <div class="ta-ma-level">
+                                            <span>SMA 20:</span>
+                                            <span id="taSMA20">--</span>
+                                        </div>
+                                        <div class="ta-ma-level">
+                                            <span>SMA 50:</span>
+                                            <span id="taSMA50">--</span>
+                                        </div>
+                                        <div class="ta-ma-level">
+                                            <span>SMA 200:</span>
+                                            <span id="taSMA200">--</span>
+                                        </div>
+                                        <div class="ta-ma-level">
+                                            <span>ATR (14):</span>
+                                            <span id="taATR">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Analysis Section -->
+                        <div class="ai-analysis-section">
+                            <div class="stats-divider">
+                                <span class="divider-label">AI TRADING ADVISOR</span>
+                            </div>
+
+                            <div class="ai-analysis-container">
+                                <div class="ai-header">
+                                    <div class="ai-badge">
+                                        <span class="ai-icon">🤖</span>
+                                        <span class="ai-name">Claude AI</span>
+                                    </div>
+                                    <button class="ai-analyze-btn" id="aiAnalyzeBtn" onclick="MarketSummary.requestAIAnalysis()">
+                                        <span class="btn-icon">✨</span>
+                                        <span class="btn-text">Get AI Analysis</span>
+                                    </button>
+                                </div>
+
+                                <div class="ai-status" id="aiStatus">
+                                    <p class="ai-intro">Click the button above to get an AI-powered trading analysis based on current market data, aggressor ratio, and technical indicators.</p>
+                                </div>
+
+                                <div class="ai-response" id="aiResponse" style="display: none;">
+                                    <div class="ai-response-header">
+                                        <span class="response-label">AI Recommendation</span>
+                                        <span class="response-time" id="aiResponseTime"></span>
+                                    </div>
+                                    <div class="ai-response-content" id="aiResponseContent">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Market Analysis Section -->
+                        <div class="market-analysis-section">
+                            <div class="analysis-section-header">
+                                <h3>Market Analysis</h3>
+                                <span class="analysis-timestamp" id="analysisTimestamp">Updated just now</span>
+                            </div>
+
+                            <!-- Overall Recommendation -->
+                            <div class="recommendation-panel" id="recommendationPanel">
+                                <div class="rec-signal-large" id="overallSignal">
+                                    <span class="signal-icon">●</span>
+                                    <span class="signal-text">ANALYZING</span>
+                                </div>
+                                <div class="rec-confidence">
+                                    <span class="conf-label">Confidence</span>
+                                    <div class="conf-bar">
+                                        <div class="conf-fill" id="confidenceFillBar" style="width: 0%"></div>
+                                    </div>
+                                    <span class="conf-value" id="confidencePercent">0%</span>
+                                </div>
+                                <p class="rec-summary" id="recSummary">Analyzing market data...</p>
+                            </div>
+
+                            <!-- Analysis Factors -->
+                            <div class="analysis-factors-grid">
+                                <!-- Trend Analysis -->
+                                <div class="analysis-factor-card">
+                                    <div class="factor-icon trend">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M3 17L9 11L13 15L21 7"/>
+                                            <path d="M17 7H21V11"/>
+                                        </svg>
+                                    </div>
+                                    <div class="factor-content">
+                                        <h4>Trend Analysis</h4>
+                                        <div class="factor-signal" id="trendSignal">--</div>
+                                        <p class="factor-desc" id="trendDesc">Loading...</p>
+                                    </div>
+                                </div>
+
+                                <!-- Momentum Analysis -->
+                                <div class="analysis-factor-card">
+                                    <div class="factor-icon momentum">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <path d="M12 6V12L16 14"/>
+                                        </svg>
+                                    </div>
+                                    <div class="factor-content">
+                                        <h4>Momentum</h4>
+                                        <div class="factor-signal" id="momentumSignal">--</div>
+                                        <p class="factor-desc" id="momentumDesc">Loading...</p>
+                                    </div>
+                                </div>
+
+                                <!-- Volatility Analysis -->
+                                <div class="analysis-factor-card">
+                                    <div class="factor-icon volatility">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M2 12H6L9 3L15 21L18 12H22"/>
+                                        </svg>
+                                    </div>
+                                    <div class="factor-content">
+                                        <h4>Volatility</h4>
+                                        <div class="factor-signal" id="volatilitySignal">--</div>
+                                        <p class="factor-desc" id="volatilityDesc">Loading...</p>
+                                    </div>
+                                </div>
+
+                                <!-- Volume Analysis -->
+                                <div class="analysis-factor-card">
+                                    <div class="factor-icon volume">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="4" y="14" width="4" height="6"/>
+                                            <rect x="10" y="10" width="4" height="10"/>
+                                            <rect x="16" y="4" width="4" height="16"/>
+                                        </svg>
+                                    </div>
+                                    <div class="factor-content">
+                                        <h4>Volume Profile</h4>
+                                        <div class="factor-signal" id="volumeSignal">--</div>
+                                        <p class="factor-desc" id="volumeDesc">Loading...</p>
+                                    </div>
+                                </div>
+
+                                <!-- Price Position -->
+                                <div class="analysis-factor-card">
+                                    <div class="factor-icon position">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2L12 22"/>
+                                            <path d="M5 12H19"/>
+                                            <circle cx="12" cy="12" r="3"/>
+                                        </svg>
+                                    </div>
+                                    <div class="factor-content">
+                                        <h4>Price Position</h4>
+                                        <div class="factor-signal" id="positionSignal">--</div>
+                                        <p class="factor-desc" id="positionDesc">Loading...</p>
+                                    </div>
+                                </div>
+
+                                <!-- Multi-Timeframe -->
+                                <div class="analysis-factor-card">
+                                    <div class="factor-icon mtf">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="7" height="7"/>
+                                            <rect x="14" y="3" width="7" height="7"/>
+                                            <rect x="3" y="14" width="7" height="7"/>
+                                            <rect x="14" y="14" width="7" height="7"/>
+                                        </svg>
+                                    </div>
+                                    <div class="factor-content">
+                                        <h4>Multi-Timeframe</h4>
+                                        <div class="factor-signal" id="mtfSignal">--</div>
+                                        <p class="factor-desc" id="mtfDesc">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Key Insights -->
+                            <div class="key-insights">
+                                <h4>Key Insights</h4>
+                                <ul class="insights-list" id="insightsList">
+                                    <li class="insight-item loading">Analyzing market conditions...</li>
+                                </ul>
+                            </div>
+
+                            <!-- Risk Assessment -->
+                            <div class="risk-assessment">
+                                <h4>Risk Assessment</h4>
+                                <div class="risk-meter">
+                                    <div class="risk-labels">
+                                        <span>Low</span>
+                                        <span>Medium</span>
+                                        <span>High</span>
+                                    </div>
+                                    <div class="risk-bar">
+                                        <div class="risk-fill" id="riskFill"></div>
+                                        <div class="risk-marker" id="riskMarker"></div>
+                                    </div>
+                                </div>
+                                <p class="risk-explanation" id="riskExplanation">Evaluating risk factors...</p>
+                            </div>
+
+                            <!-- Action Items -->
+                            <div class="action-items">
+                                <h4>Suggested Actions</h4>
+                                <div class="actions-grid" id="actionsGrid">
+                                    <div class="action-card">
+                                        <span class="action-icon">⏳</span>
+                                        <span class="action-text">Analyzing...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Multi-Chart Container -->
+                    <div class="multi-chart-wrapper" id="multiChartWrapper" data-layout="1">
+                        <div class="chart-cell active" data-index="0">
+                            <div class="chart-cell-header">
+                                <span class="cell-symbol" data-index="0">BTC/USD - <span class="cell-tf">1h</span></span>
+                                <select class="cell-timeframe" data-index="0">
+                                    <option value="1m">1m</option>
+                                    <option value="2m">2m</option>
+                                    <option value="5m">5m</option>
+                                    <option value="15m">15m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h" selected>1h</option>
+                                    <option value="4h">4h</option>
+                                    <option value="1d">1D</option>
+                                    <option value="1w">1W</option>
+                                    <option value="1M">1M</option>
+                                    <option value="1y">1Y</option>
+                                </select>
+                            </div>
+                            <div class="chart-cell-body" id="chart-0"></div>
+                        </div>
+                        <div class="chart-cell" data-index="1" style="display: none;">
+                            <div class="chart-cell-header">
+                                <span class="cell-symbol" data-index="1">BTC/USD - <span class="cell-tf">15m</span></span>
+                                <select class="cell-timeframe" data-index="1">
+                                    <option value="1m">1m</option>
+                                    <option value="2m">2m</option>
+                                    <option value="5m">5m</option>
+                                    <option value="15m" selected>15m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="4h">4h</option>
+                                    <option value="1d">1D</option>
+                                    <option value="1w">1W</option>
+                                    <option value="1M">1M</option>
+                                    <option value="1y">1Y</option>
+                                </select>
+                            </div>
+                            <div class="chart-cell-body" id="chart-1"></div>
+                        </div>
+                        <div class="chart-cell" data-index="2" style="display: none;">
+                            <div class="chart-cell-header">
+                                <span class="cell-symbol" data-index="2">BTC/USD - <span class="cell-tf">4h</span></span>
+                                <select class="cell-timeframe" data-index="2">
+                                    <option value="1m">1m</option>
+                                    <option value="2m">2m</option>
+                                    <option value="5m">5m</option>
+                                    <option value="15m">15m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="4h" selected>4h</option>
+                                    <option value="1d">1D</option>
+                                    <option value="1w">1W</option>
+                                    <option value="1M">1M</option>
+                                    <option value="1y">1Y</option>
+                                </select>
+                            </div>
+                            <div class="chart-cell-body" id="chart-2"></div>
+                        </div>
+                        <div class="chart-cell" data-index="3" style="display: none;">
+                            <div class="chart-cell-header">
+                                <span class="cell-symbol" data-index="3">BTC/USD - <span class="cell-tf">1D</span></span>
+                                <select class="cell-timeframe" data-index="3">
+                                    <option value="1m">1m</option>
+                                    <option value="2m">2m</option>
+                                    <option value="5m">5m</option>
+                                    <option value="15m">15m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="4h">4h</option>
+                                    <option value="1d" selected>1D</option>
+                                    <option value="1w">1W</option>
+                                    <option value="1M">1M</option>
+                                    <option value="1y">1Y</option>
+                                </select>
+                            </div>
+                            <div class="chart-cell-body" id="chart-3"></div>
+                        </div>
+                        <div class="chart-cell" data-index="4" style="display: none;">
+                            <div class="chart-cell-header">
+                                <span class="cell-symbol" data-index="4">BTC/USD - <span class="cell-tf">1m</span></span>
+                                <select class="cell-timeframe" data-index="4">
+                                    <option value="1m" selected>1m</option>
+                                    <option value="2m">2m</option>
+                                    <option value="5m">5m</option>
+                                    <option value="15m">15m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="4h">4h</option>
+                                    <option value="1d">1D</option>
+                                    <option value="1w">1W</option>
+                                    <option value="1M">1M</option>
+                                    <option value="1y">1Y</option>
+                                </select>
+                            </div>
+                            <div class="chart-cell-body" id="chart-4"></div>
+                        </div>
+                        <div class="chart-cell" data-index="5" style="display: none;">
+                            <div class="chart-cell-header">
+                                <span class="cell-symbol" data-index="5">BTC/USD - <span class="cell-tf">5m</span></span>
+                                <select class="cell-timeframe" data-index="5">
+                                    <option value="1m">1m</option>
+                                    <option value="2m">2m</option>
+                                    <option value="5m" selected>5m</option>
+                                    <option value="15m">15m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="4h">4h</option>
+                                    <option value="1d">1D</option>
+                                    <option value="1w">1W</option>
+                                    <option value="1M">1M</option>
+                                    <option value="1y">1Y</option>
+                                </select>
+                            </div>
+                            <div class="chart-cell-body" id="chart-5"></div>
+                        </div>
+                    </div>
+
+                    <!-- Horizontal Drawing Toolbar -->
+                    <div class="drawing-toolbar-horizontal" id="drawingToolbar">
+                        <div class="toolbar-section-h">
+                            <button class="drawing-tool-btn-h active" data-tool="cursor" title="Cursor">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4l7 17 2.5-6.5L20 12 4 4z"/>
+                                </svg>
+                            </button>
+                            <button class="drawing-tool-btn-h" data-tool="crosshair" title="Crosshair">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="22" y1="12" x2="18" y2="12"/>
+                                    <line x1="6" y1="12" x2="2" y2="12"/>
+                                    <line x1="12" y1="6" x2="12" y2="2"/>
+                                    <line x1="12" y1="22" x2="12" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-divider-h"></div>
+                        <div class="toolbar-section-h">
+                            <button class="drawing-tool-btn-h" data-tool="trendline" title="Trend Line">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="4" y1="20" x2="20" y2="4"/>
+                                </svg>
+                            </button>
+                            <button class="drawing-tool-btn-h" data-tool="ray" title="Ray">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="4" y1="20" x2="20" y2="4"/>
+                                    <circle cx="4" cy="20" r="2" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="drawing-tool-btn-h" data-tool="horizontal" title="Horizontal Line">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="2" y1="12" x2="22" y2="12"/>
+                                </svg>
+                            </button>
+                            <button class="drawing-tool-btn-h" data-tool="vertical" title="Vertical Line">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="2" x2="12" y2="22"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-divider-h"></div>
+                        <div class="toolbar-section-h">
+                            <button class="drawing-tool-btn-h" data-tool="fibonacci" title="Fibonacci Retracement">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="2" y1="4" x2="22" y2="4"/>
+                                    <line x1="2" y1="9" x2="22" y2="9"/>
+                                    <line x1="2" y1="15" x2="22" y2="15"/>
+                                    <line x1="2" y1="20" x2="22" y2="20"/>
+                                </svg>
+                            </button>
+                            <button class="drawing-tool-btn-h" data-tool="rectangle" title="Rectangle">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="5" width="18" height="14" rx="1"/>
+                                </svg>
+                            </button>
+                            <button class="drawing-tool-btn-h" data-tool="ellipse" title="Ellipse">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <ellipse cx="12" cy="12" rx="10" ry="7"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-divider-h"></div>
+                        <div class="toolbar-section-h">
+                            <button class="drawing-tool-btn-h" data-tool="text" title="Text">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 7V4h16v3"/>
+                                    <line x1="12" y1="4" x2="12" y2="20"/>
+                                    <line x1="8" y1="20" x2="16" y2="20"/>
+                                </svg>
+                            </button>
+                            <button class="drawing-tool-btn-h" data-tool="arrow" title="Arrow">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="19" x2="19" y2="5"/>
+                                    <polyline points="10,5 19,5 19,14"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-divider-h"></div>
+                        <div class="toolbar-section-h toolbar-actions-h">
+                            <button class="drawing-tool-btn-h magnet-btn" data-tool="magnet" title="Magnet Mode">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 15V9a6 6 0 0 1 12 0v6"/>
+                                    <path d="M6 9H4v6h2"/>
+                                    <path d="M18 9h2v6h-2"/>
+                                </svg>
+                            </button>
+                            <button class="drawing-tool-btn-h delete-all-btn" data-tool="delete" title="Delete All Drawings">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    <line x1="10" y1="11" x2="10" y2="17"/>
+                                    <line x1="14" y1="11" x2="14" y2="17"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-spacer"></div>
+                        <div class="chart-connection-status">
+                            <span class="status-dot-small" id="chartWsStatus"></span>
+                            <span class="status-text-small" id="chartWsStatusText">Connected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Book Panel -->
+                <div class="orderbook-panel resizable-panel" id="orderbookPanel" data-panel="orderbook" data-state="default">
+                    <div class="orderbook-header">
+                        <div class="orderbook-tabs">
+                            <button type="button" class="orderbook-tab active" data-view="book">Book</button>
+                            <button type="button" class="orderbook-tab" data-view="depth">Depth</button>
+                            <button type="button" class="orderbook-tab" data-view="analysis">Analysis</button>
+                        </div>
+                        <div class="orderbook-controls">
+                            <select id="orderbookDepth" class="depth-select" title="Order Book Depth">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <div class="panel-resize-controls">
+                                <button type="button" class="resize-btn" data-action="minimize" title="Minimize">
+                                    <svg width="14" height="14" viewBox="0 0 14 14"><line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" stroke-width="1.5"/></svg>
+                                </button>
+                                <button type="button" class="resize-btn" data-action="default" title="Default Size">
+                                    <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                                </button>
+                                <button type="button" class="resize-btn" data-action="maximize" title="Maximize">
+                                    <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="12" y2="2" stroke="currentColor" stroke-width="2"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="orderbook-spread">
+                        <span>Spread: </span>
+                        <span id="spreadValue">0.00</span>
+                        <span id="spreadPct">(0.00%)</span>
+                    </div>
+
+                    <!-- Book View -->
+                    <div class="orderbook-content orderbook-view active" id="orderbookBookView">
+                        <!-- Asks (Sell Orders) - shown in reverse order, lowest at bottom -->
+                        <div class="orderbook-asks">
+                            <div class="orderbook-table-header">
+                                <span class="col-price">Price (USD)</span>
+                                <span class="col-size">Size (BTC)</span>
+                                <span class="col-total">Total</span>
+                            </div>
+                            <div class="orderbook-rows" id="asksRows">
+                                <!-- Asks populated by JS -->
+                            </div>
+                        </div>
+                        <!-- Mid Price -->
+                        <div class="orderbook-mid">
+                            <span class="mid-price" id="midPrice">$0.00</span>
+                            <span class="mid-arrow" id="midArrow">&#9650;</span>
+                        </div>
+                        <!-- Bids (Buy Orders) -->
+                        <div class="orderbook-bids">
+                            <div class="orderbook-rows" id="bidsRows">
+                                <!-- Bids populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Depth Chart View -->
+                    <div class="depth-chart-container orderbook-view" id="orderbookDepthView">
+                        <canvas id="depthChartCanvas"></canvas>
+                        <div class="depth-chart-tooltip" id="depthChartTooltip">
+                            <div class="tooltip-price"></div>
+                            <div class="tooltip-volume"></div>
+                            <div class="tooltip-total"></div>
+                        </div>
+                        <div class="depth-chart-legend">
+                            <div class="legend-item bids">
+                                <span class="legend-color"></span>
+                                <span>Bids</span>
+                            </div>
+                            <div class="legend-item asks">
+                                <span class="legend-color"></span>
+                                <span>Asks</span>
+                            </div>
+                        </div>
+                        <div class="depth-chart-stats" id="depthChartStats">
+                            <div class="stat-item">
+                                <span class="stat-label">Bid Volume</span>
+                                <span class="stat-value bid" id="totalBidVolume">0.00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Ask Volume</span>
+                                <span class="stat-value ask" id="totalAskVolume">0.00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Bid/Ask Ratio</span>
+                                <span class="stat-value" id="bidAskRatio">1.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis View -->
+                    <div class="analysis-container orderbook-view" id="orderbookAnalysisView">
+                        <div class="analysis-header">
+                            <h3>Market Analysis</h3>
+                            <p class="analysis-subtitle">Multi-factor order book analysis</p>
+                        </div>
+
+                        <div class="analysis-factors">
+                            <!-- Depth Ratio Factor -->
+                            <div class="factor-card">
+                                <div class="factor-header">
+                                    <span class="factor-name">Depth Ratio</span>
+                                    <span class="factor-weight">35%</span>
+                                </div>
+                                <div class="factor-description">Overall bid/ask volume ratio across all price levels</div>
+                                <div class="factor-score-row">
+                                    <div class="factor-bar">
+                                        <div class="factor-bar-fill" id="depthRatioBar"></div>
+                                    </div>
+                                    <span class="factor-score" id="depthRatioScore">0</span>
+                                </div>
+                            </div>
+
+                            <!-- Top of Book Factor -->
+                            <div class="factor-card">
+                                <div class="factor-header">
+                                    <span class="factor-name">Top-of-Book Pressure</span>
+                                    <span class="factor-weight">30%</span>
+                                </div>
+                                <div class="factor-description">Immediate pressure from top 5 price levels</div>
+                                <div class="factor-score-row">
+                                    <div class="factor-bar">
+                                        <div class="factor-bar-fill" id="topBookBar"></div>
+                                    </div>
+                                    <span class="factor-score" id="topBookScore">0</span>
+                                </div>
+                            </div>
+
+                            <!-- Wall Detection Factor -->
+                            <div class="factor-card">
+                                <div class="factor-header">
+                                    <span class="factor-name">Wall Detection</span>
+                                    <span class="factor-weight">15%</span>
+                                </div>
+                                <div class="factor-description">Large orders acting as support/resistance</div>
+                                <div class="factor-score-row">
+                                    <div class="factor-bar">
+                                        <div class="factor-bar-fill" id="wallBar"></div>
+                                    </div>
+                                    <span class="factor-score" id="wallScore">0</span>
+                                </div>
+                                <div class="factor-details" id="wallDetails">No significant walls detected</div>
+                            </div>
+
+                            <!-- Spread Factor -->
+                            <div class="factor-card">
+                                <div class="factor-header">
+                                    <span class="factor-name">Spread Analysis</span>
+                                    <span class="factor-weight">10%</span>
+                                </div>
+                                <div class="factor-description">Liquidity indicator (tight = good, wide = risky)</div>
+                                <div class="factor-score-row">
+                                    <div class="factor-bar">
+                                        <div class="factor-bar-fill" id="spreadBar"></div>
+                                    </div>
+                                    <span class="factor-score" id="spreadScore">0</span>
+                                </div>
+                                <div class="factor-details" id="spreadDetails">Spread: 0.00%</div>
+                            </div>
+
+                            <!-- Volume Concentration Factor -->
+                            <div class="factor-card">
+                                <div class="factor-header">
+                                    <span class="factor-name">Volume Concentration</span>
+                                    <span class="factor-weight">10%</span>
+                                </div>
+                                <div class="factor-description">Where liquidity is clustered relative to price</div>
+                                <div class="factor-score-row">
+                                    <div class="factor-bar">
+                                        <div class="factor-bar-fill" id="concentrationBar"></div>
+                                    </div>
+                                    <span class="factor-score" id="concentrationScore">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Composite Score -->
+                        <div class="composite-score-section">
+                            <div class="composite-header">
+                                <span>COMPOSITE SCORE</span>
+                            </div>
+                            <div class="composite-score-display">
+                                <div class="composite-gauge">
+                                    <div class="gauge-labels">
+                                        <span class="label-sell">SELL</span>
+                                        <span class="label-hold">HOLD</span>
+                                        <span class="label-buy">BUY</span>
+                                    </div>
+                                    <div class="gauge-bar">
+                                        <div class="gauge-fill" id="compositeGaugeFill"></div>
+                                        <div class="gauge-marker" id="compositeGaugeMarker"></div>
+                                    </div>
+                                    <div class="gauge-scale">
+                                        <span>-100</span>
+                                        <span>-50</span>
+                                        <span>0</span>
+                                        <span>+50</span>
+                                        <span>+100</span>
+                                    </div>
+                                </div>
+                                <div class="composite-value" id="compositeScoreValue">0</div>
+                            </div>
+                        </div>
+
+                        <!-- Final Recommendation -->
+                        <div class="analysis-recommendation" id="analysisRecommendation">
+                            <div class="rec-signal" id="analysisSignal">HOLD</div>
+                            <div class="rec-message" id="analysisMessage">Analyzing market data...</div>
+                        </div>
+                    </div>
+
+                    <!-- Depth Recommendation (shown for depth tab) -->
+                    <div class="depth-recommendation" id="depthRecommendation">
+                        <span class="rec-icon">●</span>
+                        <span class="rec-text">Analyzing market depth...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARS AI Chat Panel -->
+            <div class="tars-panel resizable-panel" id="tarsPanel" data-panel="tars" data-state="hidden" style="display: none;">
+                <div class="tars-header">
+                    <div class="tars-title">
+                        <span class="tars-icon">&#129302;</span>
+                        <span class="tars-name">TARS</span>
+                        <span class="tars-status" id="tarsStatus">●</span>
+                    </div>
+                    <div class="tars-controls">
+                        <button type="button" class="tars-btn" id="tarsClearBtn" title="Clear Chat">
+                            <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 4h8M5 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1 0v7a1 1 0 01-1 1H5a1 1 0 01-1-1V4h6" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+                        </button>
+                        <div class="panel-resize-controls">
+                            <button type="button" class="resize-btn" data-action="minimize" title="Minimize">
+                                <svg width="14" height="14" viewBox="0 0 14 14"><line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" stroke-width="1.5"/></svg>
+                            </button>
+                            <button type="button" class="resize-btn" data-action="default" title="Default Size">
+                                <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                            </button>
+                            <button type="button" class="resize-btn" data-action="maximize" title="Maximize">
+                                <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="12" y2="2" stroke="currentColor" stroke-width="2"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="tars-messages" id="tarsMessages">
+                    <div class="tars-message tars-message-bot">
+                        <div class="message-avatar">&#129302;</div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                Hello! I'm <strong>TARS</strong>, your AI trading assistant. I can help you with:
+                                <ul>
+                                    <li>📊 Real-time market data & prices</li>
+                                    <li>📚 Trading strategy explanations</li>
+                                    <li>🎯 ICT concepts (FVG, Order Blocks, OTE)</li>
+                                    <li>📈 Draw levels & zones on charts</li>
+                                    <li>💰 Place paper trades</li>
+                                </ul>
+                                What would you like to know?
+                            </div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Suggestions -->
+                <div class="tars-suggestions" id="tarsSuggestions">
+                    <button class="suggestion-btn" data-message="BTC price">BTC price</button>
+                    <button class="suggestion-btn" data-message="List strategies">Strategies</button>
+                    <button class="suggestion-btn" data-message="Explain ICT">ICT concepts</button>
+                    <button class="suggestion-btn" data-message="Market analysis">Analysis</button>
+                </div>
+
+                <!-- Input Area -->
+                <div class="tars-input-area">
+                    <input type="text" class="tars-input" id="tarsInput" placeholder="Ask TARS anything..." autocomplete="off">
+                    <button type="button" class="tars-send-btn" id="tarsSendBtn" title="Send">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Panel -->
+            <div class="bottom-panel resizable-panel" id="bottomPanel" data-panel="bottom" data-state="default">
+                <div class="panel-tabs">
+                    <button class="panel-tab active" data-panel="positions">Positions</button>
+                    <button class="panel-tab" data-panel="orders">Open Orders</button>
+                    <button class="panel-tab" data-panel="trades">Trade History</button>
+                    <button class="panel-tab" data-panel="balances">Balances</button>
+                    <button class="panel-tab" data-panel="signals">ML Signals</button>
+                    <div class="panel-resize-controls">
+                        <button class="resize-btn" data-action="minimize" title="Minimize">
+                            <svg width="14" height="14" viewBox="0 0 14 14"><line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" stroke-width="1.5"/></svg>
+                        </button>
+                        <button class="resize-btn" data-action="default" title="Default Size">
+                            <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                        </button>
+                        <button class="resize-btn" data-action="maximize" title="Maximize">
+                            <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="12" y2="2" stroke="currentColor" stroke-width="2"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-content">
+                    <!-- Positions Panel -->
+                    <div class="panel-section active" id="positionsPanel">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Side</th>
+                                    <th>Size</th>
+                                    <th>Entry Price</th>
+                                    <th>Mark Price</th>
+                                    <th>PnL</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="positionsBody">
+                                <tr class="empty-row">
+                                    <td colspan="7">No open positions</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Orders Panel -->
+                    <div class="panel-section" id="ordersPanel">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Side</th>
+                                    <th>Price</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersBody">
+                                <tr class="empty-row">
+                                    <td colspan="8">No open orders</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Trade History Panel -->
+                    <div class="panel-section" id="tradesPanel">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Symbol</th>
+                                    <th>Side</th>
+                                    <th>Price</th>
+                                    <th>Amount</th>
+                                    <th>Total</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tradesBody">
+                                <tr class="empty-row">
+                                    <td colspan="7">No trades yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Balances Panel -->
+                    <div class="panel-section" id="balancesPanel">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Available</th>
+                                    <th>In Orders</th>
+                                    <th>Total</th>
+                                    <th>USD Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="balancesBody">
+                                <tr class="empty-row">
+                                    <td colspan="5">No balances</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ML Signals Panel -->
+                    <div class="panel-section" id="signalsPanel">
+                        <div class="signals-container">
+                            <div class="signal-card">
+                                <div class="signal-header">
+                                    <span class="signal-symbol">BTC/USD</span>
+                                    <span class="signal-time" id="signalTime">--:--</span>
+                                </div>
+                                <div class="signal-body">
+                                    <div class="signal-prediction" id="signalPrediction">
+                                        <span class="signal-label">Signal</span>
+                                        <span class="signal-value hold">HOLD</span>
+                                    </div>
+                                    <div class="signal-confidence">
+                                        <span class="signal-label">Confidence</span>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                                        </div>
+                                        <span class="confidence-value" id="confidenceValue">0%</span>
+                                    </div>
+                                </div>
+                                <div class="signal-indicators">
+                                    <div class="indicator">
+                                        <span class="ind-label">RSI</span>
+                                        <span class="ind-value" id="rsiValue">--</span>
+                                    </div>
+                                    <div class="indicator">
+                                        <span class="ind-label">MACD</span>
+                                        <span class="ind-value" id="macdValue">--</span>
+                                    </div>
+                                    <div class="indicator">
+                                        <span class="ind-label">Trend</span>
+                                        <span class="ind-value" id="trendValue">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar - Order Panel -->
+        <aside class="order-panel resizable-panel" id="orderPanel" data-panel="order" data-state="default">
+            <div class="order-panel-header">
+                <span class="order-panel-title">Order Form</span>
+                <div class="panel-resize-controls">
+                    <button class="resize-btn" data-action="minimize" title="Minimize">
+                        <svg width="14" height="14" viewBox="0 0 14 14"><line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </button>
+                    <button class="resize-btn" data-action="default" title="Default Size">
+                        <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </button>
+                    <button class="resize-btn" data-action="maximize" title="Maximize">
+                        <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="12" y2="2" stroke="currentColor" stroke-width="2"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="order-tabs">
+                <button class="order-tab active" data-type="market">Market</button>
+                <button class="order-tab" data-type="limit">Limit</button>
+                <button class="order-tab" data-type="stop">Stop</button>
+            </div>
+
+            <div class="order-form">
+                <div class="order-side-selector">
+                    <button class="side-btn buy active" data-side="buy">Buy</button>
+                    <button class="side-btn sell" data-side="sell">Sell</button>
+                </div>
+
+                <div class="order-input-group">
+                    <label>Amount (BTC)</label>
+                    <div class="input-with-btns">
+                        <input type="number" id="orderAmount" placeholder="0.00" step="0.001">
+                        <div class="amount-presets">
+                            <button class="preset-btn" data-pct="25">25%</button>
+                            <button class="preset-btn" data-pct="50">50%</button>
+                            <button class="preset-btn" data-pct="75">75%</button>
+                            <button class="preset-btn" data-pct="100">100%</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-input-group limit-only" style="display: none;">
+                    <label>Price (USD)</label>
+                    <input type="number" id="orderPrice" placeholder="0.00" step="0.01">
+                </div>
+
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span>Total</span>
+                        <span id="orderTotal">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Fee (0.25%)</span>
+                        <span id="orderFee">$0.00</span>
+                    </div>
+                </div>
+
+                <button class="order-submit-btn buy" id="submitOrder">
+                    Buy BTC
+                </button>
+
+                <div class="order-info">
+                    <div class="info-row">
+                        <span>Available</span>
+                        <span id="availableBalance">$0.00 USD</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bot Controls -->
+            <div class="bot-controls">
+                <h3>Trading Bot</h3>
+                <div class="bot-status">
+                    <span class="bot-indicator" id="botIndicator"></span>
+                    <span id="botStatusText">Stopped</span>
+                </div>
+                <div class="bot-buttons">
+                    <button class="bot-btn start" id="startBot">Start Bot</button>
+                    <button class="bot-btn stop" id="stopBot" disabled>Stop Bot</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Indicators Modal -->
+    <div class="modal-overlay" id="indicatorsModal">
+        <div class="indicators-modal">
+            <div class="modal-header">
+                <h2>Indicators</h2>
+                <button class="modal-close" id="closeIndicatorsModal">&times;</button>
+            </div>
+            <!-- Indicator Tabs -->
+            <div class="indicator-tabs">
+                <button class="indicator-tab active" data-tab="builtin">Built-in</button>
+                <button class="indicator-tab" data-tab="custom">Custom (Pine Script)</button>
+                <button class="indicator-tab" data-tab="python">Python</button>
+                <button class="indicator-tab" data-tab="templates">Templates</button>
+            </div>
+            <div class="modal-search">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                <input type="text" id="indicatorSearch" placeholder="Search indicators...">
+            </div>
+            <div class="modal-content">
+                <!-- Built-in Tab -->
+                <div class="indicator-tab-content active" id="builtinTab">
+                <div class="active-indicators" id="activeIndicators">
+                    <h3>Active Indicators</h3>
+                    <div class="indicator-list" id="activeIndicatorList">
+                        <div class="empty-state">No indicators active</div>
+                    </div>
+                </div>
+                <div class="available-indicators">
+                    <h3>Available Indicators</h3>
+                    <div class="indicator-list" id="availableIndicatorList">
+                        <!-- Moving Averages -->
+                        <div class="indicator-item" data-indicator="sma" data-category="trend">
+                            <div class="indicator-info">
+                                <span class="indicator-name">Simple Moving Average (SMA)</span>
+                                <span class="indicator-desc">Shows average price over a period</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <div class="indicator-item" data-indicator="ema" data-category="trend">
+                            <div class="indicator-info">
+                                <span class="indicator-name">Exponential Moving Average (EMA)</span>
+                                <span class="indicator-desc">Weighted average with recent bias</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <div class="indicator-item" data-indicator="wma" data-category="trend">
+                            <div class="indicator-info">
+                                <span class="indicator-name">Weighted Moving Average (WMA)</span>
+                                <span class="indicator-desc">Linear weighted moving average</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <!-- Oscillators -->
+                        <div class="indicator-item" data-indicator="rsi" data-category="oscillator">
+                            <div class="indicator-info">
+                                <span class="indicator-name">RSI (Relative Strength Index)</span>
+                                <span class="indicator-desc">Momentum oscillator (0-100)</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <div class="indicator-item" data-indicator="macd" data-category="oscillator">
+                            <div class="indicator-info">
+                                <span class="indicator-name">MACD</span>
+                                <span class="indicator-desc">Moving Average Convergence Divergence</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <div class="indicator-item" data-indicator="stochastic" data-category="oscillator">
+                            <div class="indicator-info">
+                                <span class="indicator-name">Stochastic Oscillator</span>
+                                <span class="indicator-desc">Momentum indicator comparing closing price</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <!-- Volatility -->
+                        <div class="indicator-item" data-indicator="bollinger" data-category="volatility">
+                            <div class="indicator-info">
+                                <span class="indicator-name">Bollinger Bands</span>
+                                <span class="indicator-desc">Volatility bands around SMA</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <div class="indicator-item" data-indicator="atr" data-category="volatility">
+                            <div class="indicator-info">
+                                <span class="indicator-name">ATR (Average True Range)</span>
+                                <span class="indicator-desc">Measures market volatility</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <!-- Volume -->
+                        <div class="indicator-item" data-indicator="vwap" data-category="volume">
+                            <div class="indicator-info">
+                                <span class="indicator-name">VWAP</span>
+                                <span class="indicator-desc">Volume Weighted Average Price</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <div class="indicator-item" data-indicator="obv" data-category="volume">
+                            <div class="indicator-info">
+                                <span class="indicator-name">OBV (On Balance Volume)</span>
+                                <span class="indicator-desc">Cumulative volume flow</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <!-- Support/Resistance -->
+                        <div class="indicator-item" data-indicator="pivotpoints" data-category="support">
+                            <div class="indicator-info">
+                                <span class="indicator-name">Pivot Points</span>
+                                <span class="indicator-desc">Support and resistance levels</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <div class="indicator-item" data-indicator="ichimoku" data-category="trend">
+                            <div class="indicator-info">
+                                <span class="indicator-name">Ichimoku Cloud</span>
+                                <span class="indicator-desc">Comprehensive trend indicator</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <!-- ICT/Structure Indicators -->
+                        <div class="indicator-item" data-indicator="bos_mss" data-category="structure">
+                            <div class="indicator-info">
+                                <span class="indicator-name">BOS/MSS (Structure Breaks)</span>
+                                <span class="indicator-desc">Break of Structure & Market Structure Shift</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                        <div class="indicator-item" data-indicator="swing_points" data-category="structure">
+                            <div class="indicator-info">
+                                <span class="indicator-name">Swing Points</span>
+                                <span class="indicator-desc">Swing highs and lows with structure</span>
+                            </div>
+                            <button class="add-indicator-btn">Add</button>
+                        </div>
+                    </div>
+                </div>
+                </div><!-- End builtinTab -->
+
+                <!-- Custom Indicators Tab -->
+                <div class="indicator-tab-content" id="customTab">
+                    <div class="custom-indicators-header">
+                        <h3>My Custom Indicators</h3>
+                        <button class="btn-create-indicator" id="createIndicatorBtn">
+                            <span>+</span> Create New
+                        </button>
+                    </div>
+                    <div class="custom-indicator-list" id="customIndicatorList">
+                        <div class="empty-state">No custom indicators yet. Create one or use a template!</div>
+                    </div>
+                </div><!-- End customTab -->
+
+                <!-- Templates Tab -->
+                <div class="indicator-tab-content" id="templatesTab">
+                    <div class="templates-header">
+                        <h3>Indicator Templates</h3>
+                        <p class="templates-desc">Start with pre-built Pine Script indicators</p>
+                    </div>
+                    <div class="template-list" id="templateList">
+                        <div class="loading-state">Loading templates...</div>
+                    </div>
+                </div><!-- End templatesTab -->
+
+                <!-- Python Indicators Tab -->
+                <div class="indicator-tab-content" id="pythonTab">
+                    <div class="python-header-row">
+                        <div class="python-header-text">
+                            <h3>Python Indicators</h3>
+                            <p class="python-desc">Custom indicators with pandas, numpy, and drawing primitives</p>
+                        </div>
+                        <button class="btn-primary-action" onclick="openPythonEditor()">
+                            + New Python Indicator
+                        </button>
+                    </div>
+                    <div class="indicator-section-wrapper">
+                        <div class="section-header">My Custom Indicators</div>
+                        <div class="custom-python-list" id="customPythonList">
+                            <div class="empty-state">No custom indicators yet. Click "New Python Indicator" to create one.</div>
+                        </div>
+                    </div>
+                    <div class="indicator-section-wrapper">
+                        <div class="section-header">Built-in Indicators</div>
+                        <div class="python-indicator-list" id="pythonIndicatorList">
+                            <div class="loading-state">Loading...</div>
+                        </div>
+                    </div>
+                </div><!-- End pythonTab -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Pine Script Editor Modal -->
+    <div class="modal-overlay" id="pineEditorModal">
+        <div class="pine-editor-modal">
+            <div class="modal-header">
+                <h2 id="pineEditorTitle">Create Custom Indicator</h2>
+                <button class="modal-close" id="closePineEditor">&times;</button>
+            </div>
+            <div class="pine-editor-container">
+                <div class="pine-editor-sidebar">
+                    <div class="editor-input-group">
+                        <label>Name</label>
+                        <input type="text" id="indicatorName" placeholder="My Indicator">
+                    </div>
+                    <div class="editor-input-group">
+                        <label>Short Name</label>
+                        <input type="text" id="indicatorShortName" placeholder="MI" maxlength="10">
+                    </div>
+                    <div class="editor-input-group">
+                        <label>Description</label>
+                        <textarea id="indicatorDescription" placeholder="Describe your indicator..."></textarea>
+                    </div>
+                    <div class="editor-checkbox-group">
+                        <label>
+                            <input type="checkbox" id="indicatorOverlay" checked>
+                            Overlay on price chart
+                        </label>
+                    </div>
+                    <div class="pine-functions-reference">
+                        <h4>Quick Reference</h4>
+                        <div class="function-category">
+                            <span class="category-label">Moving Averages</span>
+                            <code>ta.sma(close, 14)</code>
+                            <code>ta.ema(close, 14)</code>
+                        </div>
+                        <div class="function-category">
+                            <span class="category-label">Oscillators</span>
+                            <code>ta.rsi(close, 14)</code>
+                            <code>ta.macd(close)</code>
+                        </div>
+                        <div class="function-category">
+                            <span class="category-label">Volatility</span>
+                            <code>ta.atr(14)</code>
+                            <code>ta.bb(close, 20, 2)</code>
+                        </div>
+                        <div class="function-category">
+                            <span class="category-label">Signals</span>
+                            <code>ta.crossover(a, b)</code>
+                            <code>ta.crossunder(a, b)</code>
+                        </div>
+                    </div>
+                </div>
+                <div class="pine-editor-main">
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" id="validatePineBtn" title="Validate Script">
+                            <span>&#10003;</span> Validate
+                        </button>
+                        <button class="editor-btn" id="previewPineBtn" title="Preview on Chart">
+                            <span>&#128065;</span> Preview
+                        </button>
+                        <div class="validation-status" id="validationStatus"></div>
+                    </div>
+                    <div id="pineCodeEditor"></div>
+                    <div class="editor-errors" id="editorErrors"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelPineEditor">Cancel</button>
+                <button class="btn-apply" id="savePineIndicator">Save Indicator</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Python Editor Modal -->
+    <div class="modal-overlay" id="pythonEditorModal">
+        <div class="pine-editor-modal">
+            <div class="modal-header">
+                <h2 id="pythonEditorTitle">Create Python Indicator</h2>
+                <button class="modal-close" id="closePythonEditor">&times;</button>
+            </div>
+            <div class="pine-editor-container">
+                <div class="pine-editor-sidebar">
+                    <div class="editor-input-group">
+                        <label>Name</label>
+                        <input type="text" id="pythonIndicatorName" placeholder="My Python Indicator">
+                    </div>
+                    <div class="editor-input-group">
+                        <label>Short Name</label>
+                        <input type="text" id="pythonIndicatorShortName" placeholder="MPI" maxlength="10">
+                    </div>
+                    <div class="editor-input-group">
+                        <label>Description</label>
+                        <textarea id="pythonIndicatorDescription" placeholder="Describe your indicator..."></textarea>
+                    </div>
+                    <div class="editor-checkbox-group">
+                        <label>
+                            <input type="checkbox" id="pythonIndicatorOverlay" checked>
+                            Overlay on price chart
+                        </label>
+                    </div>
+                    <div class="pine-functions-reference">
+                        <h4>Available Objects</h4>
+                        <div class="function-category">
+                            <span class="category-label">NY Session</span>
+                            <code>NYOpen, NYClose</code>
+                            <code>NYBoxHigh, NYBoxLow</code>
+                            <code>NYIDRHigh, NYIDRLow</code>
+                        </div>
+                        <div class="function-category">
+                            <span class="category-label">London Session</span>
+                            <code>LondonOpen, LondonClose</code>
+                            <code>LondonBoxHigh, LondonBoxLow</code>
+                            <code>LondonIDRHigh, LondonIDRLow</code>
+                        </div>
+                        <div class="function-category">
+                            <span class="category-label">Tokyo Session</span>
+                            <code>TokyoOpen, TokyoClose</code>
+                            <code>TokyoBoxHigh, TokyoBoxLow</code>
+                            <code>TokyoIDRHigh, TokyoIDRLow</code>
+                        </div>
+                        <div class="function-category">
+                            <span class="category-label">Drawing</span>
+                            <code>output.add_line(x1,y1,x2,y2)</code>
+                            <code>output.add_box(x1,y1,x2,y2)</code>
+                            <code>output.add_hline(y, label='')</code>
+                        </div>
+                    </div>
+                </div>
+                <div class="pine-editor-main">
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" id="runPythonBtn" title="Run Script">
+                            <span>&#9654;</span> Run
+                        </button>
+                        <div class="validation-status" id="pythonValidationStatus"></div>
+                    </div>
+                    <div id="pythonCodeEditor"></div>
+                    <div class="editor-errors" id="pythonEditorErrors"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelPythonEditor">Cancel</button>
+                <button class="btn-apply" id="savePythonIndicator">Save Indicator</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicator Settings Modal -->
+    <div class="modal-overlay" id="indicatorSettingsModal">
+        <div class="indicator-settings-modal">
+            <div class="modal-header">
+                <h2 id="settingsIndicatorName">Indicator Settings</h2>
+                <button class="modal-close" id="closeSettingsModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="settings-form" id="indicatorSettingsForm">
+                    <!-- Dynamic settings will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelIndicatorSettings">Cancel</button>
+                <button class="btn-apply" id="applyIndicatorSettings">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Go To Date Modal -->
+    <div class="modal-overlay" id="goToDateModal">
+        <div class="modal goto-modal">
+            <div class="modal-header">
+                <h3>Go to</h3>
+                <button class="modal-close" id="closeGoToModal">&times;</button>
+            </div>
+            <div class="modal-content goto-content">
+                <div class="goto-tabs">
+                    <button class="goto-tab active" data-tab="date">Date</button>
+                    <button class="goto-tab" data-tab="range">Custom range</button>
+                </div>
+                <div class="goto-tab-content" id="gotoDateTab">
+                    <div class="goto-datetime">
+                        <div class="goto-input-group">
+                            <input type="date" id="gotoDate" class="goto-input">
+                        </div>
+                        <div class="goto-input-group">
+                            <input type="time" id="gotoTime" class="goto-input" value="00:00">
+                        </div>
+                    </div>
+                    <div class="goto-calendar">
+                        <div class="calendar-header">
+                            <button class="calendar-nav" id="calendarPrev">&#10094;</button>
+                            <span class="calendar-month" id="calendarMonth">December 2025</span>
+                            <button class="calendar-nav" id="calendarNext">&#10095;</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+                        </div>
+                        <div class="calendar-days" id="calendarDays">
+                            <!-- Days will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    <div class="goto-presets">
+                        <button class="preset-btn" data-preset="today">Today</button>
+                        <button class="preset-btn" data-preset="1w">1W ago</button>
+                        <button class="preset-btn" data-preset="1m">1M ago</button>
+                        <button class="preset-btn" data-preset="3m">3M ago</button>
+                        <button class="preset-btn" data-preset="6m">6M ago</button>
+                        <button class="preset-btn" data-preset="1y">1Y ago</button>
+                    </div>
+                </div>
+                <div class="goto-tab-content hidden" id="gotoRangeTab">
+                    <div class="goto-range-inputs">
+                        <div class="range-input-group">
+                            <label>From</label>
+                            <input type="date" id="gotoRangeFrom" class="goto-input">
+                        </div>
+                        <div class="range-input-group">
+                            <label>To</label>
+                            <input type="date" id="gotoRangeTo" class="goto-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelGoTo">Cancel</button>
+                <button class="btn-apply" id="applyGoTo">Go to</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Save Modal -->
+    <div class="modal-overlay" id="layoutSaveModal">
+        <div class="layout-save-modal">
+            <div class="modal-header">
+                <h3 id="layoutModalTitle">Save Layout</h3>
+                <button class="modal-close" id="closeLayoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="layoutName">Layout Name</label>
+                    <input type="text" id="layoutName" placeholder="My Custom Layout" maxlength="30">
+                </div>
+                <div class="layout-preview">
+                    <div class="preview-label">Layout Preview</div>
+                    <div class="preview-grid" id="layoutPreviewGrid">
+                        <!-- Preview will be generated dynamically -->
+                    </div>
+                    <div class="preview-info">
+                        <span id="previewChartCount">1 chart</span>
+                        <span id="previewLayoutType">Single</span>
+                    </div>
+                </div>
+                <div class="layout-settings">
+                    <div class="setting-item">
+                        <input type="checkbox" id="saveIndicators" checked>
+                        <label for="saveIndicators">Save active indicators</label>
+                    </div>
+                    <div class="setting-item">
+                        <input type="checkbox" id="saveTimeframes" checked>
+                        <label for="saveTimeframes">Save timeframe settings</label>
+                    </div>
+                    <div class="setting-item">
+                        <input type="checkbox" id="saveSymbols" checked>
+                        <label for="saveSymbols">Save symbol assignments</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelLayoutSave">Cancel</button>
+                <button class="btn-apply" id="confirmLayoutSave">Save Layout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Global Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <svg class="spinner-svg" viewBox="0 0 50 50">
+                <circle class="spinner-path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
+            </svg>
+            <span class="loading-text">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Rich Tooltip Template -->
+    <div class="rich-tooltip" id="richTooltip">
+        <div class="tooltip-header"></div>
+        <div class="tooltip-body"></div>
+        <div class="tooltip-footer"></div>
+    </div>
+
+    <script src="/static/js/drawing-tools.js"></script>
+    <script src="/static/js/depth-chart.js"></script>
+    <script src="/static/js/trading.js?v=9"></script>
+    <script src="/static/js/custom-indicators.js"></script>
+    <script src="/static/js/ui-polish.js"></script>
+    <script src="/static/js/layout-manager.js"></script>
+    <script src="/static/js/market-summary.js"></script>
+    <script src="/static/js/dr-idr-indicator.js"></script>
+    <script src="/static/js/tars.js"></script>
+</body>
+</html>

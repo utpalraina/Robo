@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backtest Simulator - Robo Trader</title>
+    <link rel="stylesheet" href="/static/css/trading.css">
+    <link rel="stylesheet" href="/static/css/simulation.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>AI Trading Backtest Simulator</h1>
+            <nav class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/trading">Trading</a>
+                <a href="/simulation" class="active">Simulator</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <!-- Configuration Panel -->
+            <div class="sim-config-panel">
+                <h2>Backtest Configuration</h2>
+
+                <div class="config-grid">
+                    <div class="config-group">
+                        <label for="capital">Starting Capital ($)</label>
+                        <input type="number" id="capital" value="2000" min="100" step="100">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="risk-percent">Risk per Trade (%)</label>
+                        <input type="number" id="risk-percent" value="0.5" min="0.1" max="5" step="0.1">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="start-date">Start Date</label>
+                        <input type="date" id="start-date" value="2025-10-01">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="num-days">Number of Days</label>
+                        <input type="number" id="num-days" value="31" min="1" max="90">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="trades-per-day">Trades per Day</label>
+                        <input type="number" id="trades-per-day" value="10" min="1" max="24">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="symbol">Symbol</label>
+                        <select id="symbol">
+                            <option value="BTC/USDT" selected>BTC/USDT</option>
+                            <option value="ETH/USDT">ETH/USDT</option>
+                            <option value="SOL/USDT">SOL/USDT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="config-summary">
+                    <div class="summary-item">
+                        <span class="label">Total Trades:</span>
+                        <span class="value" id="total-trades">310</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Risk per Trade:</span>
+                        <span class="value" id="risk-per-trade">$10.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Max Risk (1 trade):</span>
+                        <span class="value" id="max-risk">0.5%</span>
+                    </div>
+                </div>
+
+                <button id="run-backtest" class="btn-primary">
+                    <span class="btn-text">Run Backtest</span>
+                    <span class="btn-loading" style="display: none;">Running...</span>
+                </button>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="sim-results-panel" id="results-panel" style="display: none;">
+                <h2>Backtest Results</h2>
+
+                <!-- Summary Cards -->
+                <div class="results-summary">
+                    <div class="result-card positive">
+                        <div class="card-label">Total P/L</div>
+                        <div class="card-value" id="result-pnl">+$0.00</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="card-label">Final Capital</div>
+                        <div class="card-value" id="result-final-capital">$0.00</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="card-label">ROI</div>
+                        <div class="card-value" id="result-roi">0%</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="card-label">Win Rate</div>
+                        <div class="card-value" id="result-winrate">0%</div>
+                    </div>
+                </div>
+
+                <!-- Detailed Stats -->
+                <div class="results-details">
+                    <div class="detail-section">
+                        <h3>Performance</h3>
+                        <table class="stats-table">
+                            <tr>
+                                <td>Total Trades</td>
+                                <td id="stat-total-trades">0</td>
+                            </tr>
+                            <tr>
+                                <td>Wins</td>
+                                <td id="stat-wins">0</td>
+                            </tr>
+                            <tr>
+                                <td>Losses</td>
+                                <td id="stat-losses">0</td>
+                            </tr>
+                            <tr>
+                                <td>Skipped (NO_TRADE)</td>
+                                <td id="stat-skipped">0</td>
+                            </tr>
+                            <tr>
+                                <td>Total R-Multiple</td>
+                                <td id="stat-total-r">0R</td>
+                            </tr>
+                            <tr>
+                                <td>Avg R per Trade</td>
+                                <td id="stat-avg-r">0R</td>
+                            </tr>
+                            <tr>
+                                <td>Max Drawdown</td>
+                                <td id="stat-max-dd">$0</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>By Direction</h3>
+                        <table class="stats-table">
+                            <tr>
+                                <td>Long Trades</td>
+                                <td id="stat-long-trades">0</td>
+                            </tr>
+                            <tr>
+                                <td>Long Win Rate</td>
+                                <td id="stat-long-winrate">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Short Trades</td>
+                                <td id="stat-short-trades">0</td>
+                            </tr>
+                            <tr>
+                                <td>Short Win Rate</td>
+                                <td id="stat-short-winrate">0%</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Trade Log -->
+                <div class="trade-log-section">
+                    <h3>Trade Log <span class="log-count" id="log-count">(0 trades)</span></h3>
+                    <div class="trade-log-container">
+                        <table class="trade-log" id="trade-log">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Price</th>
+                                    <th>Signal</th>
+                                    <th>Direction</th>
+                                    <th>Outcome</th>
+                                    <th>R</th>
+                                    <th>Cumulative R</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trade-log-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Panel -->
+            <div class="sim-progress-panel" id="progress-panel" style="display: none;">
+                <h2>Running Backtest...</h2>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progress-current">0</span> / <span id="progress-total">0</span> trades
+                </div>
+                <div class="progress-status" id="progress-status">Fetching historical data...</div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/simulation.js"></script>
+</body>
+</html>

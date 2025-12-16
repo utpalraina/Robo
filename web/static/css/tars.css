@@ -1,0 +1,361 @@
+/* ============================================================
+   TARS AI Chat Panel Styles
+   ============================================================ */
+
+/* Panel Container */
+.tars-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 380px;
+    background: var(--bg-secondary, #1a1a2e);
+    border-left: 1px solid var(--border-color, #2a2a4a);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    transition: width 0.3s ease, transform 0.3s ease;
+}
+
+.tars-panel[data-state="hidden"] {
+    transform: translateX(100%);
+}
+
+.tars-panel[data-state="minimized"] {
+    width: 60px;
+}
+
+.tars-panel[data-state="maximized"] {
+    width: 500px;
+}
+
+/* Header */
+.tars-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #8358ff 0%, #5b3cc4 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.tars-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-weight: 600;
+}
+
+.tars-icon {
+    font-size: 20px;
+}
+
+.tars-name {
+    font-size: 16px;
+    letter-spacing: 1px;
+}
+
+.tars-status {
+    font-size: 10px;
+    color: #0ecb81;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.tars-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tars-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    border-radius: 4px;
+    padding: 6px;
+    cursor: pointer;
+    color: white;
+    transition: background 0.2s;
+}
+
+.tars-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Messages Container */
+.tars-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: #4a4a6a #1a1a2e;
+}
+
+.tars-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tars-messages::-webkit-scrollbar-track {
+    background: #1a1a2e;
+}
+
+.tars-messages::-webkit-scrollbar-thumb {
+    background: #4a4a6a;
+    border-radius: 3px;
+}
+
+/* Message Bubbles */
+.tars-message {
+    display: flex;
+    gap: 10px;
+    max-width: 95%;
+}
+
+.tars-message-user {
+    flex-direction: row-reverse;
+    align-self: flex-end;
+}
+
+.tars-message-bot {
+    align-self: flex-start;
+}
+
+.message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.tars-message-bot .message-avatar {
+    background: linear-gradient(135deg, #8358ff, #5b3cc4);
+}
+
+.tars-message-user .message-avatar {
+    background: #2a2a4a;
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.message-text {
+    background: #2a2a4a;
+    padding: 12px 16px;
+    border-radius: 16px;
+    color: #e0e0e0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.tars-message-user .message-text {
+    background: #8358ff;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.tars-message-bot .message-text {
+    border-bottom-left-radius: 4px;
+}
+
+.message-text ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+}
+
+.message-text li {
+    margin: 4px 0;
+}
+
+.message-text strong {
+    color: #8358ff;
+}
+
+.tars-message-user .message-text strong {
+    color: white;
+}
+
+.message-text code {
+    background: rgba(0,0,0,0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.message-time {
+    font-size: 11px;
+    color: #666;
+    padding: 0 8px;
+}
+
+.tars-message-user .message-time {
+    text-align: right;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+}
+
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background: #8358ff;
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+}
+
+/* Suggestions */
+.tars-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid #2a2a4a;
+    background: #1a1a2e;
+}
+
+.suggestion-btn {
+    background: #2a2a4a;
+    border: 1px solid #3a3a5a;
+    border-radius: 16px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #b0b0b0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suggestion-btn:hover {
+    background: #3a3a5a;
+    border-color: #8358ff;
+    color: #8358ff;
+}
+
+/* Input Area */
+.tars-input-area {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #1e1e32;
+    border-top: 1px solid #2a2a4a;
+}
+
+.tars-input {
+    flex: 1;
+    background: #2a2a4a;
+    border: 1px solid #3a3a5a;
+    border-radius: 20px;
+    padding: 10px 16px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.tars-input:focus {
+    border-color: #8358ff;
+}
+
+.tars-input::placeholder {
+    color: #666;
+}
+
+.tars-send-btn {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #8358ff, #5b3cc4);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tars-send-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(131, 88, 255, 0.4);
+}
+
+.tars-send-btn:active {
+    transform: scale(0.95);
+}
+
+/* Actions from TARS */
+.tars-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(14, 203, 129, 0.1);
+    border: 1px solid rgba(14, 203, 129, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #0ecb81;
+}
+
+.tars-action-warning {
+    background: rgba(246, 70, 93, 0.1);
+    border-color: rgba(246, 70, 93, 0.3);
+    color: #f6465d;
+}
+
+.tars-action-info {
+    background: rgba(131, 88, 255, 0.1);
+    border-color: rgba(131, 88, 255, 0.3);
+    color: #8358ff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tars-panel {
+        width: 100%;
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        height: 60vh;
+        border-left: none;
+        border-top: 1px solid var(--border-color, #2a2a4a);
+        border-radius: 16px 16px 0 0;
+    }
+}
+
+/* TARS Toggle Button Active State */
+#tarsToggle.active {
+    background: linear-gradient(135deg, #8358ff, #5b3cc4);
+    color: white;
+}

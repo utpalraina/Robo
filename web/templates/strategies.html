@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategy Manager - Robo Trader</title>
+    <link rel="stylesheet" href="/static/css/trading.css">
+    <link rel="stylesheet" href="/static/css/strategies.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Strategy Manager</h1>
+            <nav class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/trading">Trading</a>
+                <a href="/simulation">Simulator</a>
+                <a href="/strategies" class="active">Strategies</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <div class="strategies-layout">
+                <!-- Strategy List Panel -->
+                <div class="strategy-list-panel">
+                    <div class="panel-header">
+                        <h2>My Strategies</h2>
+                        <button id="new-strategy-btn" class="btn-new">+ New Strategy</button>
+                    </div>
+                    <div class="strategy-list" id="strategy-list">
+                        <!-- Strategies will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Strategy Editor Panel -->
+                <div class="strategy-editor-panel">
+                    <div class="panel-header">
+                        <h2 id="editor-title">Select a Strategy</h2>
+                        <div class="editor-actions">
+                            <button id="save-btn" class="btn-save" disabled>Save</button>
+                            <button id="delete-btn" class="btn-delete" disabled>Delete</button>
+                            <button id="test-btn" class="btn-test" disabled>Quick Test</button>
+                        </div>
+                    </div>
+
+                    <div class="editor-content" id="editor-content">
+                        <div class="empty-state">
+                            <p>Select a strategy from the list or create a new one to get started.</p>
+                        </div>
+                    </div>
+
+                    <!-- Strategy Form (hidden by default) -->
+                    <form id="strategy-form" class="strategy-form" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="strategy-id">Strategy ID</label>
+                                <input type="text" id="strategy-id" placeholder="e.g., my_custom_strategy" pattern="[a-z0-9_]+" title="lowercase letters, numbers, underscores only">
+                                <small>Unique identifier (lowercase, no spaces)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="strategy-name">Display Name</label>
+                                <input type="text" id="strategy-name" placeholder="e.g., My Custom Strategy">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="strategy-direction">Trade Direction</label>
+                                <select id="strategy-direction">
+                                    <option value="BOTH">BOTH (Long & Short)</option>
+                                    <option value="LONG">LONG Only</option>
+                                    <option value="SHORT">SHORT Only</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="strategy-description">Description</label>
+                            <input type="text" id="strategy-description" placeholder="Brief description of your strategy">
+                        </div>
+
+                        <div class="form-group rules-group">
+                            <label for="strategy-rules">Trading Rules (Plain English)</label>
+                            <textarea id="strategy-rules" rows="20" placeholder="Write your trading rules here in plain English. The AI will interpret and follow these rules.
+
+Example:
+You are a trend-following trader. Your rules are:
+
+1. ENTRY CONDITIONS:
+   - LONG: Only when trend is UPTREND and RSI is between 40-60
+   - SHORT: Only when trend is DOWNTREND and RSI is between 40-60
+
+2. STOP LOSS:
+   - Place stop loss 1 ATR away from entry
+
+3. TAKE PROFIT:
+   - Target 3x your risk (1:3 R:R)
+
+4. NO TRADE if:
+   - Trend is SIDEWAYS
+   - RSI is extreme (below 30 or above 70)"></textarea>
+                            <div class="rules-help">
+                                <strong>Tips:</strong> Be specific about entry/exit conditions, stop loss placement, take profit targets, and when NOT to trade.
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Test Modal -->
+            <div id="test-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Quick Test: <span id="test-strategy-name"></span></h3>
+                        <button class="modal-close" id="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="test-config">
+                            <div class="form-group">
+                                <label>Days to Test</label>
+                                <input type="number" id="test-days" value="5" min="1" max="30">
+                            </div>
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <input type="date" id="test-start-date" value="2025-10-01">
+                            </div>
+                            <button id="run-test-btn" class="btn-primary">Run Test</button>
+                        </div>
+                        <div class="test-results" id="test-results" style="display: none;">
+                            <h4>Results</h4>
+                            <div class="results-grid" id="results-grid"></div>
+                        </div>
+                        <div class="test-loading" id="test-loading" style="display: none;">
+                            <div class="spinner"></div>
+                            <p>Running backtest... This may take a minute.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/strategies.js"></script>
+</body>
+</html>

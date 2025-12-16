@@ -1,0 +1,230 @@
+# Robo Trader - Production Docker Compose
+# Complete stack with all services
+
+version: '3.8'
+
+services:
+  # ==================== Main Application ====================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: robo-trader-app
+    restart: unless-stopped
+    environment:
+      - ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://robotrader:${DB_PASSWORD:-robotrader}@postgres:5432/robotrader
+      - BINANCE_API_KEY=${BINANCE_API_KEY:-}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET:-}
+    volumes:
+      - ./config:/app/config:ro
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - robo-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ==================== Nginx Reverse Proxy ====================
+  nginx:
+    image: nginx:alpine
+    container_name: robo-trader-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/robo-trader.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./web/static:/app/web/static:ro
+      - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+    depends_on:
+      - app
+    networks:
+      - robo-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==================== Redis Cache & Pub/Sub ====================
+  redis:
+    image: redis:7-alpine
+    container_name: robo-trader-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - robo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # ==================== PostgreSQL Database ====================
+  postgres:
+    image: postgres:15-alpine
+    container_name: robo-trader-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=robotrader
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-robotrader}
+      - POSTGRES_DB=robotrader
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - robo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U robotrader"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # ==================== Celery Worker (Background Tasks) ====================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: robo-trader-worker
+    restart: unless-stopped
+    command: celery -A workers.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      - ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://robotrader:${DB_PASSWORD:-robotrader}@postgres:5432/robotrader
+      - BINANCE_API_KEY=${BINANCE_API_KEY:-}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET:-}
+    volumes:
+      - ./config:/app/config:ro
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - robo-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # ==================== Celery Beat (Scheduled Tasks) ====================
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: robo-trader-scheduler
+    restart: unless-stopped
+    command: celery -A workers.celery_app beat --loglevel=info
+    environment:
+      - ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - robo-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+  # ==================== Prometheus Monitoring (Optional) ====================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: robo-trader-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - robo-network
+    profiles:
+      - monitoring
+
+  # ==================== Grafana Dashboard (Optional) ====================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: robo-trader-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - robo-network
+    profiles:
+      - monitoring
+
+# ==================== Networks ====================
+networks:
+  robo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ==================== Volumes ====================
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+  nginx-cache:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
