@@ -2428,8 +2428,11 @@
         });
 
         // ========== VEDHA LINES SYSTEM ==========
-        // Vedha lines are drawn from planet positions to the birth factors they affect
-        // Lines are filtered by: Positive/Negative vedha type and individual planets
+        // Traditional SBC vedha lines follow geometric patterns:
+        // - 45° diagonals (NW-SE and NE-SW)
+        // - Horizontal lines
+        // - Vertical lines
+        // Lines are highlighted when planets are transiting on them
 
         // Planet colors
         const PLANET_COLORS = {
@@ -2476,7 +2479,7 @@
             };
         }
 
-        // Find cell position in grid by looking for planets or birth factors
+        // Find cell position in grid by looking for planets
         function findCellPosition(gridData, planetName) {
             for (let row = 0; row < gridData.length; row++) {
                 for (let col = 0; col < gridData[row].length; col++) {
@@ -2489,34 +2492,21 @@
             return null;
         }
 
-        // Find birth factor cells (gold colored cells)
-        function findBirthFactorCells(gridData) {
-            const birthCells = [];
-            for (let row = 0; row < gridData.length; row++) {
-                for (let col = 0; col < gridData[row].length; col++) {
-                    const cell = gridData[row][col];
-                    if (cell.color === 'gold' || cell.is_birth_nakshatra || cell.is_birth_factor) {
-                        birthCells.push({ row, col, cell });
-                    }
-                }
-            }
-            return birthCells;
+        // Check if a cell is on a diagonal line from a given position
+        function isOnDiagonal(fromRow, fromCol, toRow, toCol) {
+            const rowDiff = Math.abs(toRow - fromRow);
+            const colDiff = Math.abs(toCol - fromCol);
+            return rowDiff === colDiff && rowDiff > 0; // True 45° diagonal
         }
 
-        // Find cells with vedha (green = positive, red = negative)
-        function findVedhaCells(gridData) {
-            const vedhaCells = { positive: [], negative: [] };
-            for (let row = 0; row < gridData.length; row++) {
-                for (let col = 0; col < gridData[row].length; col++) {
-                    const cell = gridData[row][col];
-                    if (cell.color === 'green') {
-                        vedhaCells.positive.push({ row, col, cell });
-                    } else if (cell.color === 'red') {
-                        vedhaCells.negative.push({ row, col, cell });
-                    }
-                }
-            }
-            return vedhaCells;
+        // Check if a cell is on the same row (horizontal vedha)
+        function isOnHorizontal(fromRow, fromCol, toRow, toCol) {
+            return fromRow === toRow && fromCol !== toCol;
+        }
+
+        // Check if a cell is on the same column (vertical vedha)
+        function isOnVertical(fromRow, fromCol, toRow, toCol) {
+            return fromCol === toCol && fromRow !== toRow;
         }
 
         function drawVedhaLines(gridData, transitPositions) {
@@ -2545,9 +2535,49 @@
             const totalHeight = cellHeight * 9;
             svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
 
-            // Find all planet positions and their vedha targets
-            const planets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+            // Helper to draw a line
+            function drawLine(fromRow, fromCol, toRow, toCol, color, planetName, isActive) {
+                const x1 = fromCol * cellWidth + cellWidth / 2;
+                const y1 = fromRow * cellHeight + cellHeight / 2;
+                const x2 = toCol * cellWidth + cellWidth / 2;
+                const y2 = toRow * cellHeight + cellHeight / 2;
 
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('stroke', color);
+                if (planetName) {
+                    line.setAttribute('data-planet', planetName);
+                }
+                if (isActive) {
+                    line.classList.add('vedha-active');
+                }
+                svg.appendChild(line);
+            }
+
+            // Track drawn lines to avoid duplicates
+            const drawnLines = new Set();
+            function lineKey(r1, c1, r2, c2) {
+                // Normalize so (0,0)-(8,8) and (8,8)-(0,0) are the same
+                if (r1 > r2 || (r1 === r2 && c1 > c2)) {
+                    return `${r2},${c2}-${r1},${c1}`;
+                }
+                return `${r1},${c1}-${r2},${c2}`;
+            }
+
+            // Find all planet positions
+            const planets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+            const planetPositions = {};
+            planets.forEach(planetName => {
+                const pos = findCellPosition(gridData, planetName);
+                if (pos) {
+                    planetPositions[planetName] = pos;
+                }
+            });
+
+            // For each planet, draw vedha lines to cells on diagonals, horizontals, and verticals
             planets.forEach(planetName => {
                 // Check if this planet is enabled in filters
                 if (!filters.planets[planetName]) return;
@@ -2558,44 +2588,33 @@
                 if (isPositive && !filters.showPositive) return;
                 if (!isPositive && !filters.showNegative) return;
 
-                // Find planet position in grid
-                const planetPos = findCellPosition(gridData, planetName);
+                const planetPos = planetPositions[planetName];
                 if (!planetPos) return;
 
-                // Find cells this planet is affecting (vedha cells with matching color)
-                for (let row = 0; row < gridData.length; row++) {
-                    for (let col = 0; col < gridData[row].length; col++) {
+                const color = PLANET_COLORS[planetName];
+
+                // Draw lines to all cells that are:
+                // 1. On a 45° diagonal from the planet
+                // 2. On the same row (horizontal)
+                // 3. On the same column (vertical)
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (row === planetPos.row && col === planetPos.col) continue; // Skip self
+
                         const cell = gridData[row][col];
+                        const key = lineKey(planetPos.row, planetPos.col, row, col);
 
-                        // Check if this cell has vedha from this planet
-                        // A cell is affected if it's colored (green/red) and the planet is causing vedha to it
-                        const isVedhaCell = (isPositive && cell.color === 'green') ||
-                                           (!isPositive && cell.color === 'red');
+                        // Check if this is a valid vedha path
+                        const isDiag = isOnDiagonal(planetPos.row, planetPos.col, row, col);
+                        const isHoriz = isOnHorizontal(planetPos.row, planetPos.col, row, col);
+                        const isVert = isOnVertical(planetPos.row, planetPos.col, row, col);
 
-                        // Also check if cell is a birth factor being affected
-                        const isBirthFactor = cell.color === 'gold';
+                        if ((isDiag || isHoriz || isVert) && !drawnLines.has(key)) {
+                            // Check if the target cell has a birth factor or vedha
+                            const isTargetActive = cell.color === 'gold' || cell.color === 'green' || cell.color === 'red';
 
-                        if (isVedhaCell || isBirthFactor) {
-                            // Draw line from planet to this cell
-                            const x1 = planetPos.col * cellWidth + cellWidth / 2;
-                            const y1 = planetPos.row * cellHeight + cellHeight / 2;
-                            const x2 = col * cellWidth + cellWidth / 2;
-                            const y2 = row * cellHeight + cellHeight / 2;
-
-                            // Don't draw line to itself
-                            if (planetPos.row === row && planetPos.col === col) return;
-
-                            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                            line.setAttribute('x1', x1);
-                            line.setAttribute('y1', y1);
-                            line.setAttribute('x2', x2);
-                            line.setAttribute('y2', y2);
-                            line.setAttribute('stroke', PLANET_COLORS[planetName]);
-                            line.setAttribute('data-planet', planetName);
-                            line.setAttribute('data-nature', nature);
-                            line.classList.add('vedha-active');
-
-                            svg.appendChild(line);
+                            drawnLines.add(key);
+                            drawLine(planetPos.row, planetPos.col, row, col, color, planetName, isTargetActive);
                         }
                     }
                 }
