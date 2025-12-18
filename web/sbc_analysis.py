@@ -685,32 +685,52 @@ def calculate_sbc_analysis(jd: float, lat: float = 28.6139, lon: float = 77.2090
 
     planetary_positions = {}
 
-    # First pass: calculate all planetary positions
+    # First pass: calculate all planetary positions with speed/gati
     for planet_name, planet_id in planet_ids.items():
-        result = swe.calc_ut(jd, planet_id, swe.FLG_SIDEREAL)
+        # Get position with speed
+        result = swe.calc_ut(jd, planet_id, swe.FLG_SIDEREAL | swe.FLG_SPEED)
         longitude = result[0][0]
+        speed = result[0][3]  # Speed in degrees/day
+        is_retrograde = speed < 0
 
         nakshatra_name, nakshatra_idx, degree = get_nakshatra_from_longitude(longitude)
+
+        # Calculate gati (speed category)
+        gati = get_planet_gati(planet_name, abs(speed), is_retrograde)
+        gati_info = GATI_EFFECTS.get(gati, GATI_EFFECTS['sama'])
 
         planetary_positions[planet_name] = {
             'longitude': round(longitude, 2),
             'nakshatra': nakshatra_name,
             'nakshatra_idx': nakshatra_idx,
             'degree_in_nakshatra': round(degree, 2),
-            'pada': int(degree / 3.333333) + 1  # 4 padas per nakshatra
+            'pada': int(degree / 3.333333) + 1,  # 4 padas per nakshatra
+            'speed': round(abs(speed), 4),
+            'is_retrograde': is_retrograde,
+            'gati': gati,
+            'gati_name': gati_info['name'],
+            'vedha_multiplier': gati_info['vedha_multiplier']
         }
 
-    # Calculate Ketu (opposite to Rahu)
+    # Calculate Ketu (opposite to Rahu) - always retrograde like Rahu
     rahu_long = planetary_positions['Rahu']['longitude']
+    rahu_speed = planetary_positions['Rahu']['speed']
     ketu_long = (rahu_long + 180) % 360
     ketu_nakshatra, ketu_idx, ketu_degree = get_nakshatra_from_longitude(ketu_long)
+    ketu_gati = get_planet_gati('Ketu', rahu_speed, True)
+    ketu_gati_info = GATI_EFFECTS.get(ketu_gati, GATI_EFFECTS['sama'])
 
     planetary_positions['Ketu'] = {
         'longitude': round(ketu_long, 2),
         'nakshatra': ketu_nakshatra,
         'nakshatra_idx': ketu_idx,
         'degree_in_nakshatra': round(ketu_degree, 2),
-        'pada': int(ketu_degree / 3.333333) + 1
+        'pada': int(ketu_degree / 3.333333) + 1,
+        'speed': round(rahu_speed, 4),
+        'is_retrograde': True,  # Ketu is always retrograde
+        'gati': ketu_gati,
+        'gati_name': ketu_gati_info['name'],
+        'vedha_multiplier': ketu_gati_info['vedha_multiplier']
     }
 
     # Get current Lagna nakshatra
@@ -1544,28 +1564,48 @@ def calculate_custom_sbc_analysis(
 
         transit_positions = {}
         for planet_name, planet_id in planet_ids.items():
-            result = swe.calc_ut(jd, planet_id, swe.FLG_SIDEREAL)
+            # Get position with speed for gati calculation
+            result = swe.calc_ut(jd, planet_id, swe.FLG_SIDEREAL | swe.FLG_SPEED)
             lon = result[0][0]
+            speed = result[0][3]  # Speed in degrees/day
+            is_retrograde = speed < 0
             nak_name, nak_idx, degree = get_nakshatra_from_longitude(lon)
             rashi_idx = int(lon / 30)
+
+            # Calculate gati (speed category)
+            gati = get_planet_gati(planet_name, abs(speed), is_retrograde)
+            gati_info = GATI_EFFECTS.get(gati, GATI_EFFECTS['sama'])
 
             transit_positions[planet_name] = {
                 'longitude': round(lon, 2),
                 'nakshatra': nak_name,
                 'nakshatra_idx': nak_idx,
                 'pada': int(degree / 3.333333) + 1,
-                'rashi': RASHI_NAMES[rashi_idx]
+                'rashi': RASHI_NAMES[rashi_idx],
+                'speed': round(abs(speed), 4),
+                'is_retrograde': is_retrograde,
+                'gati': gati,
+                'gati_name': gati_info['name'],
+                'vedha_multiplier': gati_info['vedha_multiplier']
             }
 
-        # Add Ketu
+        # Add Ketu (always retrograde)
         ketu_lon = (transit_positions['Rahu']['longitude'] + 180) % 360
+        rahu_speed = transit_positions['Rahu']['speed']
         ketu_nak, ketu_idx, ketu_deg = get_nakshatra_from_longitude(ketu_lon)
+        ketu_gati = get_planet_gati('Ketu', rahu_speed, True)
+        ketu_gati_info = GATI_EFFECTS.get(ketu_gati, GATI_EFFECTS['sama'])
         transit_positions['Ketu'] = {
             'longitude': round(ketu_lon, 2),
             'nakshatra': ketu_nak,
             'nakshatra_idx': ketu_idx,
             'pada': int(ketu_deg / 3.333333) + 1,
-            'rashi': RASHI_NAMES[int(ketu_lon / 30)]
+            'rashi': RASHI_NAMES[int(ketu_lon / 30)],
+            'speed': round(rahu_speed, 4),
+            'is_retrograde': True,
+            'gati': ketu_gati,
+            'gati_name': ketu_gati_info['name'],
+            'vedha_multiplier': ketu_gati_info['vedha_multiplier']
         }
 
         # Calculate vedhas for all 5 Janma factors

@@ -387,6 +387,80 @@
             background: rgba(180, 120, 180, 0.5);
         }
 
+        /* Planet Gati Status Grid */
+        .gati-status-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .planet-gati-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .planet-gati-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85em;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .planet-gati-item .planet-name {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .planet-gati-item .gati-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .planet-gati-item .gati-symbol {
+            font-size: 1.2em;
+        }
+
+        .planet-gati-item .gati-label {
+            font-size: 0.75em;
+            color: #aaa;
+        }
+
+        .planet-gati-item.retrograde {
+            border-color: rgba(255, 68, 68, 0.5);
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .planet-gati-item.ati-chari {
+            border-color: rgba(255, 136, 0, 0.5);
+            background: rgba(255, 136, 0, 0.1);
+        }
+
+        .planet-gati-item.sheeghra {
+            border-color: rgba(255, 204, 0, 0.5);
+            background: rgba(255, 204, 0, 0.1);
+        }
+
+        .planet-gati-item.sama {
+            border-color: rgba(68, 255, 68, 0.3);
+        }
+
+        .planet-gati-item.manda {
+            border-color: rgba(68, 136, 255, 0.5);
+            background: rgba(68, 136, 255, 0.1);
+        }
+
+        .planet-gati-item.ati-manda {
+            border-color: rgba(136, 68, 255, 0.5);
+            background: rgba(136, 68, 255, 0.1);
+        }
+
         /* Signal box */
         .signal-box {
             text-align: center;
@@ -808,6 +882,24 @@
                                 <span>Swara/Akshara</span>
                             </div>
                         </div>
+
+                        <!-- Planet Gati (Speed) Status -->
+                        <div class="gati-status-section">
+                            <h4 style="color: #4ecdc4; margin: 15px 0 10px; font-size: 0.9em;">Planet Gati (Speed) Status</h4>
+                            <div id="planetGatiStatus" class="planet-gati-grid">
+                                <!-- Populated by JS -->
+                            </div>
+                            <div class="gati-legend" style="margin-top: 10px; font-size: 0.75em; color: #888;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                                    <span><span style="color: #ff4444;">℞</span> Retrograde</span>
+                                    <span><span style="color: #ff8800;">⚡</span> Very Fast</span>
+                                    <span><span style="color: #ffcc00;">↑</span> Fast</span>
+                                    <span><span style="color: #44ff44;">→</span> Normal</span>
+                                    <span><span style="color: #4488ff;">↓</span> Slow</span>
+                                    <span><span style="color: #8844ff;">◼</span> Very Slow</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Factor Scores -->
@@ -931,6 +1023,9 @@
 
             // Vedha list
             renderVedhaList(data.vedhas_by_factor || {});
+
+            // Planet Gati Status
+            renderPlanetGati(data.transit_positions || {});
 
             // Interpretation
             document.getElementById('interpretationText').textContent =
@@ -1132,6 +1227,56 @@
                     <div class="vedha-planet">${vedha.planet || 'Unknown'} (${vedha.nature || 'unknown'})</div>
                     <div class="vedha-detail">Factor: ${vedha.factor} | ${vedha.description || ''}</div>
                 `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderPlanetGati(transitPositions) {
+            const container = document.getElementById('planetGatiStatus');
+            container.innerHTML = '';
+
+            if (!transitPositions) {
+                container.innerHTML = '<p style="color: #888; text-align: center;">No transit data</p>';
+                return;
+            }
+
+            // Gati symbols and colors
+            const gatiConfig = {
+                'vakri': { symbol: '℞', label: 'Retro', color: '#ff4444', class: 'retrograde' },
+                'ati_chari': { symbol: '⚡', label: 'V.Fast', color: '#ff8800', class: 'ati-chari' },
+                'sheeghra': { symbol: '↑', label: 'Fast', color: '#ffcc00', class: 'sheeghra' },
+                'sama': { symbol: '→', label: 'Normal', color: '#44ff44', class: 'sama' },
+                'manda': { symbol: '↓', label: 'Slow', color: '#4488ff', class: 'manda' },
+                'ati_manda': { symbol: '◼', label: 'V.Slow', color: '#8844ff', class: 'ati-manda' }
+            };
+
+            // Planet order for display
+            const planetOrder = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+
+            planetOrder.forEach(planet => {
+                const pos = transitPositions[planet];
+                if (!pos) return;
+
+                const gati = pos.gati || 'sama';
+                const config = gatiConfig[gati] || gatiConfig['sama'];
+                const isRetro = pos.is_retrograde;
+
+                const item = document.createElement('div');
+                item.className = `planet-gati-item ${isRetro ? 'retrograde' : config.class}`;
+
+                // For retrograde planets, show retrograde indicator
+                const displaySymbol = isRetro ? '℞' : config.symbol;
+                const displayLabel = isRetro ? 'Retro' : config.label;
+                const displayColor = isRetro ? '#ff4444' : config.color;
+
+                item.innerHTML = `
+                    <span class="planet-name">${planet}</span>
+                    <span class="gati-indicator">
+                        <span class="gati-symbol" style="color: ${displayColor}">${displaySymbol}</span>
+                        <span class="gati-label">${displayLabel}</span>
+                    </span>
+                `;
+                item.title = `${planet}: ${pos.gati_name || gati}\nSpeed: ${pos.speed ? pos.speed.toFixed(4) : 'N/A'}°/day\nNakshatra: ${pos.nakshatra || 'N/A'}`;
                 container.appendChild(item);
             });
         }
