@@ -194,6 +194,63 @@
             display: none;
         }
 
+        .vedha-controls {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .vedha-toggle-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .vedha-toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .vedha-toggle-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .vedha-toggle-item input[type="checkbox"] {
+            display: none;
+        }
+
+        .vedha-toggle-item .toggle-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            background: var(--toggle-color);
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        .vedha-toggle-item input[type="checkbox"]:checked + .toggle-color {
+            opacity: 1;
+        }
+
+        .vedha-toggle-item input[type="checkbox"]:checked ~ span:last-child {
+            color: #fff;
+        }
+
+        .vedha-toggle-item span:last-child {
+            color: #888;
+            transition: color 0.2s;
+        }
+
         .vedha-toggle {
             margin: 10px 0;
             display: flex;
@@ -842,24 +899,86 @@
                                 <!-- Vedha lines will be drawn here by JS -->
                             </svg>
                         </div>
-                        <div class="vedha-toggle">
-                            <label>
-                                <input type="checkbox" id="showVedhaLines" checked>
-                                Show Vedha Lines
-                            </label>
+                        <!-- Vedha Lines Toggle Controls -->
+                        <div class="vedha-controls">
+                            <h4 style="color: #4ecdc4; margin: 10px 0; font-size: 0.9em;">Show Vedha Lines</h4>
+                            <div class="vedha-toggle-grid">
+                                <!-- Vedha Type Filters -->
+                                <label class="vedha-toggle-item" style="--toggle-color: #00cc66;">
+                                    <input type="checkbox" id="showPositiveVedha" checked data-filter="positive">
+                                    <span class="toggle-color"></span>
+                                    <span>Positive Vedha</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #ff4444;">
+                                    <input type="checkbox" id="showNegativeVedha" checked data-filter="negative">
+                                    <span class="toggle-color"></span>
+                                    <span>Negative Vedha</span>
+                                </label>
+                            </div>
+                            <h5 style="color: #888; margin: 10px 0 5px; font-size: 0.8em;">Filter by Planet</h5>
+                            <div class="vedha-toggle-grid">
+                                <label class="vedha-toggle-item" style="--toggle-color: #FF6600;">
+                                    <input type="checkbox" id="showSunVedha" checked data-planet="Sun">
+                                    <span class="toggle-color"></span>
+                                    <span>Sun</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #CCCCCC;">
+                                    <input type="checkbox" id="showMoonVedha" checked data-planet="Moon">
+                                    <span class="toggle-color"></span>
+                                    <span>Moon</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #FF0000;">
+                                    <input type="checkbox" id="showMarsVedha" checked data-planet="Mars">
+                                    <span class="toggle-color"></span>
+                                    <span>Mars</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #00CC00;">
+                                    <input type="checkbox" id="showMercuryVedha" checked data-planet="Mercury">
+                                    <span class="toggle-color"></span>
+                                    <span>Mercury</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #FFCC00;">
+                                    <input type="checkbox" id="showJupiterVedha" checked data-planet="Jupiter">
+                                    <span class="toggle-color"></span>
+                                    <span>Jupiter</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #FF69B4;">
+                                    <input type="checkbox" id="showVenusVedha" checked data-planet="Venus">
+                                    <span class="toggle-color"></span>
+                                    <span>Venus</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #4444AA;">
+                                    <input type="checkbox" id="showSaturnVedha" checked data-planet="Saturn">
+                                    <span class="toggle-color"></span>
+                                    <span>Saturn</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #666666;">
+                                    <input type="checkbox" id="showRahuVedha" checked data-planet="Rahu">
+                                    <span class="toggle-color"></span>
+                                    <span>Rahu</span>
+                                </label>
+                                <label class="vedha-toggle-item" style="--toggle-color: #996633;">
+                                    <input type="checkbox" id="showKetuVedha" checked data-planet="Ketu">
+                                    <span class="toggle-color"></span>
+                                    <span>Ketu</span>
+                                </label>
+                            </div>
                         </div>
+
+                        <!-- Cell Type Legend -->
                         <div class="legend">
+                            <h4 style="color: #4ecdc4; margin: 10px 0; font-size: 0.9em; width: 100%; text-align: center;">Cell Types</h4>
                             <div class="legend-item">
                                 <div class="legend-color birth"></div>
                                 <span>Birth Factor</span>
                             </div>
                             <div class="legend-item">
                                 <div class="legend-color positive"></div>
-                                <span>Positive Vedha (Benefic)</span>
+                                <span>Positive Vedha</span>
                             </div>
                             <div class="legend-item">
                                 <div class="legend-color negative"></div>
-                                <span>Negative Vedha (Malefic)</span>
+                                <span>Negative Vedha</span>
                             </div>
                             <div class="legend-item">
                                 <div class="legend-color nakshatra"></div>
@@ -867,7 +986,7 @@
                             </div>
                             <div class="legend-item">
                                 <div class="legend-color rashi"></div>
-                                <span>Rashi (Sign)</span>
+                                <span>Rashi</span>
                             </div>
                             <div class="legend-item">
                                 <div class="legend-color tithi"></div>
@@ -875,11 +994,11 @@
                             </div>
                             <div class="legend-item">
                                 <div class="legend-color day"></div>
-                                <span>Vara (Day)</span>
+                                <span>Vara</span>
                             </div>
                             <div class="legend-item">
                                 <div class="legend-color swara"></div>
-                                <span>Swara/Akshara</span>
+                                <span>Swara</span>
                             </div>
                         </div>
 
@@ -2309,76 +2428,10 @@
         });
 
         // ========== VEDHA LINES SYSTEM ==========
-        // Traditional Sarvatobhadra Chakra Vedha Line Definitions
-        // Each nakshatra has vedha (obstruction) with specific other nakshatras
-        // Lines are drawn diagonally connecting vedha pairs
+        // Vedha lines are drawn from planet positions to the birth factors they affect
+        // Lines are filtered by: Positive/Negative vedha type and individual planets
 
-        // Vedha pairs based on traditional SBC - diagonal connections
-        // Format: [fromRow, fromCol, toRow, toCol, color, label]
-        // Colors match different vedha types/directions
-        const VEDHA_LINES = [
-            // Yellow lines - NW to SE diagonal vedhas (primary)
-            // Dhanishta to Hasta
-            [0, 1, 8, 4, '#FFD700', 'Dhan-Hast'],
-            // Shatabhisha to U.Phalguni
-            [0, 2, 8, 5, '#FFD700', 'Shata-UPha'],
-            // P.Bhadrapada to P.Phalguni
-            [0, 3, 8, 6, '#FFD700', 'PBha-PPha'],
-            // U.Bhadrapada to Magha
-            [0, 4, 8, 7, '#FFD700', 'UBha-Magh'],
-
-            // Orange/Brown lines - vertical vedhas (secondary)
-            // Shravana to Vishakha
-            [1, 0, 8, 1, '#CD853F', 'Srav-Vish'],
-            // Krittika to Swati
-            [1, 8, 8, 2, '#CD853F', 'Krit-Swat'],
-
-            // Red lines - NE to SW diagonal vedhas
-            // Revati to Chitra
-            [0, 5, 8, 3, '#FF4444', 'Reva-Chit'],
-            // Ashwini to Hasta
-            [0, 6, 2, 8, '#FF4444', 'Asvi-Roh'],
-            // Bharani to Krittika
-            [0, 7, 1, 8, '#FF4444', 'Bhar-Krit'],
-
-            // Blue lines - horizontal vedhas
-            // U.Ashadha to Mrigashira
-            [3, 0, 3, 8, '#4444FF', 'UAsh-Mrig'],
-            // P.Ashadha to Ardra
-            [4, 0, 4, 8, '#4444FF', 'PAsh-Ardr'],
-            // Mula to Punarvasu
-            [5, 0, 5, 8, '#4444FF', 'Mula-Puna'],
-            // Jyeshtha to Pushya
-            [6, 0, 6, 8, '#4444FF', 'Jyes-Push'],
-            // Anuradha to Ashlesha
-            [7, 0, 7, 8, '#4444FF', 'Anu-Ashl'],
-
-            // Green lines - cross vedhas through center
-            // Abhijit to Rohini
-            [2, 0, 2, 8, '#44AA44', 'Abhi-Roh'],
-            // Vishakha diagonal
-            [8, 1, 5, 8, '#44AA44', 'Vish-cross'],
-
-            // Purple lines - Rashi vedhas through center
-            // Aquarius to Aries (through center)
-            [2, 3, 2, 5, '#9944FF', 'Aq-Ar'],
-            // Capricorn to Taurus
-            [3, 2, 3, 6, '#9944FF', 'Cp-Ta'],
-            // Sagittarius to Gemini
-            [4, 2, 4, 6, '#9944FF', 'Sg-Ge'],
-            // Scorpio to Cancer
-            [5, 2, 5, 6, '#9944FF', 'Sc-Ca'],
-            // Libra to Leo
-            [6, 3, 6, 5, '#9944FF', 'Li-Le'],
-
-            // Cyan lines - Tithi/Vara vedhas
-            // Rikta (center row 3) connections
-            [3, 4, 4, 3, '#00CCCC', 'Rikta-Jaya'],
-            [3, 4, 4, 5, '#00CCCC', 'Rikta-Nanda'],
-            [4, 4, 5, 4, '#00CCCC', 'Purna-Bhadra'],
-        ];
-
-        // Planet colors for active vedha highlighting
+        // Planet colors
         const PLANET_COLORS = {
             'Sun': '#FF6600',
             'Moon': '#CCCCCC',
@@ -2391,6 +2444,81 @@
             'Ketu': '#996633'
         };
 
+        // Planet nature (benefic = positive vedha, malefic = negative vedha)
+        const PLANET_NATURE = {
+            'Sun': 'malefic',
+            'Moon': 'benefic',
+            'Mars': 'malefic',
+            'Mercury': 'benefic',
+            'Jupiter': 'benefic',
+            'Venus': 'benefic',
+            'Saturn': 'malefic',
+            'Rahu': 'malefic',
+            'Ketu': 'malefic'
+        };
+
+        // Get filter settings from checkboxes
+        function getVedhaFilters() {
+            return {
+                showPositive: document.getElementById('showPositiveVedha')?.checked ?? true,
+                showNegative: document.getElementById('showNegativeVedha')?.checked ?? true,
+                planets: {
+                    'Sun': document.getElementById('showSunVedha')?.checked ?? true,
+                    'Moon': document.getElementById('showMoonVedha')?.checked ?? true,
+                    'Mars': document.getElementById('showMarsVedha')?.checked ?? true,
+                    'Mercury': document.getElementById('showMercuryVedha')?.checked ?? true,
+                    'Jupiter': document.getElementById('showJupiterVedha')?.checked ?? true,
+                    'Venus': document.getElementById('showVenusVedha')?.checked ?? true,
+                    'Saturn': document.getElementById('showSaturnVedha')?.checked ?? true,
+                    'Rahu': document.getElementById('showRahuVedha')?.checked ?? true,
+                    'Ketu': document.getElementById('showKetuVedha')?.checked ?? true
+                }
+            };
+        }
+
+        // Find cell position in grid by looking for planets or birth factors
+        function findCellPosition(gridData, planetName) {
+            for (let row = 0; row < gridData.length; row++) {
+                for (let col = 0; col < gridData[row].length; col++) {
+                    const cell = gridData[row][col];
+                    if (cell.planets && cell.planets.includes(planetName)) {
+                        return { row, col };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Find birth factor cells (gold colored cells)
+        function findBirthFactorCells(gridData) {
+            const birthCells = [];
+            for (let row = 0; row < gridData.length; row++) {
+                for (let col = 0; col < gridData[row].length; col++) {
+                    const cell = gridData[row][col];
+                    if (cell.color === 'gold' || cell.is_birth_nakshatra || cell.is_birth_factor) {
+                        birthCells.push({ row, col, cell });
+                    }
+                }
+            }
+            return birthCells;
+        }
+
+        // Find cells with vedha (green = positive, red = negative)
+        function findVedhaCells(gridData) {
+            const vedhaCells = { positive: [], negative: [] };
+            for (let row = 0; row < gridData.length; row++) {
+                for (let col = 0; col < gridData[row].length; col++) {
+                    const cell = gridData[row][col];
+                    if (cell.color === 'green') {
+                        vedhaCells.positive.push({ row, col, cell });
+                    } else if (cell.color === 'red') {
+                        vedhaCells.negative.push({ row, col, cell });
+                    }
+                }
+            }
+            return vedhaCells;
+        }
+
         function drawVedhaLines(gridData, transitPositions) {
             const svg = document.getElementById('vedhaLines');
             if (!svg) return;
@@ -2399,10 +2527,13 @@
             svg.innerHTML = '';
 
             const grid = document.getElementById('sbcGrid');
-            if (!grid) return;
+            if (!grid || !gridData) return;
 
             const cells = grid.querySelectorAll('.sbc-cell');
             if (cells.length !== 81) return; // 9x9 grid
+
+            // Get filter settings
+            const filters = getVedhaFilters();
 
             // Get cell dimensions
             const firstCell = cells[0];
@@ -2414,61 +2545,83 @@
             const totalHeight = cellHeight * 9;
             svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
 
-            // Draw each vedha line
-            VEDHA_LINES.forEach(([fromRow, fromCol, toRow, toCol, color, label]) => {
-                const x1 = fromCol * cellWidth + cellWidth / 2;
-                const y1 = fromRow * cellHeight + cellHeight / 2;
-                const x2 = toCol * cellWidth + cellWidth / 2;
-                const y2 = toRow * cellHeight + cellHeight / 2;
+            // Find all planet positions and their vedha targets
+            const planets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
 
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', x1);
-                line.setAttribute('y1', y1);
-                line.setAttribute('x2', x2);
-                line.setAttribute('y2', y2);
-                line.setAttribute('stroke', color);
-                line.setAttribute('data-label', label);
+            planets.forEach(planetName => {
+                // Check if this planet is enabled in filters
+                if (!filters.planets[planetName]) return;
 
-                // Check if any planet is on this vedha line (making it active)
-                if (transitPositions) {
-                    const fromCellIdx = fromRow * 9 + fromCol;
-                    const toCellIdx = toRow * 9 + toCol;
+                // Check if vedha type (positive/negative) is enabled
+                const nature = PLANET_NATURE[planetName];
+                const isPositive = nature === 'benefic';
+                if (isPositive && !filters.showPositive) return;
+                if (!isPositive && !filters.showNegative) return;
 
-                    if (gridData && gridData[fromRow] && gridData[toRow]) {
-                        const fromCell = gridData[fromRow][fromCol];
-                        const toCell = gridData[toRow][toCol];
+                // Find planet position in grid
+                const planetPos = findCellPosition(gridData, planetName);
+                if (!planetPos) return;
 
-                        if ((fromCell && fromCell.planets && fromCell.planets.length > 0) ||
-                            (toCell && toCell.planets && toCell.planets.length > 0)) {
+                // Find cells this planet is affecting (vedha cells with matching color)
+                for (let row = 0; row < gridData.length; row++) {
+                    for (let col = 0; col < gridData[row].length; col++) {
+                        const cell = gridData[row][col];
+
+                        // Check if this cell has vedha from this planet
+                        // A cell is affected if it's colored (green/red) and the planet is causing vedha to it
+                        const isVedhaCell = (isPositive && cell.color === 'green') ||
+                                           (!isPositive && cell.color === 'red');
+
+                        // Also check if cell is a birth factor being affected
+                        const isBirthFactor = cell.color === 'gold';
+
+                        if (isVedhaCell || isBirthFactor) {
+                            // Draw line from planet to this cell
+                            const x1 = planetPos.col * cellWidth + cellWidth / 2;
+                            const y1 = planetPos.row * cellHeight + cellHeight / 2;
+                            const x2 = col * cellWidth + cellWidth / 2;
+                            const y2 = row * cellHeight + cellHeight / 2;
+
+                            // Don't draw line to itself
+                            if (planetPos.row === row && planetPos.col === col) return;
+
+                            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                            line.setAttribute('x1', x1);
+                            line.setAttribute('y1', y1);
+                            line.setAttribute('x2', x2);
+                            line.setAttribute('y2', y2);
+                            line.setAttribute('stroke', PLANET_COLORS[planetName]);
+                            line.setAttribute('data-planet', planetName);
+                            line.setAttribute('data-nature', nature);
                             line.classList.add('vedha-active');
-                            // Use planet color if available
-                            const activePlanet = (fromCell && fromCell.planets && fromCell.planets[0]) ||
-                                                (toCell && toCell.planets && toCell.planets[0]);
-                            if (activePlanet && PLANET_COLORS[activePlanet]) {
-                                line.setAttribute('stroke', PLANET_COLORS[activePlanet]);
-                            }
+
+                            svg.appendChild(line);
                         }
                     }
                 }
-
-                svg.appendChild(line);
             });
         }
 
-        // Toggle vedha lines visibility
+        // Setup vedha line toggle controls
         function setupVedhaToggle() {
-            const toggle = document.getElementById('showVedhaLines');
-            const svg = document.getElementById('vedhaLines');
+            // All filter checkboxes
+            const filterCheckboxes = [
+                'showPositiveVedha', 'showNegativeVedha',
+                'showSunVedha', 'showMoonVedha', 'showMarsVedha', 'showMercuryVedha',
+                'showJupiterVedha', 'showVenusVedha', 'showSaturnVedha', 'showRahuVedha', 'showKetuVedha'
+            ];
 
-            if (toggle && svg) {
-                toggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        svg.classList.remove('hidden');
-                    } else {
-                        svg.classList.add('hidden');
-                    }
-                });
-            }
+            filterCheckboxes.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) {
+                    checkbox.addEventListener('change', function() {
+                        // Redraw lines with current settings
+                        if (window.lastGridData) {
+                            drawVedhaLines(window.lastGridData, window.lastTransitPositions);
+                        }
+                    });
+                }
+            });
         }
 
         // Call setup on page load
@@ -2480,6 +2633,8 @@
         const originalRenderSBCGrid = renderSBCGrid;
         renderSBCGrid = function(grid) {
             originalRenderSBCGrid(grid);
+            // Store grid data for redrawing when toggles change
+            window.lastGridData = grid;
             // Draw vedha lines after grid is rendered
             setTimeout(() => {
                 drawVedhaLines(grid, window.lastTransitPositions);
