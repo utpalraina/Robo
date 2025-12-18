@@ -151,6 +151,11 @@
             align-items: center;
         }
 
+        .sbc-grid-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
         .sbc-grid {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -159,6 +164,56 @@
             padding: 10px;
             border-radius: 10px;
             max-width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .vedha-lines-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .vedha-lines-overlay line {
+            stroke-width: 2;
+            stroke-linecap: round;
+            opacity: 0.7;
+        }
+
+        .vedha-lines-overlay line.vedha-active {
+            stroke-width: 3;
+            opacity: 1;
+            filter: drop-shadow(0 0 3px currentColor);
+        }
+
+        .vedha-lines-overlay.hidden {
+            display: none;
+        }
+
+        .vedha-toggle {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vedha-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #e0e0e0;
+            font-size: 0.9em;
+        }
+
+        .vedha-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
         .sbc-cell {
@@ -705,8 +760,19 @@
                     <!-- SBC Grid -->
                     <h2 style="color: #4ecdc4; margin: 25px 0 15px;">Sarvato Bhadra Chakra</h2>
                     <div class="sbc-grid-container">
-                        <div id="sbcGrid" class="sbc-grid">
-                            <!-- Grid will be populated by JS -->
+                        <div class="sbc-grid-wrapper">
+                            <div id="sbcGrid" class="sbc-grid">
+                                <!-- Grid will be populated by JS -->
+                            </div>
+                            <svg id="vedhaLines" class="vedha-lines-overlay">
+                                <!-- Vedha lines will be drawn here by JS -->
+                            </svg>
+                        </div>
+                        <div class="vedha-toggle">
+                            <label>
+                                <input type="checkbox" id="showVedhaLines" checked>
+                                Show Vedha Lines
+                            </label>
                         </div>
                         <div class="legend">
                             <div class="legend-item">
@@ -2096,6 +2162,191 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeLocationDropdowns();
         });
+
+        // ========== VEDHA LINES SYSTEM ==========
+        // Traditional Sarvatobhadra Chakra Vedha Line Definitions
+        // Each nakshatra has vedha (obstruction) with specific other nakshatras
+        // Lines are drawn diagonally connecting vedha pairs
+
+        // Vedha pairs based on traditional SBC - diagonal connections
+        // Format: [fromRow, fromCol, toRow, toCol, color, label]
+        // Colors match different vedha types/directions
+        const VEDHA_LINES = [
+            // Yellow lines - NW to SE diagonal vedhas (primary)
+            // Dhanishta to Hasta
+            [0, 1, 8, 4, '#FFD700', 'Dhan-Hast'],
+            // Shatabhisha to U.Phalguni
+            [0, 2, 8, 5, '#FFD700', 'Shata-UPha'],
+            // P.Bhadrapada to P.Phalguni
+            [0, 3, 8, 6, '#FFD700', 'PBha-PPha'],
+            // U.Bhadrapada to Magha
+            [0, 4, 8, 7, '#FFD700', 'UBha-Magh'],
+
+            // Orange/Brown lines - vertical vedhas (secondary)
+            // Shravana to Vishakha
+            [1, 0, 8, 1, '#CD853F', 'Srav-Vish'],
+            // Krittika to Swati
+            [1, 8, 8, 2, '#CD853F', 'Krit-Swat'],
+
+            // Red lines - NE to SW diagonal vedhas
+            // Revati to Chitra
+            [0, 5, 8, 3, '#FF4444', 'Reva-Chit'],
+            // Ashwini to Hasta
+            [0, 6, 2, 8, '#FF4444', 'Asvi-Roh'],
+            // Bharani to Krittika
+            [0, 7, 1, 8, '#FF4444', 'Bhar-Krit'],
+
+            // Blue lines - horizontal vedhas
+            // U.Ashadha to Mrigashira
+            [3, 0, 3, 8, '#4444FF', 'UAsh-Mrig'],
+            // P.Ashadha to Ardra
+            [4, 0, 4, 8, '#4444FF', 'PAsh-Ardr'],
+            // Mula to Punarvasu
+            [5, 0, 5, 8, '#4444FF', 'Mula-Puna'],
+            // Jyeshtha to Pushya
+            [6, 0, 6, 8, '#4444FF', 'Jyes-Push'],
+            // Anuradha to Ashlesha
+            [7, 0, 7, 8, '#4444FF', 'Anu-Ashl'],
+
+            // Green lines - cross vedhas through center
+            // Abhijit to Rohini
+            [2, 0, 2, 8, '#44AA44', 'Abhi-Roh'],
+            // Vishakha diagonal
+            [8, 1, 5, 8, '#44AA44', 'Vish-cross'],
+
+            // Purple lines - Rashi vedhas through center
+            // Aquarius to Aries (through center)
+            [2, 3, 2, 5, '#9944FF', 'Aq-Ar'],
+            // Capricorn to Taurus
+            [3, 2, 3, 6, '#9944FF', 'Cp-Ta'],
+            // Sagittarius to Gemini
+            [4, 2, 4, 6, '#9944FF', 'Sg-Ge'],
+            // Scorpio to Cancer
+            [5, 2, 5, 6, '#9944FF', 'Sc-Ca'],
+            // Libra to Leo
+            [6, 3, 6, 5, '#9944FF', 'Li-Le'],
+
+            // Cyan lines - Tithi/Vara vedhas
+            // Rikta (center row 3) connections
+            [3, 4, 4, 3, '#00CCCC', 'Rikta-Jaya'],
+            [3, 4, 4, 5, '#00CCCC', 'Rikta-Nanda'],
+            [4, 4, 5, 4, '#00CCCC', 'Purna-Bhadra'],
+        ];
+
+        // Planet colors for active vedha highlighting
+        const PLANET_COLORS = {
+            'Sun': '#FF6600',
+            'Moon': '#CCCCCC',
+            'Mars': '#FF0000',
+            'Mercury': '#00CC00',
+            'Jupiter': '#FFCC00',
+            'Venus': '#FF69B4',
+            'Saturn': '#4444AA',
+            'Rahu': '#666666',
+            'Ketu': '#996633'
+        };
+
+        function drawVedhaLines(gridData, transitPositions) {
+            const svg = document.getElementById('vedhaLines');
+            if (!svg) return;
+
+            // Clear existing lines
+            svg.innerHTML = '';
+
+            const grid = document.getElementById('sbcGrid');
+            if (!grid) return;
+
+            const cells = grid.querySelectorAll('.sbc-cell');
+            if (cells.length !== 81) return; // 9x9 grid
+
+            // Get cell dimensions
+            const firstCell = cells[0];
+            const cellWidth = firstCell.offsetWidth + 2; // +2 for gap
+            const cellHeight = firstCell.offsetHeight + 2;
+
+            // Set SVG viewBox
+            const totalWidth = cellWidth * 9;
+            const totalHeight = cellHeight * 9;
+            svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
+
+            // Draw each vedha line
+            VEDHA_LINES.forEach(([fromRow, fromCol, toRow, toCol, color, label]) => {
+                const x1 = fromCol * cellWidth + cellWidth / 2;
+                const y1 = fromRow * cellHeight + cellHeight / 2;
+                const x2 = toCol * cellWidth + cellWidth / 2;
+                const y2 = toRow * cellHeight + cellHeight / 2;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('stroke', color);
+                line.setAttribute('data-label', label);
+
+                // Check if any planet is on this vedha line (making it active)
+                if (transitPositions) {
+                    const fromCellIdx = fromRow * 9 + fromCol;
+                    const toCellIdx = toRow * 9 + toCol;
+
+                    if (gridData && gridData[fromRow] && gridData[toRow]) {
+                        const fromCell = gridData[fromRow][fromCol];
+                        const toCell = gridData[toRow][toCol];
+
+                        if ((fromCell && fromCell.planets && fromCell.planets.length > 0) ||
+                            (toCell && toCell.planets && toCell.planets.length > 0)) {
+                            line.classList.add('vedha-active');
+                            // Use planet color if available
+                            const activePlanet = (fromCell && fromCell.planets && fromCell.planets[0]) ||
+                                                (toCell && toCell.planets && toCell.planets[0]);
+                            if (activePlanet && PLANET_COLORS[activePlanet]) {
+                                line.setAttribute('stroke', PLANET_COLORS[activePlanet]);
+                            }
+                        }
+                    }
+                }
+
+                svg.appendChild(line);
+            });
+        }
+
+        // Toggle vedha lines visibility
+        function setupVedhaToggle() {
+            const toggle = document.getElementById('showVedhaLines');
+            const svg = document.getElementById('vedhaLines');
+
+            if (toggle && svg) {
+                toggle.addEventListener('change', function() {
+                    if (this.checked) {
+                        svg.classList.remove('hidden');
+                    } else {
+                        svg.classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        // Call setup on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setupVedhaToggle();
+        });
+
+        // Modify the existing renderSBCGrid function to also draw vedha lines
+        const originalRenderSBCGrid = renderSBCGrid;
+        renderSBCGrid = function(grid) {
+            originalRenderSBCGrid(grid);
+            // Draw vedha lines after grid is rendered
+            setTimeout(() => {
+                drawVedhaLines(grid, window.lastTransitPositions);
+            }, 100);
+        };
+
+        // Store transit positions for vedha line highlighting
+        const originalDisplayResults = displayResults;
+        displayResults = function(data) {
+            window.lastTransitPositions = data.transit_positions;
+            originalDisplayResults(data);
+        };
     </script>
 </body>
 </html>
