@@ -84,6 +84,228 @@ SBC_GRID = [
      ('N', 'Jyeshtha', 17), ('N', 'Anuradha', 16), ('N', 'Vishakha', 15), ('N', 'Swati', 14), ('N', 'Chitra', 13)],
 ]
 
+# =====================================================
+# PLANET SPEED (GATI) SYSTEM FOR SBC VEDHA
+# =====================================================
+# In traditional SBC, planet speed affects vedha strength and number of affected points
+#
+# Gati Types:
+# 1. Ati-Chari (Very Fast) - Planet moving much faster than average
+# 2. Sheeghra/Chari (Fast) - Planet moving faster than average
+# 3. Sama (Normal) - Planet moving at average speed
+# 4. Manda (Slow) - Planet moving slower than average
+# 5. Ati-Manda (Very Slow) - Planet nearly stationary
+# 6. Vakri (Retrograde) - Planet moving backward
+
+# Average daily motion for each planet (degrees per day)
+PLANET_AVERAGE_SPEED = {
+    'Sun': 0.9856,      # ~1 degree/day
+    'Moon': 13.176,     # ~13 degrees/day (fastest)
+    'Mars': 0.524,      # Variable, can be retrograde
+    'Mercury': 1.383,   # Highly variable
+    'Jupiter': 0.083,   # ~5 degrees/month (slow)
+    'Venus': 1.2,       # Variable
+    'Saturn': 0.033,    # ~2 degrees/month (slowest)
+    'Rahu': -0.053,     # Always retrograde (mean motion)
+    'Ketu': -0.053,     # Always retrograde (mean motion)
+}
+
+# Speed thresholds as percentage of average speed
+GATI_THRESHOLDS = {
+    'ati_chari': 1.5,      # > 150% of average = very fast
+    'sheeghra': 1.2,       # > 120% of average = fast
+    'sama_high': 1.1,      # 90-110% = normal
+    'sama_low': 0.9,
+    'manda': 0.5,          # < 50% of average = slow
+    'ati_manda': 0.1,      # < 10% of average = very slow/stationary
+}
+
+# Gati effects on vedha
+# - vedha_multiplier: Affects strength of vedha
+# - vedha_points: Number of cells affected (more for slow planets)
+# - duration_factor: How long the vedha lasts
+GATI_EFFECTS = {
+    'ati_chari': {
+        'name': 'Ati-Chari (Very Fast)',
+        'vedha_multiplier': 0.5,    # Weak vedha due to quick transit
+        'vedha_points': 1,          # Only direct vedha point
+        'duration_factor': 0.5,     # Short duration
+        'description': 'Planet moving very fast - weak, fleeting vedha'
+    },
+    'sheeghra': {
+        'name': 'Sheeghra (Fast)',
+        'vedha_multiplier': 0.75,
+        'vedha_points': 1,
+        'duration_factor': 0.75,
+        'description': 'Planet moving fast - moderate vedha'
+    },
+    'sama': {
+        'name': 'Sama (Normal)',
+        'vedha_multiplier': 1.0,    # Standard vedha strength
+        'vedha_points': 1,          # Standard affected points
+        'duration_factor': 1.0,
+        'description': 'Planet moving at normal speed - standard vedha'
+    },
+    'manda': {
+        'name': 'Manda (Slow)',
+        'vedha_multiplier': 1.5,    # Stronger vedha due to longer influence
+        'vedha_points': 2,          # Affects additional adjacent cells
+        'duration_factor': 1.5,
+        'description': 'Planet moving slowly - strong, prolonged vedha'
+    },
+    'ati_manda': {
+        'name': 'Ati-Manda (Very Slow/Stationary)',
+        'vedha_multiplier': 2.0,    # Very strong vedha
+        'vedha_points': 3,          # Affects multiple cells
+        'duration_factor': 2.0,
+        'description': 'Planet nearly stationary - very strong, extended vedha'
+    },
+    'vakri': {
+        'name': 'Vakri (Retrograde)',
+        'vedha_multiplier': 1.75,   # Strong vedha, karmic implications
+        'vedha_points': 2,          # Multiple points affected
+        'duration_factor': 1.5,
+        'description': 'Planet retrograde - strong vedha with karmic effects'
+    }
+}
+
+# Extended vedha - additional nakshatras affected based on gati
+# When a planet is slow/retrograde, it affects adjacent nakshatras too
+EXTENDED_VEDHA_NEIGHBORS = {
+    # Each nakshatra's adjacent nakshatras in the SBC grid
+    0: [1, 26],      # Ashwini neighbors
+    1: [0, 2],       # Bharani neighbors
+    2: [1, 3],       # Krittika neighbors
+    3: [2, 4],       # Rohini neighbors
+    4: [3, 5],       # Mrigashira neighbors
+    5: [4, 6],       # Ardra neighbors
+    6: [5, 7],       # Punarvasu neighbors
+    7: [6, 8],       # Pushya neighbors
+    8: [7, 9],       # Ashlesha neighbors
+    9: [8, 10],      # Magha neighbors
+    10: [9, 11],     # P.Phalguni neighbors
+    11: [10, 12],    # U.Phalguni neighbors
+    12: [11, 13],    # Hasta neighbors
+    13: [12, 14],    # Chitra neighbors
+    14: [13, 15],    # Swati neighbors
+    15: [14, 16],    # Vishakha neighbors
+    16: [15, 17],    # Anuradha neighbors
+    17: [16, 18],    # Jyeshtha neighbors
+    18: [17, 19],    # Mula neighbors
+    19: [18, 20],    # P.Ashadha neighbors
+    20: [19, 21],    # U.Ashadha neighbors
+    21: [20, 22],    # Shravana neighbors
+    22: [21, 23],    # Dhanishta neighbors
+    23: [22, 24],    # Shatabhisha neighbors
+    24: [23, 25],    # P.Bhadrapada neighbors
+    25: [24, 26],    # U.Bhadrapada neighbors
+    26: [25, 0],     # Revati neighbors
+}
+
+
+def calculate_planet_speed(planet_name: str, jd: float) -> Tuple[float, bool]:
+    """
+    Calculate the current speed of a planet.
+
+    Returns:
+        Tuple of (speed in degrees/day, is_retrograde)
+    """
+    if not SWISSEPH_AVAILABLE:
+        return (PLANET_AVERAGE_SPEED.get(planet_name, 1.0), False)
+
+    planet_ids = {
+        'Sun': swe.SUN,
+        'Moon': swe.MOON,
+        'Mars': swe.MARS,
+        'Mercury': swe.MERCURY,
+        'Jupiter': swe.JUPITER,
+        'Venus': swe.VENUS,
+        'Saturn': swe.SATURN,
+    }
+
+    if planet_name in ['Rahu', 'Ketu']:
+        # Rahu/Ketu always retrograde
+        return (abs(PLANET_AVERAGE_SPEED.get(planet_name, 0.053)), True)
+
+    if planet_name not in planet_ids:
+        return (PLANET_AVERAGE_SPEED.get(planet_name, 1.0), False)
+
+    try:
+        # Get position with speed flag
+        result = swe.calc_ut(jd, planet_ids[planet_name], swe.FLG_SPEED)
+        speed = result[0][3]  # Speed in longitude (degrees/day)
+        is_retrograde = speed < 0
+        return (abs(speed), is_retrograde)
+    except Exception:
+        return (PLANET_AVERAGE_SPEED.get(planet_name, 1.0), False)
+
+
+def get_planet_gati(planet_name: str, speed: float, is_retrograde: bool) -> str:
+    """
+    Determine the gati (speed category) of a planet based on its current speed.
+
+    Args:
+        planet_name: Name of the planet
+        speed: Current speed in degrees/day (absolute value)
+        is_retrograde: Whether planet is retrograde
+
+    Returns:
+        Gati category string
+    """
+    if is_retrograde:
+        return 'vakri'
+
+    avg_speed = PLANET_AVERAGE_SPEED.get(planet_name, 1.0)
+    if avg_speed == 0:
+        avg_speed = 0.001  # Prevent division by zero
+
+    speed_ratio = speed / avg_speed
+
+    if speed_ratio < GATI_THRESHOLDS['ati_manda']:
+        return 'ati_manda'
+    elif speed_ratio < GATI_THRESHOLDS['manda']:
+        return 'manda'
+    elif speed_ratio < GATI_THRESHOLDS['sama_low']:
+        return 'manda'
+    elif speed_ratio <= GATI_THRESHOLDS['sama_high']:
+        return 'sama'
+    elif speed_ratio <= GATI_THRESHOLDS['sheeghra']:
+        return 'sheeghra'
+    else:
+        return 'ati_chari'
+
+
+def get_extended_vedha_targets(nakshatra_idx: int, gati: str) -> List[int]:
+    """
+    Get additional vedha targets based on planet's gati.
+    Slow/retrograde planets affect adjacent nakshatras as well.
+
+    Args:
+        nakshatra_idx: Primary nakshatra index
+        gati: Planet's gati category
+
+    Returns:
+        List of additional nakshatra indices affected
+    """
+    gati_effects = GATI_EFFECTS.get(gati, GATI_EFFECTS['sama'])
+    vedha_points = gati_effects['vedha_points']
+
+    if vedha_points <= 1:
+        return []
+
+    # Get neighbors for extended vedha
+    neighbors = EXTENDED_VEDHA_NEIGHBORS.get(nakshatra_idx, [])
+
+    if vedha_points >= 3:
+        # Very slow - return all neighbors
+        return neighbors
+    elif vedha_points >= 2:
+        # Slow - return first neighbor only
+        return neighbors[:1] if neighbors else []
+
+    return []
+
+
 # Vedha patterns - which nakshatras cause vedha to which
 # Key: source nakshatra index, Value: list of target nakshatra indices that receive vedha
 NAKSHATRA_VEDHA = {
