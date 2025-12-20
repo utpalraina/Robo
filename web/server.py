@@ -408,6 +408,548 @@ async def strategies_page(request: Request):
     return templates.TemplateResponse("strategies.html", {"request": request})
 
 
+@app.get("/planetary", response_class=HTMLResponse)
+async def planetary_page(request: Request):
+    """Serve planetary analysis dashboard."""
+    return templates.TemplateResponse("planetary.html", {"request": request})
+
+
+# ================== PLANETARY ANALYSIS API ==================
+
+from web.planetary_analysis import get_full_analysis, load_backtest_data
+
+BACKTEST_CSV_FILE = Path(__file__).parent.parent / 'backtest_detailed_results.csv'
+
+
+@app.get("/api/planetary/analysis")
+async def get_planetary_analysis():
+    """Get full planetary analysis data."""
+    try:
+        analysis = get_full_analysis()
+        return convert_numpy_types(analysis)
+    except Exception as e:
+        logger.error(f"Error getting planetary analysis: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/planetary/download-csv")
+async def download_planetary_csv():
+    """Download the full backtest CSV."""
+    from fastapi.responses import FileResponse
+
+    if not BACKTEST_CSV_FILE.exists():
+        raise HTTPException(status_code=404, detail="Backtest CSV not found")
+
+    return FileResponse(
+        path=str(BACKTEST_CSV_FILE),
+        filename="planetary_backtest_results.csv",
+        media_type="text/csv"
+    )
+
+
+# ================== VEDIC ASTROLOGY ANALYSIS API ==================
+
+from web.vedic_analysis import get_full_vedic_analysis, get_current_vedic_positions, calculate_current_signal, get_planetary_stats
+from web.sbc_analysis import get_current_sbc_analysis, analyze_historical_vedhas, get_full_sbc_data, calculate_custom_sbc_analysis
+from web.sbc_market_rules import forecast_vedha_weights, forecast_hourly_vedha_weights
+from web.combined_signal import get_combined_signal
+
+VEDIC_DATA_FILE = Path(__file__).parent.parent / 'btc_vedic_planetary_5years.csv'
+
+
+@app.get("/vedic", response_class=HTMLResponse)
+async def vedic_page(request: Request):
+    """Serve Vedic astrology analysis dashboard."""
+    return templates.TemplateResponse("vedic.html", {"request": request})
+
+
+@app.get("/api/vedic/analysis")
+async def get_vedic_analysis():
+    """Get full Vedic astrology analysis data."""
+    try:
+        analysis = get_full_vedic_analysis()
+        return convert_numpy_types(analysis)
+    except Exception as e:
+        logger.error(f"Error getting Vedic analysis: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/vedic/positions")
+async def get_vedic_positions():
+    """Get current Vedic planetary positions."""
+    try:
+        positions = get_current_vedic_positions()
+        return convert_numpy_types(positions)
+    except Exception as e:
+        logger.error(f"Error getting Vedic positions: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/vedic/signal")
+async def get_vedic_signal():
+    """Get current trading signal based on Vedic analysis."""
+    try:
+        signal = calculate_current_signal()
+        return convert_numpy_types(signal)
+    except Exception as e:
+        logger.error(f"Error calculating Vedic signal: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/vedic/stats")
+async def get_vedic_stats():
+    """Get planetary statistics."""
+    try:
+        stats = get_planetary_stats()
+        return convert_numpy_types(stats)
+    except Exception as e:
+        logger.error(f"Error getting Vedic stats: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/vedic/download-csv")
+async def download_vedic_csv():
+    """Download the full Vedic planetary data CSV."""
+    from fastapi.responses import FileResponse
+
+    if not VEDIC_DATA_FILE.exists():
+        raise HTTPException(status_code=404, detail="Vedic data CSV not found")
+
+    return FileResponse(
+        path=str(VEDIC_DATA_FILE),
+        filename="btc_vedic_planetary_5years.csv",
+        media_type="text/csv"
+    )
+
+
+# ================== SARVATO BHADRA CHAKRA (SBC) API ==================
+
+@app.get("/sbc", response_class=HTMLResponse)
+async def sbc_page(request: Request):
+    """Serve Sarvato Bhadra Chakra analysis dashboard."""
+    return templates.TemplateResponse("sbc.html", {"request": request})
+
+
+@app.get("/api/sbc/current")
+async def get_sbc_current():
+    """Get current SBC analysis with vedhas."""
+    try:
+        analysis = get_current_sbc_analysis()
+        return convert_numpy_types(analysis)
+    except Exception as e:
+        logger.error(f"Error getting SBC analysis: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc/historical")
+async def get_sbc_historical():
+    """Get historical vedha analysis (5 years correlation with BTC)."""
+    try:
+        analysis = analyze_historical_vedhas()
+        return convert_numpy_types(analysis)
+    except Exception as e:
+        logger.error(f"Error getting historical SBC analysis: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc/full")
+async def get_sbc_full():
+    """Get complete SBC data for dashboard."""
+    try:
+        data = get_full_sbc_data()
+        return convert_numpy_types(data)
+    except Exception as e:
+        logger.error(f"Error getting full SBC data: {e}")
+        return {"error": str(e)}
+
+
+class CustomSBCRequest(BaseModel):
+    """Request model for custom SBC analysis."""
+    name: str
+    birth_date: str  # YYYY-MM-DD
+    birth_time: str  # HH:MM
+    latitude: float
+    longitude: float
+    analysis_date: str  # YYYY-MM-DD
+    analysis_time: str = "12:00"  # HH:MM
+    timezone: str = "UTC"
+
+
+@app.get("/sbc-custom", response_class=HTMLResponse)
+async def sbc_custom_page(request: Request):
+    """Serve custom SBC analysis dashboard."""
+    return templates.TemplateResponse("sbc_custom.html", {"request": request})
+
+
+@app.get("/markets", response_class=HTMLResponse)
+async def markets_page(request: Request):
+    """Serve markets SBC dashboard for commodities, indexes, and stocks."""
+    return templates.TemplateResponse("markets.html", {"request": request})
+
+
+@app.get("/sbc-rules", response_class=HTMLResponse)
+async def sbc_rules_page(request: Request):
+    """Serve SBC trading rules dashboard."""
+    return templates.TemplateResponse("sbc_rules.html", {"request": request})
+
+
+@app.get("/api/sbc/rules")
+async def get_sbc_rules():
+    """Get all SBC trading rules from database."""
+    import sqlite3
+    try:
+        db_path = Path(__file__).parent.parent / "data" / "robo_trader.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM sbc_trading_rules
+            WHERE is_active = 1
+            ORDER BY category, rule_number
+        """)
+
+        rules = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+
+        # Group by category
+        categories = {}
+        for rule in rules:
+            cat = rule['category']
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(rule)
+
+        return {
+            "total_rules": len(rules),
+            "categories": categories,
+            "rules": rules
+        }
+    except Exception as e:
+        logger.error(f"Error getting SBC rules: {e}")
+        return {"error": str(e)}
+
+
+@app.post("/api/sbc/custom")
+async def get_custom_sbc_analysis(request: CustomSBCRequest):
+    """Get custom SBC analysis for any person on any date."""
+    try:
+        analysis = calculate_custom_sbc_analysis(
+            name=request.name,
+            birth_date=request.birth_date,
+            birth_time=request.birth_time,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            analysis_date=request.analysis_date,
+            analysis_time=request.analysis_time,
+            timezone=request.timezone
+        )
+        # Debug logging
+        logger.info(f"vedha_weights in analysis: {'vedha_weights' in analysis}")
+        if 'vedha_weights' in analysis:
+            vw = analysis['vedha_weights']
+            logger.info(f"vedha_weights positive_weight: {vw.get('positive_weight')}")
+        return convert_numpy_types(analysis)
+    except Exception as e:
+        logger.error(f"Error getting custom SBC analysis: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc/forecast")
+async def get_sbc_forecast(days: int = 7):
+    """Get vedha weight forecast for the next N days with optimal trade timing."""
+    try:
+        forecast = forecast_vedha_weights(days=days)
+        return convert_numpy_types(forecast)
+    except Exception as e:
+        logger.error(f"Error getting SBC forecast: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc/forecast/hourly")
+async def get_sbc_hourly_forecast(date: str = None, hours: int = 24):
+    """Get hourly vedha weight forecast for intraday trade timing."""
+    try:
+        forecast = forecast_hourly_vedha_weights(target_date=date, hours=hours)
+        return convert_numpy_types(forecast)
+    except Exception as e:
+        logger.error(f"Error getting hourly SBC forecast: {e}")
+        return {"error": str(e)}
+
+
+# ================== NY SESSION ANALYSIS API ==================
+
+NY_SESSION_CSV = Path(__file__).parent.parent / "btc_sbc_ny_session_2025.csv"
+
+
+@app.get("/sbc/ny-analysis", response_class=HTMLResponse)
+async def ny_session_analysis_page(request: Request):
+    """Serve NY Session Analysis dashboard."""
+    return templates.TemplateResponse("ny_session_analysis.html", {"request": request})
+
+
+@app.get("/api/sbc/ny-session-analysis")
+async def get_ny_session_analysis():
+    """Get NY session analysis data with statistics."""
+    try:
+        if not NY_SESSION_CSV.exists():
+            return {"error": "NY session data file not found. Run generate_btc_sbc_ny_session.py first."}
+
+        df = pd.read_csv(NY_SESSION_CSV)
+
+        # Calculate overall stats
+        total = len(df)
+        correct = (df['signal_correct'] == 'YES').sum()
+        overall_accuracy = round(correct / total * 100, 1) if total > 0 else 0
+
+        # By signal type
+        signal_stats = {}
+        for sig in df['signal'].unique():
+            sig_df = df[df['signal'] == sig]
+            sig_correct = (sig_df['signal_correct'] == 'YES').sum()
+            sig_total = len(sig_df)
+            signal_stats[sig] = {
+                'total': sig_total,
+                'correct': sig_correct,
+                'accuracy': round(sig_correct / sig_total * 100, 1) if sig_total > 0 else 0,
+                'avg_change': round(sig_df['ny_session_change_pct'].mean(), 2)
+            }
+
+        # By day of week
+        day_stats = {}
+        for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+            day_df = df[df['day_of_week'] == day]
+            if len(day_df) > 0:
+                day_correct = (day_df['signal_correct'] == 'YES').sum()
+                day_total = len(day_df)
+                day_stats[day] = {
+                    'total': day_total,
+                    'correct': day_correct,
+                    'accuracy': round(day_correct / day_total * 100, 1),
+                    'avg_change': round(day_df['ny_session_change_pct'].mean(), 2)
+                }
+
+        # Monthly stats
+        df['month'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m')
+        monthly_stats = {}
+        for month in df['month'].unique():
+            month_df = df[df['month'] == month]
+            month_correct = (month_df['signal_correct'] == 'YES').sum()
+            month_total = len(month_df)
+            monthly_stats[month] = {
+                'total': month_total,
+                'correct': month_correct,
+                'accuracy': round(month_correct / month_total * 100, 1),
+                'avg_change': round(month_df['ny_session_change_pct'].mean(), 2)
+            }
+
+        # Trading simulation
+        bullish_days = df[df['signal'].str.contains('BULLISH')]
+        bearish_days = df[df['signal'].str.contains('BEARISH')]
+        bull_return = bullish_days['ny_session_change_pct'].sum()
+        bear_return = -bearish_days['ny_session_change_pct'].sum()
+        total_return = bull_return + bear_return
+        bnh = ((df.iloc[-1]['ny_close'] - df.iloc[0]['ny_open']) / df.iloc[0]['ny_open']) * 100
+
+        # Convert dataframe to records for table
+        records = df.to_dict('records')
+
+        # Panchang factor analysis
+        panchang_stats = {}
+        factors = ['nakshatra', 'tithi', 'rashi', 'akshara', 'swara']
+        for factor in factors:
+            pos_col = f'{factor}_positive'
+            neg_col = f'{factor}_negative'
+
+            has_pos = df[df[pos_col] != '-']
+            has_neg = df[df[neg_col] != '-']
+
+            panchang_stats[factor] = {
+                'positive_days': len(has_pos),
+                'positive_avg': round(has_pos['ny_session_change_pct'].mean(), 2) if len(has_pos) > 0 else 0,
+                'negative_days': len(has_neg),
+                'negative_avg': round(has_neg['ny_session_change_pct'].mean(), 2) if len(has_neg) > 0 else 0
+            }
+
+        # Calculate Paksha (Waxing/Waning Moon phase)
+        df_sorted = df.sort_values('date').copy()
+        paksha_list = []
+        current_paksha = None
+
+        for idx, row in df_sorted.iterrows():
+            tithi = str(row['tithi']) if pd.notna(row['tithi']) else ''
+            if 'Purnima' in tithi:
+                paksha_list.append('Shukla')
+                current_paksha = 'Krishna'
+            elif 'Amavasya' in tithi:
+                paksha_list.append('Krishna')
+                current_paksha = 'Shukla'
+            elif current_paksha:
+                paksha_list.append(current_paksha)
+            else:
+                paksha_list.append('Unknown')
+
+        df_sorted['paksha'] = paksha_list
+
+        # Fix unknown values
+        first_known_idx = df_sorted[df_sorted['paksha'] != 'Unknown'].index
+        if len(first_known_idx) > 0:
+            first_tithi = str(df_sorted.loc[first_known_idx[0], 'tithi'])
+            if 'Purnima' in first_tithi:
+                df_sorted.loc[df_sorted['paksha'] == 'Unknown', 'paksha'] = 'Shukla'
+            elif 'Amavasya' in first_tithi:
+                df_sorted.loc[df_sorted['paksha'] == 'Unknown', 'paksha'] = 'Krishna'
+
+        # Paksha statistics
+        paksha_analysis = {}
+        for paksha in ['Shukla', 'Krishna']:
+            paksha_df = df_sorted[df_sorted['paksha'] == paksha]
+            if len(paksha_df) > 0:
+                pos_days = len(paksha_df[paksha_df['ny_session_change_pct'] > 0])
+                neg_days = len(paksha_df[paksha_df['ny_session_change_pct'] < 0])
+                paksha_analysis[paksha] = {
+                    'name': 'Waxing (Shukla)' if paksha == 'Shukla' else 'Waning (Krishna)',
+                    'moon_nature': 'Benefic' if paksha == 'Shukla' else 'Malefic',
+                    'total_days': len(paksha_df),
+                    'up_days': pos_days,
+                    'down_days': neg_days,
+                    'avg_change': round(paksha_df['ny_session_change_pct'].mean(), 3),
+                    'expected': 'Bullish' if paksha == 'Shukla' else 'Bearish'
+                }
+
+        # Moon analysis by Paksha
+        moon_by_paksha = {}
+        for paksha in ['Shukla', 'Krishna']:
+            paksha_df = df_sorted[df_sorted['paksha'] == paksha]
+            moon_pos = paksha_df[
+                paksha_df['nakshatra_positive'].str.contains('Moon', na=False) |
+                paksha_df['tithi_positive'].str.contains('Moon', na=False) |
+                paksha_df['rashi_positive'].str.contains('Moon', na=False) |
+                paksha_df['akshara_positive'].str.contains('Moon', na=False) |
+                paksha_df['swara_positive'].str.contains('Moon', na=False)
+            ]
+            moon_neg = paksha_df[
+                paksha_df['nakshatra_negative'].str.contains('Moon', na=False) |
+                paksha_df['tithi_negative'].str.contains('Moon', na=False) |
+                paksha_df['rashi_negative'].str.contains('Moon', na=False) |
+                paksha_df['akshara_negative'].str.contains('Moon', na=False) |
+                paksha_df['swara_negative'].str.contains('Moon', na=False)
+            ]
+
+            pos_avg = round(moon_pos['ny_session_change_pct'].mean(), 3) if len(moon_pos) > 0 else 0
+            neg_avg = round(moon_neg['ny_session_change_pct'].mean(), 3) if len(moon_neg) > 0 else 0
+
+            # Check if Moon is working correctly
+            if paksha == 'Shukla':
+                correct = pos_avg > 0  # Benefic Moon +vedha should be positive
+            else:
+                correct = neg_avg < 0  # Malefic Moon -vedha should be negative
+
+            moon_by_paksha[paksha] = {
+                'paksha_name': 'Waxing' if paksha == 'Shukla' else 'Waning',
+                'moon_nature': 'Benefic' if paksha == 'Shukla' else 'Malefic',
+                'positive_vedha_days': len(moon_pos),
+                'positive_vedha_avg': pos_avg,
+                'negative_vedha_days': len(moon_neg),
+                'negative_vedha_avg': neg_avg,
+                'working_correctly': correct
+            }
+
+        # Planet vedha analysis (excluding Moon - handled separately)
+        benefics = ['Jupiter', 'Venus', 'Mercury']  # Moon handled by paksha
+        malefics = ['Saturn', 'Mars', 'Rahu', 'Ketu', 'Sun']
+        all_planets = ['Sun', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']
+
+        planet_stats = {}
+        for planet in all_planets:
+            pos_mask = (df['nakshatra_positive'].str.contains(planet, na=False) |
+                        df['tithi_positive'].str.contains(planet, na=False) |
+                        df['rashi_positive'].str.contains(planet, na=False) |
+                        df['akshara_positive'].str.contains(planet, na=False) |
+                        df['swara_positive'].str.contains(planet, na=False))
+
+            neg_mask = (df['nakshatra_negative'].str.contains(planet, na=False) |
+                        df['tithi_negative'].str.contains(planet, na=False) |
+                        df['rashi_negative'].str.contains(planet, na=False) |
+                        df['akshara_negative'].str.contains(planet, na=False) |
+                        df['swara_negative'].str.contains(planet, na=False))
+
+            pos_days = df[pos_mask]
+            neg_days = df[neg_mask]
+            is_benefic = planet in benefics
+
+            pos_avg = round(pos_days['ny_session_change_pct'].mean(), 3) if len(pos_days) > 0 else 0
+            neg_avg = round(neg_days['ny_session_change_pct'].mean(), 3) if len(neg_days) > 0 else 0
+
+            # Check for reversal
+            reversal = False
+            if is_benefic and pos_avg < 0:
+                reversal = True
+            if not is_benefic and neg_avg > 0:
+                reversal = True
+
+            planet_stats[planet] = {
+                'type': 'benefic' if is_benefic else 'malefic',
+                'positive_days': len(pos_days),
+                'positive_avg': pos_avg,
+                'negative_days': len(neg_days),
+                'negative_avg': neg_avg,
+                'reversal': reversal
+            }
+
+        # Add Moon with paksha breakdown
+        planet_stats['Moon'] = {
+            'type': 'conditional',
+            'note': 'Benefic when Waxing, Malefic when Waning',
+            'waxing': moon_by_paksha.get('Shukla', {}),
+            'waning': moon_by_paksha.get('Krishna', {}),
+            'reversal': False  # Moon works correctly when paksha is considered
+        }
+
+        # Retrograde analysis
+        retrograde_stats = {}
+        for planet in ['Mars', 'Jupiter', 'Saturn', 'Mercury', 'Venus']:
+            retro_days = df[df['retrograde_planets'].str.contains(planet, na=False)]
+            direct_days = df[~df['retrograde_planets'].str.contains(planet, na=False)]
+
+            if len(retro_days) > 5:
+                retrograde_stats[planet] = {
+                    'retro_days': len(retro_days),
+                    'retro_avg': round(retro_days['ny_session_change_pct'].mean(), 2),
+                    'direct_days': len(direct_days),
+                    'direct_avg': round(direct_days['ny_session_change_pct'].mean(), 2)
+                }
+
+        return convert_numpy_types({
+            'summary': {
+                'total_days': total,
+                'correct': correct,
+                'accuracy': overall_accuracy,
+                'date_range': f"{df['date'].min()} to {df['date'].max()}"
+            },
+            'signal_stats': signal_stats,
+            'day_stats': day_stats,
+            'monthly_stats': monthly_stats,
+            'trading_simulation': {
+                'follow_signals': round(total_return, 2),
+                'buy_and_hold': round(bnh, 2),
+                'bullish_trades': len(bullish_days),
+                'bearish_trades': len(bearish_days),
+                'bull_return': round(bull_return, 2),
+                'bear_return': round(bear_return, 2)
+            },
+            'panchang_stats': panchang_stats,
+            'paksha_analysis': paksha_analysis,
+            'moon_by_paksha': moon_by_paksha,
+            'planet_stats': planet_stats,
+            'retrograde_stats': retrograde_stats,
+            'records': records
+        })
+    except Exception as e:
+        logger.error(f"Error getting NY session analysis: {e}")
+        return {"error": str(e)}
+
+
 # ================== STRATEGIES API ==================
 
 STRATEGIES_FILE = Path(__file__).parent.parent / "strategies.json"
@@ -521,6 +1063,50 @@ async def run_backtest(config: BacktestConfig):
         total_r = re.search(r'Total R-Multiple:\s+([\+\-]?[\d.]+)R', output)
         roi = re.search(r'^ROI:\s+([\+\-]?[\d.]+)%', output, re.MULTILINE)
 
+        # Parse individual trades from the TRADE LOG section
+        # Format: #    Date           Entry        SL        TP Dir    Outcome R         P/L       Cum R
+        # Example: 2    10-16 08:00    $  110,800 $  111,389 $  110,071 SHORT  LOSS    -1.0R    $-10.00    -1.0R
+        trade_list = []
+        trade_pattern = re.compile(
+            r'^(\d+)\s+'                              # Trade number
+            r'(\d{2}-\d{2}\s+\d{2}:\d{2})\s+'         # Date (MM-DD HH:MM)
+            r'\$\s*([\d,]+)\s+'                       # Entry price (with optional spaces after $)
+            r'(?:\$\s*([\d,]+)|---)\s+'               # Stop Loss
+            r'(?:\$\s*([\d,]+)|---)\s+'               # Take Profit
+            r'(LONG|SHORT|SKIP|ERR)\s+'               # Direction
+            r'(WIN|LOSS|BE|OPEN|INVLD|---)\s+'        # Outcome
+            r'([\+\-]?[\d.]+R|---)\s+'                # R-multiple
+            r'(\$[\+\-]?[\d,.]+|---)\s+'              # P/L
+            r'([\+\-]?[\d.]+R)',                      # Cumulative R
+            re.MULTILINE
+        )
+
+        for match in trade_pattern.finditer(output):
+            trade_num = int(match.group(1))
+            date_str = match.group(2)
+            entry = match.group(3).replace(',', '') if match.group(3) else None
+            sl = match.group(4).replace(',', '') if match.group(4) else None
+            tp = match.group(5).replace(',', '') if match.group(5) else None
+            direction = match.group(6)
+            outcome = match.group(7)
+            r_mult = match.group(8)
+            pnl = match.group(9)
+            cum_r = match.group(10)
+
+            # Include all trades (executed and skipped) so user can see full picture
+            trade_list.append({
+                "num": trade_num,
+                "date": date_str,
+                "entry": float(entry) if entry else None,
+                "stop_loss": float(sl) if sl else None,
+                "take_profit": float(tp) if tp else None,
+                "direction": direction,
+                "outcome": outcome,
+                "r_multiple": r_mult,
+                "pnl": pnl,
+                "cumulative_r": cum_r
+            })
+
         return {
             "trades": int(trades.group(1)) if trades else 0,
             "wins": int(wins.group(1)) if wins else 0,
@@ -528,6 +1114,7 @@ async def run_backtest(config: BacktestConfig):
             "win_rate": float(winrate.group(1)) if winrate else 0,
             "total_r": float(total_r.group(1)) if total_r else 0,
             "roi": float(roi.group(1)) if roi else 0,
+            "trade_list": trade_list,
             "raw_output": output
         }
 
@@ -862,6 +1449,195 @@ async def get_candles(symbol: str, timeframe: str = "1h", limit: int = 500, befo
 
     except Exception as e:
         return {"error": str(e), "candles": [], "symbol": symbol}
+
+
+@app.get("/api/ohlc/{symbol}")
+async def get_daily_ohlc(symbol: str, date: str, timezone: str = None):
+    """Get OHLC data for a specific date in the given timezone (00:00 to 23:59).
+
+    Args:
+        symbol: Trading pair or instrument symbol (e.g., BTC, ETH, GOLD, NIFTY)
+        date: Date in YYYY-MM-DD format
+        timezone: Timezone name (e.g., 'America/New_York', 'Asia/Kolkata', 'Europe/London')
+                  If not provided, uses UTC
+    """
+    import aiohttp
+    from datetime import datetime, timedelta
+    import pytz
+
+    try:
+        # Parse the date
+        target_date = datetime.strptime(date, '%Y-%m-%d')
+
+        # Timezone display names
+        timezone_names = {
+            'America/New_York': 'New York (EST/EDT)',
+            'Asia/Kolkata': 'India (IST)',
+            'Europe/London': 'London (GMT/BST)',
+            'UTC': 'UTC'
+        }
+
+        # Symbol mapping for different data sources
+        crypto_symbols = {
+            'BTC': 'BTCUSDT',
+            'ETH': 'ETHUSDT',
+            'SOL': 'SOLUSDT',
+            'XRP': 'XRPUSDT',
+            'ADA': 'ADAUSDT',
+            'DOGE': 'DOGEUSDT',
+            'DOT': 'DOTUSDT',
+            'LINK': 'LINKUSDT',
+        }
+
+        # For crypto, use Binance API with timezone-adjusted times
+        if symbol.upper() in crypto_symbols:
+            binance_symbol = crypto_symbols[symbol.upper()]
+
+            if timezone:
+                try:
+                    # Get the timezone
+                    tz = pytz.timezone(timezone)
+
+                    # Create start of day (00:00) in the given timezone
+                    local_start = tz.localize(target_date.replace(hour=0, minute=0, second=0, microsecond=0))
+                    # Create end of day (23:59:59) in the given timezone
+                    local_end = tz.localize(target_date.replace(hour=23, minute=59, second=59, microsecond=0))
+
+                    # Convert to UTC timestamps
+                    start_time = int(local_start.astimezone(pytz.UTC).timestamp() * 1000)
+                    end_time = int(local_end.astimezone(pytz.UTC).timestamp() * 1000)
+
+                    tz_display = timezone_names.get(timezone, timezone)
+                except Exception as tz_error:
+                    logger.warning(f"Timezone error: {tz_error}, falling back to UTC")
+                    start_time = int(target_date.timestamp() * 1000)
+                    end_time = int((target_date + timedelta(days=1)).timestamp() * 1000)
+                    tz_display = "UTC"
+            else:
+                # Default to UTC
+                start_time = int(target_date.timestamp() * 1000)
+                end_time = int((target_date + timedelta(days=1)).timestamp() * 1000)
+                tz_display = "UTC"
+
+            # Fetch hourly data for the full day in the timezone
+            url = "https://api.binance.com/api/v3/klines"
+            params = {
+                'symbol': binance_symbol,
+                'interval': '1h',
+                'startTime': start_time,
+                'endTime': end_time,
+                'limit': 25
+            }
+
+            async with aiohttp.ClientSession() as http_session:
+                async with http_session.get(url, params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data and len(data) > 0:
+                            # Calculate OHLC from hourly candles
+                            open_price = float(data[0][1])
+                            high_price = max(float(k[2]) for k in data)
+                            low_price = min(float(k[3]) for k in data)
+                            close_price = float(data[-1][4])
+                            volume = sum(float(k[5]) for k in data)
+
+                            return {
+                                "symbol": symbol.upper(),
+                                "date": date,
+                                "open": open_price,
+                                "high": high_price,
+                                "low": low_price,
+                                "close": close_price,
+                                "volume": volume,
+                                "timezone": tz_display,
+                                "source": "Binance"
+                            }
+                        else:
+                            return {"error": f"No data found for {symbol} on {date}", "symbol": symbol}
+                    else:
+                        return {"error": f"Binance API error: {response.status}", "symbol": symbol}
+
+        # For stocks and indices, use Yahoo Finance
+        yahoo_symbols = {
+            'NIFTY': '^NSEI',
+            'SENSEX': '^BSESN',
+            'SPX': '^GSPC',
+            'DJI': '^DJI',
+            'NASDAQ': '^IXIC',
+            'GOLD': 'GC=F',
+            'XAU': 'GC=F',
+            'SILVER': 'SI=F',
+            'XAG': 'SI=F',
+            'CRUDE_OIL': 'CL=F',
+            'CL': 'CL=F',
+            'NATURAL_GAS': 'NG=F',
+            'NG': 'NG=F',
+            'COPPER': 'HG=F',
+            'HG': 'HG=F',
+            # Indian stocks
+            'RELIANCE': 'RELIANCE.NS',
+            'TCS': 'TCS.NS',
+            'INFY': 'INFY.NS',
+            'HDFC': 'HDFCBANK.NS',
+            'ICICI': 'ICICIBANK.NS',
+            # US stocks
+            'AAPL': 'AAPL',
+            'MSFT': 'MSFT',
+            'GOOGL': 'GOOGL',
+            'AMZN': 'AMZN',
+            'TSLA': 'TSLA',
+            'META': 'META',
+            'NVDA': 'NVDA',
+        }
+
+        yahoo_symbol = yahoo_symbols.get(symbol.upper(), symbol.upper())
+
+        # Get timezone display name
+        tz_display = timezone_names.get(timezone, timezone) if timezone else "UTC"
+
+        # Yahoo Finance API - for stocks we use daily data
+        period1 = int(target_date.timestamp())
+        period2 = int((target_date + timedelta(days=1)).timestamp())
+
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}"
+        params = {
+            'period1': period1,
+            'period2': period2,
+            'interval': '1d'
+        }
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+
+        async with aiohttp.ClientSession() as http_session:
+            async with http_session.get(url, params=params, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    result = data.get('chart', {}).get('result', [])
+                    if result and len(result) > 0:
+                        quote = result[0].get('indicators', {}).get('quote', [{}])[0]
+                        if quote.get('open') and len(quote.get('open', [])) > 0:
+                            return {
+                                "symbol": symbol.upper(),
+                                "date": date,
+                                "open": quote['open'][0],
+                                "high": quote['high'][0],
+                                "low": quote['low'][0],
+                                "close": quote['close'][0],
+                                "volume": quote.get('volume', [0])[0],
+                                "timezone": tz_display,
+                                "source": "Yahoo Finance"
+                            }
+                        else:
+                            return {"error": f"No data found for {symbol} on {date}", "symbol": symbol}
+                    else:
+                        return {"error": f"No data found for {symbol} on {date}", "symbol": symbol}
+                else:
+                    return {"error": f"Yahoo Finance API error: {response.status}", "symbol": symbol}
+
+    except Exception as e:
+        logger.error(f"Error fetching OHLC for {symbol} on {date}: {e}")
+        return {"error": str(e), "symbol": symbol}
 
 
 @app.get("/api/account")
