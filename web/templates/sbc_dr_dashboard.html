@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBC + DR Combined Strategy Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1em;
+        }
+
+        .nav-links {
+            margin-top: 15px;
+        }
+
+        .nav-links a {
+            color: #4ecdc4;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #ffd700;
+        }
+
+        /* Today's Decision Section */
+        .today-section {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(255, 215, 0, 0.1));
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .today-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .today-date {
+            font-size: 1.5em;
+            color: #ffd700;
+        }
+
+        .signal-badge {
+            font-size: 1.8em;
+            font-weight: bold;
+            padding: 15px 40px;
+            border-radius: 15px;
+            text-transform: uppercase;
+        }
+
+        .signal-bullish {
+            background: linear-gradient(135deg, #00c853, #00a843);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(0, 200, 83, 0.4);
+        }
+
+        .signal-bearish {
+            background: linear-gradient(135deg, #ff5252, #d32f2f);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(255, 82, 82, 0.4);
+        }
+
+        .signal-neutral {
+            background: linear-gradient(135deg, #ffc107, #ff9800);
+            color: #1a1a2e;
+            box-shadow: 0 4px 20px rgba(255, 193, 7, 0.4);
+        }
+
+        .signal-conflict {
+            background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(156, 39, 176, 0.4);
+        }
+
+        .decision-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .decision-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .decision-card h3 {
+            color: #4ecdc4;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .signal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .signal-row:last-child {
+            border-bottom: none;
+        }
+
+        .signal-label {
+            color: #888;
+        }
+
+        .signal-value {
+            font-weight: bold;
+        }
+
+        .signal-value.bullish { color: #00c853; }
+        .signal-value.bearish { color: #ff5252; }
+        .signal-value.neutral { color: #ffc107; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .stat-value.positive { color: #00c853; }
+        .stat-value.negative { color: #ff5252; }
+
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        /* Filters Section */
+        .filters-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filters-header h2 {
+            color: #ffd700;
+            font-size: 1.2em;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            color: #fff;
+            font-size: 0.9em;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4ecdc4, #3db8b0);
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            margin-left: 10px;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Similar Cases Section */
+        .similar-cases {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .similar-cases h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .cases-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .cases-table th {
+            background: rgba(0, 0, 0, 0.3);
+            color: #4ecdc4;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .cases-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .cases-table tbody tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .cases-table tbody tr:hover {
+            background-color: rgba(78, 205, 196, 0.15);
+        }
+
+        .cases-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .result-correct {
+            color: #00c853;
+            font-weight: bold;
+        }
+
+        .result-wrong {
+            color: #ff5252;
+            font-weight: bold;
+        }
+
+        /* History Table */
+        .history-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .history-section h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .pagination button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pagination button:hover {
+            background: rgba(78, 205, 196, 0.3);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Decision Basis */
+        .decision-basis {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .basis-title {
+            color: #ffd700;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+
+        .basis-list {
+            list-style: none;
+        }
+
+        .basis-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+        }
+
+        .basis-list li:last-child {
+            border-bottom: none;
+        }
+
+        .basis-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+
+        .basis-icon.check {
+            background: rgba(0, 200, 83, 0.2);
+            color: #00c853;
+        }
+
+        .basis-icon.cross {
+            background: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+        }
+
+        .basis-icon.info {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #4ecdc4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Confidence Meter */
+        .confidence-meter {
+            margin-top: 20px;
+        }
+
+        .meter-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .meter-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+
+        .meter-fill.high {
+            background: linear-gradient(90deg, #00c853, #4ecdc4);
+        }
+
+        .meter-fill.medium {
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+        }
+
+        .meter-fill.low {
+            background: linear-gradient(90deg, #ff5252, #ff9800);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            .filters-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .decision-grid {
+                grid-template-columns: 1fr;
+            }
+            .filters-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SBC + DR Combined Strategy Dashboard</h1>
+            <div class="subtitle">Sarvatobhadra Chakra + Defining Range | NY Session Analysis</div>
+            <div class="nav-links">
+                <a href="/sbc-custom">SBC Analysis</a>
+                <a href="/sbc/ny-analysis">NY Session</a>
+                <a href="/trading">Trading</a>
+                <a href="/markets">Markets</a>
+                <a href="/">Dashboard</a>
+            </div>
+        </header>
+
+        <!-- Today's Decision -->
+        <section class="today-section" id="today-section">
+            <div class="loading">
+                <div class="spinner"></div>
+                Loading today's analysis...
+            </div>
+        </section>
+
+        <!-- Stats Overview -->
+        <section class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="total-days">--</div>
+                <div class="stat-label">Total Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="combined-trades">--</div>
+                <div class="stat-label">Combined Trades</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="combined-accuracy">--</div>
+                <div class="stat-label">Combined Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value positive" id="total-pnl">--</div>
+                <div class="stat-label">Total P&L</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="dr-accuracy">--</div>
+                <div class="stat-label">DR Accuracy</div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="filters-section">
+            <div class="filters-header">
+                <h2>Filters</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                    <button class="btn btn-reset" onclick="resetFilters()">Reset</button>
+                </div>
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Date From</label>
+                    <input type="date" id="filter-date-from" value="2017-09-01">
+                </div>
+                <div class="filter-group">
+                    <label>Date To</label>
+                    <input type="date" id="filter-date-to">
+                </div>
+                <div class="filter-group">
+                    <label>Signal Type</label>
+                    <select id="filter-signal">
+                        <option value="">All</option>
+                        <option value="BULLISH">Bullish Only</option>
+                        <option value="BEARISH">Bearish Only</option>
+                        <option value="AGREE">SBC+DR Agree</option>
+                        <option value="CONFLICT">SBC+DR Conflict</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Moon Nakshatra</label>
+                    <select id="filter-nakshatra">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Tithi</label>
+                    <select id="filter-tithi">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Day of Week</label>
+                    <select id="filter-day">
+                        <option value="">All</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts -->
+        <section class="charts-section">
+            <div class="chart-card">
+                <h3>Accuracy Comparison</h3>
+                <div class="chart-container">
+                    <canvas id="accuracy-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Cumulative P&L Over Time</h3>
+                <div class="chart-container">
+                    <canvas id="pnl-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Monthly Performance</h3>
+                <div class="chart-container">
+                    <canvas id="monthly-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Signal Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="distribution-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Similar Cases -->
+        <section class="similar-cases" id="similar-cases">
+            <h2>Similar Historical Cases</h2>
+            <p style="color: #888; margin-bottom: 15px;">Cases with same Moon Nakshatra + similar panchang factors</p>
+            <div style="overflow-x: auto;">
+            <table class="cases-table" id="similar-cases-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Nakshatra</th>
+                        <th>Tithi</th>
+                        <th>NY Open</th>
+                        <th>1Hr High</th>
+                        <th>1Hr Low</th>
+                        <th>10:30 Close</th>
+                        <th>Sess High</th>
+                        <th>Sess Low</th>
+                        <th>Break High</th>
+                        <th>Break Low</th>
+                        <th>SBC</th>
+                        <th>DR</th>
+                        <th>Combined</th>
+                        <th>Actual</th>
+                        <th>Result</th>
+                        <th>P&L</th>
+                    </tr>
+                </thead>
+                <tbody id="similar-cases-body">
+                    <tr><td colspan="17" class="loading">Loading similar cases...</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </section>
+
+        <!-- Full History -->
+        <section class="history-section">
+            <h2>Full Trading History</h2>
+            <div class="table-controls">
+                <div>
+                    <span id="showing-count">Showing 0-0 of 0</span>
+                </div>
+                <div class="pagination">
+                    <button id="prev-page" onclick="prevPage()" disabled>&lt; Prev</button>
+                    <span id="page-info">Page 1</span>
+                    <button id="next-page" onclick="nextPage()">Next &gt;</button>
+                </div>
+            </div>
+            <table class="cases-table" id="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Day</th>
+                        <th>Nakshatra</th>
+                        <th>Tithi</th>
+                        <th>SBC V6</th>
+                        <th>DR</th>
+                        <th>Agree?</th>
+                        <th>Decision</th>
+                        <th>Actual</th>
+                        <th>Result</th>
+                        <th>P&L</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="11" class="loading">Loading history...</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const perPage = 50;
+        let charts = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Set default date range
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filter-date-to').value = today;
+
+            await loadData();
+            await loadTodaySignal();
+            populateFilters();
+            updateStats();
+            renderCharts();
+            loadSimilarCases();
+            renderHistory();
+        });
+
+        async function loadData() {
+            try {
+                const response = await fetch('/api/sbc-dr/history');
+                const data = await response.json();
+                allData = data.history || [];
+                filteredData = [...allData];
+                console.log(`Loaded ${allData.length} records`);
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        async function loadTodaySignal() {
+            const container = document.getElementById('today-section');
+            try {
+                const response = await fetch('/api/sbc-dr/today');
+                const data = await response.json();
+
+                if (data.error) {
+                    container.innerHTML = `<div class="loading">${data.error}</div>`;
+                    return;
+                }
+
+                const signalClass = getSignalClass(data.combined_signal);
+                const confidenceLevel = data.signals_agree ? 'high' : (data.dr_signal ? 'medium' : 'low');
+                const confidencePercent = data.signals_agree ? 85 : (data.dr_signal ? 65 : 50);
+
+                container.innerHTML = `
+                    <div class="today-header">
+                        <div class="today-date">${formatDate(data.date)} - ${data.day_of_week || ''}</div>
+                        <div class="signal-badge ${signalClass}">${data.combined_signal || 'LOADING'}</div>
+                    </div>
+
+                    <div class="decision-grid">
+                        <div class="decision-card">
+                            <h3>SBC V6 Signal</h3>
+                            <div class="signal-row">
+                                <span class="signal-label">Signal:</span>
+                                <span class="signal-value ${getSignalColorClass(data.v6_signal)}">${data.v6_signal || 'N/A'}</span>
+                            </div>
+                            <div class="signal-row">
+                                <span class="signal-label">Moon Nakshatra:</span>
+                                <span class="signal-value">${data.moon_nakshatra || 'N/A'}</span>
+                            </div>
+                            <div class="signal-row">
+                                <span class="signal-label">Tithi:</span>
+                                <span class="signal-value">${data.tithi || 'N/A'}</span>
+                            </div>
+                            <div class="signal-row">
+                                <span class="signal-label">Nakshatra Net:</span>
+                                <span class="signal-value">${data.nakshatra_net || 0}</span>
+                            </div>
+                        </div>
+
+                        <div class="decision-card">
+                            <h3>DR Signal</h3>
+                            <div class="signal-row">
+                                <span class="signal-label">Signal:</span>
+                                <span class="signal-value ${getSignalColorClass(data.dr_signal)}">${data.dr_signal || 'Pending (after 10:00 AM)'}</span>
+                            </div>
+                            <div class="signal-row">
+                                <span class="signal-label">DR High:</span>
+                                <span class="signal-value">${data.dr_high ? '$' + data.dr_high.toLocaleString() : 'N/A'}</span>
+                            </div>
+                            <div class="signal-row">
+                                <span class="signal-label">DR Low:</span>
+                                <span class="signal-value">${data.dr_low ? '$' + data.dr_low.toLocaleString() : 'N/A'}</span>
+                            </div>
+                            <div class="signal-row">
+                                <span class="signal-label">Breakout:</span>
+                                <span class="signal-value">${data.breakout_direction || 'N/A'}</span>
+                            </div>
+                        </div>
+
+                        <div class="decision-card">
+                            <h3>Combined Decision</h3>
+                            <div class="signal-row">
+                                <span class="signal-label">Signals Agree:</span>
+                                <span class="signal-value ${data.signals_agree ? 'bullish' : 'bearish'}">${data.signals_agree ? 'YES' : 'NO'}</span>
+                            </div>
+                            <div class="signal-row">
+                                <span class="signal-label">Decision:</span>
+                                <span class="signal-value ${getSignalColorClass(data.combined_signal)}">${data.combined_signal || 'WAIT'}</span>
+                            </div>
+                            <div class="signal-row">
+                                <span class="signal-label">Reason:</span>
+                                <span class="signal-value">${data.decision_reason || ''}</span>
+                            </div>
+
+                            <div class="confidence-meter">
+                                <div class="meter-label">
+                                    <span>Confidence</span>
+                                    <span>${confidencePercent}%</span>
+                                </div>
+                                <div class="meter-bar">
+                                    <div class="meter-fill ${confidenceLevel}" style="width: ${confidencePercent}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="decision-basis">
+                        <div class="basis-title">Decision Basis:</div>
+                        <ul class="basis-list">
+                            <li>
+                                <span class="basis-icon ${data.v6_signal && !data.v6_signal.includes('NEUTRAL') ? 'check' : 'info'}">
+                                    ${data.v6_signal && !data.v6_signal.includes('NEUTRAL') ? '✓' : 'i'}
+                                </span>
+                                SBC V6: ${data.v6_signal || 'Calculating...'} ${data.v6_reason ? '(' + data.v6_reason + ')' : ''}
+                            </li>
+                            <li>
+                                <span class="basis-icon ${data.dr_signal ? 'check' : 'info'}">
+                                    ${data.dr_signal ? '✓' : 'i'}
+                                </span>
+                                DR: ${data.dr_signal || 'Awaiting breakout'} ${data.breakout_direction ? '(Breakout: ' + data.breakout_direction + ')' : ''}
+                            </li>
+                            <li>
+                                <span class="basis-icon ${data.signals_agree ? 'check' : 'cross'}">
+                                    ${data.signals_agree ? '✓' : '✗'}
+                                </span>
+                                Signal Agreement: ${data.signals_agree ? 'Both signals align - HIGH CONFIDENCE' : 'Signals differ - Use DR (60.4% win rate in conflicts)'}
+                            </li>
+                            <li>
+                                <span class="basis-icon info">i</span>
+                                Historical accuracy for this Nakshatra: ${data.nakshatra_accuracy || 'N/A'}
+                            </li>
+                        </ul>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="loading">Error loading today's signal: ${error.message}</div>`;
+            }
+        }
+
+        function populateFilters() {
+            // Populate nakshatra filter
+            const nakshatras = [...new Set(allData.map(d => d.moon_nakshatra).filter(n => n))].sort();
+            const nakSelect = document.getElementById('filter-nakshatra');
+            nakshatras.forEach(n => {
+                nakSelect.innerHTML += `<option value="${n}">${n}</option>`;
+            });
+
+            // Populate tithi filter
+            const tithis = [...new Set(allData.map(d => d.tithi).filter(t => t))].sort();
+            const tithiSelect = document.getElementById('filter-tithi');
+            tithis.forEach(t => {
+                tithiSelect.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+        }
+
+        function applyFilters() {
+            const dateFrom = document.getElementById('filter-date-from').value;
+            const dateTo = document.getElementById('filter-date-to').value;
+            const signal = document.getElementById('filter-signal').value;
+            const nakshatra = document.getElementById('filter-nakshatra').value;
+            const tithi = document.getElementById('filter-tithi').value;
+            const day = document.getElementById('filter-day').value;
+
+            filteredData = allData.filter(d => {
+                if (dateFrom && d.date < dateFrom) return false;
+                if (dateTo && d.date > dateTo) return false;
+                if (nakshatra && d.moon_nakshatra !== nakshatra) return false;
+                if (tithi && d.tithi !== tithi) return false;
+
+                if (signal === 'BULLISH' && !d.combined_signal?.includes('BULLISH')) return false;
+                if (signal === 'BEARISH' && !d.combined_signal?.includes('BEARISH')) return false;
+                if (signal === 'AGREE' && !d.signals_agree) return false;
+                if (signal === 'CONFLICT' && d.signals_agree) return false;
+
+                return true;
+            });
+
+            currentPage = 1;
+            updateStats();
+            renderCharts();
+            renderHistory();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-date-from').value = '2017-09-01';
+            document.getElementById('filter-date-to').value = new Date().toISOString().split('T')[0];
+            document.getElementById('filter-signal').value = '';
+            document.getElementById('filter-nakshatra').value = '';
+            document.getElementById('filter-tithi').value = '';
+            document.getElementById('filter-day').value = '';
+            filteredData = [...allData];
+            currentPage = 1;
+            updateStats();
+            renderCharts();
+            renderHistory();
+        }
+
+        function updateStats() {
+            document.getElementById('total-days').textContent = filteredData.length.toLocaleString();
+
+            const combinedTrades = filteredData.filter(d => d.signals_agree);
+            document.getElementById('combined-trades').textContent = combinedTrades.length.toLocaleString();
+
+            const correct = combinedTrades.filter(d => d.combined_correct).length;
+            const accuracy = combinedTrades.length > 0 ? (correct / combinedTrades.length * 100).toFixed(1) : 0;
+            document.getElementById('combined-accuracy').textContent = accuracy + '%';
+
+            const totalPnl = combinedTrades.reduce((sum, d) => sum + (d.pnl_combined || 0), 0);
+            document.getElementById('total-pnl').textContent = '+' + totalPnl.toFixed(1) + '%';
+
+            const drTrades = filteredData.filter(d => d.dr_signal);
+            const drCorrect = drTrades.filter(d => d.dr_correct).length;
+            const drAcc = drTrades.length > 0 ? (drCorrect / drTrades.length * 100).toFixed(1) : 0;
+            document.getElementById('dr-accuracy').textContent = drAcc + '%';
+        }
+
+        function renderCharts() {
+            // Destroy existing charts
+            Object.values(charts).forEach(c => c?.destroy());
+
+            // Accuracy Comparison Chart
+            const sbcTrades = filteredData.filter(d => d.v6_signal && !d.v6_signal.includes('NEUTRAL'));
+            const sbcCorrect = sbcTrades.filter(d => d.v6_correct).length;
+            const sbcAcc = sbcTrades.length > 0 ? (sbcCorrect / sbcTrades.length * 100) : 0;
+
+            const drTrades = filteredData.filter(d => d.dr_signal);
+            const drCorrect = drTrades.filter(d => d.dr_correct).length;
+            const drAcc = drTrades.length > 0 ? (drCorrect / drTrades.length * 100) : 0;
+
+            const combinedTrades = filteredData.filter(d => d.signals_agree);
+            const combinedCorrect = combinedTrades.filter(d => d.combined_correct).length;
+            const combinedAcc = combinedTrades.length > 0 ? (combinedCorrect / combinedTrades.length * 100) : 0;
+
+            charts.accuracy = new Chart(document.getElementById('accuracy-chart'), {
+                type: 'bar',
+                data: {
+                    labels: ['SBC V6 Only', 'DR Only', 'Combined (Agree)'],
+                    datasets: [{
+                        label: 'Accuracy %',
+                        data: [sbcAcc, drAcc, combinedAcc],
+                        backgroundColor: ['rgba(78, 205, 196, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(0, 200, 83, 0.7)'],
+                        borderColor: ['#4ecdc4', '#ffc107', '#00c853'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#888' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#888' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Cumulative P&L Chart
+            const sortedData = [...filteredData].sort((a, b) => a.date.localeCompare(b.date));
+            let cumPnl = 0;
+            const pnlData = sortedData.filter(d => d.signals_agree).map(d => {
+                cumPnl += d.pnl_combined || 0;
+                return { date: d.date, pnl: cumPnl };
+            });
+
+            // Sample every 10th point for large datasets
+            const sampledPnl = pnlData.filter((_, i) => i % Math.ceil(pnlData.length / 100) === 0 || i === pnlData.length - 1);
+
+            charts.pnl = new Chart(document.getElementById('pnl-chart'), {
+                type: 'line',
+                data: {
+                    labels: sampledPnl.map(d => d.date),
+                    datasets: [{
+                        label: 'Cumulative P&L %',
+                        data: sampledPnl.map(d => d.pnl),
+                        borderColor: '#00c853',
+                        backgroundColor: 'rgba(0, 200, 83, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#888' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#888', maxRotation: 45 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Monthly Performance
+            const monthlyData = {};
+            filteredData.filter(d => d.signals_agree).forEach(d => {
+                const month = d.date.substring(0, 7);
+                if (!monthlyData[month]) monthlyData[month] = { pnl: 0, count: 0, correct: 0 };
+                monthlyData[month].pnl += d.pnl_combined || 0;
+                monthlyData[month].count++;
+                if (d.combined_correct) monthlyData[month].correct++;
+            });
+
+            const months = Object.keys(monthlyData).sort().slice(-24); // Last 24 months
+            charts.monthly = new Chart(document.getElementById('monthly-chart'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Monthly P&L %',
+                        data: months.map(m => monthlyData[m]?.pnl || 0),
+                        backgroundColor: months.map(m => (monthlyData[m]?.pnl || 0) >= 0 ? 'rgba(0, 200, 83, 0.7)' : 'rgba(255, 82, 82, 0.7)'),
+                        borderColor: months.map(m => (monthlyData[m]?.pnl || 0) >= 0 ? '#00c853' : '#ff5252'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#888' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#888', maxRotation: 45 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Signal Distribution
+            const agree = filteredData.filter(d => d.signals_agree).length;
+            const conflict = filteredData.filter(d => d.dr_signal && d.v6_signal && !d.signals_agree).length;
+            const sbcOnly = filteredData.filter(d => !d.dr_signal && d.v6_signal).length;
+            const neutral = filteredData.filter(d => !d.dr_signal && (!d.v6_signal || d.v6_signal.includes('NEUTRAL'))).length;
+
+            charts.distribution = new Chart(document.getElementById('distribution-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Agree (Trade)', 'Conflict (Skip/DR)', 'SBC Only', 'No Signal'],
+                    datasets: [{
+                        data: [agree, conflict, sbcOnly, neutral],
+                        backgroundColor: ['rgba(0, 200, 83, 0.7)', 'rgba(156, 39, 176, 0.7)', 'rgba(78, 205, 196, 0.7)', 'rgba(128, 128, 128, 0.7)'],
+                        borderColor: ['#00c853', '#9c27b0', '#4ecdc4', '#808080'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#888' }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadSimilarCases() {
+            try {
+                const response = await fetch('/api/sbc-dr/similar-cases');
+                const data = await response.json();
+
+                const tbody = document.getElementById('similar-cases-body');
+                if (!data.cases || data.cases.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">No similar cases found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.cases.map(c => `
+                    <tr onclick="window.location='/trade-detail?date=${c.date}'" title="Click to view trade details">
+                        <td>${formatDate(c.date)}</td>
+                        <td>${c.moon_nakshatra || 'N/A'}</td>
+                        <td>${c.tithi || 'N/A'}</td>
+                        <td style="color: #ffd700;">${c.ny_open ? '$' + formatPrice(c.ny_open) : '-'}</td>
+                        <td style="color: #00c853;">${c.first_hour_high ? '$' + formatPrice(c.first_hour_high) : '-'}</td>
+                        <td style="color: #ff5252;">${c.first_hour_low ? '$' + formatPrice(c.first_hour_low) : '-'}</td>
+                        <td style="color: #4ecdc4;">${c.ny_close_1030 ? '$' + formatPrice(c.ny_close_1030) : '-'}</td>
+                        <td style="color: #00c853;">${c.session_high_full ? '$' + formatPrice(c.session_high_full) : '-'}</td>
+                        <td style="color: #ff5252;">${c.session_low_full ? '$' + formatPrice(c.session_low_full) : '-'}</td>
+                        <td style="color: #00c853;">${c.time_close_above_1hr_high || '-'}</td>
+                        <td style="color: #ff5252;">${c.time_close_below_1hr_low || '-'}</td>
+                        <td class="${getSignalColorClass(c.v6_signal)}">${formatSignal(c.v6_signal)}</td>
+                        <td class="${getSignalColorClass(c.dr_signal)}">${c.dr_signal || 'N/A'}</td>
+                        <td class="${getSignalColorClass(c.combined_signal)}">${c.combined_signal || 'N/A'}</td>
+                        <td>${c.actual_direction || 'N/A'}</td>
+                        <td class="${c.combined_correct ? 'result-correct' : 'result-wrong'}">${c.combined_correct ? '✓' : '✗'}</td>
+                        <td style="color: ${(c.pnl_combined || 0) >= 0 ? '#00c853' : '#ff5252'}">${(c.pnl_combined || 0).toFixed(2)}%</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading similar cases:', error);
+            }
+        }
+
+        function renderHistory() {
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            const pageData = filteredData.slice(start, end);
+
+            document.getElementById('showing-count').textContent =
+                `Showing ${start + 1}-${Math.min(end, filteredData.length)} of ${filteredData.length}`;
+            document.getElementById('page-info').textContent =
+                `Page ${currentPage} of ${Math.ceil(filteredData.length / perPage)}`;
+
+            document.getElementById('prev-page').disabled = currentPage === 1;
+            document.getElementById('next-page').disabled = end >= filteredData.length;
+
+            const tbody = document.getElementById('history-body');
+            tbody.innerHTML = pageData.map(d => {
+                const dayOfWeek = new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' });
+                return `
+                    <tr onclick="window.location='/trade-detail?date=${d.date}'" title="Click to view trade details">
+                        <td>${formatDate(d.date)}</td>
+                        <td>${dayOfWeek}</td>
+                        <td>${d.moon_nakshatra || 'N/A'}</td>
+                        <td>${d.tithi || 'N/A'}</td>
+                        <td class="${getSignalColorClass(d.v6_signal)}">${formatSignal(d.v6_signal)}</td>
+                        <td class="${getSignalColorClass(d.dr_signal)}">${d.dr_signal || 'N/A'}</td>
+                        <td>${d.signals_agree ? '✓' : '✗'}</td>
+                        <td class="${getSignalColorClass(d.combined_signal)}">${d.combined_signal || 'N/A'}</td>
+                        <td>${d.actual_direction || 'N/A'}</td>
+                        <td class="${d.combined_correct ? 'result-correct' : (d.combined_correct === false ? 'result-wrong' : '')}">${d.combined_correct === true ? '✓' : (d.combined_correct === false ? '✗' : '-')}</td>
+                        <td style="color: ${(d.pnl_combined || 0) >= 0 ? '#00c853' : '#ff5252'}">${(d.pnl_combined || 0).toFixed(2)}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderHistory();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage * perPage < filteredData.length) {
+                currentPage++;
+                renderHistory();
+            }
+        }
+
+        // Utility functions
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatSignal(signal) {
+            if (!signal) return 'N/A';
+            return signal.replace('MODERATELY_', 'MOD_').replace('SLIGHTLY_', 'SL_').replace('STRONGLY_', 'STR_');
+        }
+
+        function formatPrice(price) {
+            if (!price) return '-';
+            return parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function getSignalClass(signal) {
+            if (!signal) return 'signal-neutral';
+            signal = signal.toUpperCase();
+            if (signal.includes('BULLISH')) return 'signal-bullish';
+            if (signal.includes('BEARISH')) return 'signal-bearish';
+            if (signal === 'CONFLICT') return 'signal-conflict';
+            return 'signal-neutral';
+        }
+
+        function getSignalColorClass(signal) {
+            if (!signal) return '';
+            signal = signal.toUpperCase();
+            if (signal.includes('BULLISH')) return 'bullish';
+            if (signal.includes('BEARISH')) return 'bearish';
+            return 'neutral';
+        }
+    </script>
+</body>
+</html>

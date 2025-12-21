@@ -1,0 +1,95 @@
+{
+  "version": "V6",
+  "description": "SBC V6 NEUTRAL Decision Rules with All Safety Checks",
+  "baseline": {
+    "total_days": 4643,
+    "date_range": "2013-04-03 to 2025-12-20",
+    "v6_trades": 3528,
+    "v6_accuracy": 51.2,
+    "v6_pnl": 615.8,
+    "period": "~12.7 years"
+  },
+  "bullish_nakshatras": {
+    "Mula": 0.689,
+    "Chitra": 0.625,
+    "Revati": 0.585,
+    "Punarvasu": 0.574,
+    "Uttara Ashadha": 0.568,
+    "Dhanishta": 0.548
+  },
+  "bearish_nakshatras": {
+    "Vishakha": 0.413,
+    "Purva Bhadrapada": 0.419,
+    "Jyeshtha": 0.432,
+    "Pushya": 0.435,
+    "Mrigashira": 0.447
+  },
+  "safety_checks": {
+    "high_fail_moon_nakshatras": {
+      "Anuradha": 0.71,
+      "Mrigashira": 0.69,
+      "Ardra": 0.61,
+      "Purva Ashadha": 0.62,
+      "Ashlesha": 0.62,
+      "Revati": 0.58,
+      "Mula": 0.58,
+      "Magha": 0.57,
+      "Rohini": 0.55,
+      "Punarvasu": 0.53
+    },
+    "high_fail_tithis": {
+      "Ashtami": 0.68,
+      "Pratipada": 0.5,
+      "Purnima/Amavasya": 0.45,
+      "Dvitiya": 0.444
+    },
+    "signal_nakshatra_skip_100pct": [
+      "MODERATELY_BEARISH+Shravana",
+      "NEUTRAL+Purva Ashadha",
+      "MODERATELY_BEARISH+Vishakha"
+    ],
+    "signal_nakshatra_high_fail": {
+      "MODERATELY_BEARISH+Pushya": 0.833,
+      "MODERATELY_BULLISH+Purva Bhadrapada": 0.75,
+      "MODERATELY_BULLISH+Jyeshtha": 0.667,
+      "STRONGLY_BULLISH+Purva Phalguni": 0.6
+    }
+  },
+  "decision_rules": [
+    {
+      "rule": 1,
+      "name": "Strong Bullish Nakshatra",
+      "condition": "Moon in Mula(68.9%), Chitra(62.5%), or Revati(58.5%)",
+      "action": "MODERATELY_BULLISH",
+      "crypto_interpretation": "Strong historical bullish bias"
+    },
+    {
+      "rule": 2,
+      "name": "Strong Bearish Nakshatra",
+      "condition": "Moon in Vishakha(41.3%), Purva Bhadrapada(41.9%), or Jyeshtha(43.2%)",
+      "action": "MODERATELY_BEARISH",
+      "crypto_interpretation": "Strong historical bearish bias"
+    },
+    {
+      "rule": 3,
+      "name": "Bullish Nakshatra + Negative Panchang",
+      "condition": "Moon in bullish nakshatra AND (nakshatra_net < 0 OR tithi_net < 0)",
+      "action": "MODERATELY_BULLISH",
+      "crypto_interpretation": "Negative vedhas = bullish for crypto"
+    },
+    {
+      "rule": 4,
+      "name": "Bearish Nakshatra + Positive Panchang",
+      "condition": "Moon in bearish nakshatra AND (nakshatra_net > 0 OR tithi_net > 0)",
+      "action": "MODERATELY_BEARISH",
+      "crypto_interpretation": "Positive vedhas = bearish for crypto"
+    },
+    {
+      "rule": 5,
+      "name": "Panchang Factor Alignment",
+      "condition": "2+ positive factors = SLIGHTLY_BEARISH, 2+ negative = SLIGHTLY_BULLISH",
+      "action": "SLIGHTLY_BULLISH or SLIGHTLY_BEARISH",
+      "crypto_interpretation": "Multiple panchang factors align"
+    }
+  ]
+}

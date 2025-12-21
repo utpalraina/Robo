@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Detail - SBC + DR</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .back-btn {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+            border: 1px solid #4ecdc4;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(78, 205, 196, 0.4);
+        }
+
+        h1 {
+            font-size: 1.8em;
+            color: #ffd700;
+        }
+
+        .trade-header {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-card h3 {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+
+        .header-card .value {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        .value.bullish { color: #00c853; }
+        .value.bearish { color: #ff5252; }
+        .value.neutral { color: #ffc107; }
+        .value.positive { color: #00c853; }
+        .value.negative { color: #ff5252; }
+
+        .chart-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-section h2 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        #chart-container {
+            width: 100%;
+            height: 500px;
+            background: #0a0a1a;
+            border-radius: 10px;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-box.dr-range { background: rgba(78, 205, 196, 0.3); border: 1px solid #4ecdc4; }
+        .legend-box.idr-range { background: rgba(255, 215, 0, 0.3); border: 1px solid #ffd700; }
+        .legend-box.entry { background: #00c853; }
+        .legend-box.target { background: #4ecdc4; }
+
+        .signal-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .detail-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #888;
+        }
+
+        .detail-value {
+            font-weight: 500;
+        }
+
+        .timeframe-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tf-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tf-btn:hover, .tf-btn.active {
+            background: rgba(78, 205, 196, 0.3);
+            color: #4ecdc4;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 100px;
+            color: #888;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 100px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #4ecdc4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .result-badge.correct {
+            background: rgba(0, 200, 83, 0.2);
+            color: #00c853;
+        }
+
+        .result-badge.wrong {
+            background: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+        }
+
+        @media (max-width: 768px) {
+            .signal-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/sbc-dr-dashboard" class="back-btn">&larr; Back to Dashboard</a>
+            <h1>Trade Detail: <span id="trade-date">Loading...</span></h1>
+            <div></div>
+        </header>
+
+        <div class="trade-header" id="trade-header">
+            <div class="header-card">
+                <h3>Combined Signal</h3>
+                <div class="value" id="combined-signal">--</div>
+            </div>
+            <div class="header-card">
+                <h3>Actual Result</h3>
+                <div class="value" id="actual-result">--</div>
+            </div>
+            <div class="header-card">
+                <h3>Outcome</h3>
+                <div id="outcome">--</div>
+            </div>
+            <div class="header-card">
+                <h3>P&L</h3>
+                <div class="value" id="pnl">--</div>
+            </div>
+            <div class="header-card">
+                <h3>Session Change</h3>
+                <div class="value" id="session-change">--</div>
+            </div>
+        </div>
+
+        <section class="chart-section">
+            <h2>Price Chart - NY Session</h2>
+            <div class="timeframe-selector">
+                <button class="tf-btn" data-tf="5m" onclick="changeTimeframe('5m')">5 Min</button>
+                <button class="tf-btn active" data-tf="15m" onclick="changeTimeframe('15m')">15 Min</button>
+                <button class="tf-btn" data-tf="1h" onclick="changeTimeframe('1h')">1 Hour</button>
+                <button class="tf-btn" data-tf="1d" onclick="changeTimeframe('1d')">Daily</button>
+            </div>
+            <div id="chart-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading chart data...
+                </div>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-box dr-range"></div>
+                    <span>DR Range (9:30-10:00)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box idr-range"></div>
+                    <span>IDR Range (9:30-10:30)</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="signal-details">
+            <div class="detail-card">
+                <h3>SBC V6 Signal</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Signal</span>
+                    <span class="detail-value" id="sbc-signal">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Reason</span>
+                    <span class="detail-value" id="sbc-reason">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Moon Nakshatra</span>
+                    <span class="detail-value" id="moon-nakshatra">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Tithi</span>
+                    <span class="detail-value" id="tithi">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Nakshatra Net</span>
+                    <span class="detail-value" id="nakshatra-net">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Tithi Net</span>
+                    <span class="detail-value" id="tithi-net">--</span>
+                </div>
+            </div>
+
+            <div class="detail-card">
+                <h3>DR Signal</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Signal</span>
+                    <span class="detail-value" id="dr-signal">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">DR High</span>
+                    <span class="detail-value" id="dr-high">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">DR Low</span>
+                    <span class="detail-value" id="dr-low">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Breakout Direction</span>
+                    <span class="detail-value" id="breakout-dir">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Retracement to DR</span>
+                    <span class="detail-value" id="retracement">--</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Signals Agree</span>
+                    <span class="detail-value" id="signals-agree">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let candleSeries = null;
+        let tradeData = null;
+        let currentTimeframe = '15m';
+
+        // Get date from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const tradeDate = urlParams.get('date');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!tradeDate) {
+                document.getElementById('trade-date').textContent = 'No date specified';
+                return;
+            }
+
+            document.getElementById('trade-date').textContent = formatDate(tradeDate);
+            await loadTradeData();
+            await loadChartData(currentTimeframe);
+        });
+
+        async function loadTradeData() {
+            try {
+                const response = await fetch(`/api/sbc-dr/trade/${tradeDate}`);
+                tradeData = await response.json();
+
+                if (tradeData.error) {
+                    console.error('Error loading trade:', tradeData.error);
+                    return;
+                }
+
+                // Update header
+                updateElement('combined-signal', tradeData.combined_signal || 'N/A', getSignalClass(tradeData.combined_signal));
+                updateElement('actual-result', tradeData.actual_direction || 'N/A', getSignalClass(tradeData.actual_direction));
+
+                const isCorrect = tradeData.combined_correct;
+                document.getElementById('outcome').innerHTML = isCorrect === true
+                    ? '<span class="result-badge correct">CORRECT</span>'
+                    : (isCorrect === false ? '<span class="result-badge wrong">WRONG</span>' : '-');
+
+                const pnl = tradeData.pnl_combined || 0;
+                updateElement('pnl', (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + '%', pnl >= 0 ? 'positive' : 'negative');
+
+                const change = tradeData.ny_session_change_pct || 0;
+                updateElement('session-change', (change >= 0 ? '+' : '') + change.toFixed(2) + '%', change >= 0 ? 'positive' : 'negative');
+
+                // Update SBC details
+                document.getElementById('sbc-signal').textContent = tradeData.v6_signal || 'N/A';
+                document.getElementById('sbc-signal').className = 'detail-value ' + getSignalClass(tradeData.v6_signal);
+                document.getElementById('sbc-reason').textContent = tradeData.v6_reason || 'N/A';
+                document.getElementById('moon-nakshatra').textContent = tradeData.moon_nakshatra || 'N/A';
+                document.getElementById('tithi').textContent = tradeData.tithi || 'N/A';
+                document.getElementById('nakshatra-net').textContent = tradeData.nakshatra_net || 0;
+                document.getElementById('tithi-net').textContent = tradeData.tithi_net || 0;
+
+                // Update DR details
+                document.getElementById('dr-signal').textContent = tradeData.dr_signal || 'N/A';
+                document.getElementById('dr-signal').className = 'detail-value ' + getSignalClass(tradeData.dr_signal);
+                document.getElementById('dr-high').textContent = tradeData.dr_high ? '$' + tradeData.dr_high.toLocaleString() : 'N/A';
+                document.getElementById('dr-low').textContent = tradeData.dr_low ? '$' + tradeData.dr_low.toLocaleString() : 'N/A';
+                document.getElementById('breakout-dir').textContent = tradeData.breakout_direction || 'N/A';
+                document.getElementById('retracement').textContent = tradeData.retracement_back_to_dr || 'N/A';
+                document.getElementById('signals-agree').textContent = tradeData.signals_agree === true ? 'YES' : (tradeData.signals_agree === false ? 'NO' : 'N/A');
+
+            } catch (error) {
+                console.error('Error loading trade data:', error);
+            }
+        }
+
+        async function loadChartData(timeframe) {
+            const container = document.getElementById('chart-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading chart data...</div>';
+
+            try {
+                const response = await fetch(`/api/sbc-dr/chart/${tradeDate}?timeframe=${timeframe}`);
+                const data = await response.json();
+
+                if (data.error || !data.candles || data.candles.length === 0) {
+                    container.innerHTML = '<div class="no-data">No chart data available for this date.<br>Historical 5-minute data is only available from 2017 onwards.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                // Create chart
+                chart = LightweightCharts.createChart(container, {
+                    width: container.clientWidth,
+                    height: 500,
+                    layout: {
+                        background: { color: '#0a0a1a' },
+                        textColor: '#888',
+                    },
+                    grid: {
+                        vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                        horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                    },
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Normal,
+                    },
+                    rightPriceScale: {
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    timeScale: {
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        timeVisible: true,
+                        secondsVisible: false,
+                    },
+                });
+
+                // Add candlestick series
+                candleSeries = chart.addCandlestickSeries({
+                    upColor: '#00c853',
+                    downColor: '#ff5252',
+                    borderUpColor: '#00c853',
+                    borderDownColor: '#ff5252',
+                    wickUpColor: '#00c853',
+                    wickDownColor: '#ff5252',
+                });
+
+                candleSeries.setData(data.candles);
+
+                // Add DR range box if available
+                if (data.dr_high && data.dr_low && data.dr_start && data.dr_end) {
+                    // Create area for DR range
+                    const drAreaSeries = chart.addAreaSeries({
+                        topColor: 'rgba(78, 205, 196, 0.3)',
+                        bottomColor: 'rgba(78, 205, 196, 0.1)',
+                        lineColor: 'rgba(78, 205, 196, 0.5)',
+                        lineWidth: 1,
+                    });
+
+                    // Add horizontal lines for DR high/low
+                    candleSeries.createPriceLine({
+                        price: data.dr_high,
+                        color: '#4ecdc4',
+                        lineWidth: 2,
+                        lineStyle: LightweightCharts.LineStyle.Solid,
+                        axisLabelVisible: true,
+                        title: 'DR High',
+                    });
+
+                    candleSeries.createPriceLine({
+                        price: data.dr_low,
+                        color: '#4ecdc4',
+                        lineWidth: 2,
+                        lineStyle: LightweightCharts.LineStyle.Solid,
+                        axisLabelVisible: true,
+                        title: 'DR Low',
+                    });
+                }
+
+                // Add IDR range if available
+                if (data.idr_high && data.idr_low) {
+                    candleSeries.createPriceLine({
+                        price: data.idr_high,
+                        color: '#ffd700',
+                        lineWidth: 1,
+                        lineStyle: LightweightCharts.LineStyle.Dashed,
+                        axisLabelVisible: true,
+                        title: 'IDR High',
+                    });
+
+                    candleSeries.createPriceLine({
+                        price: data.idr_low,
+                        color: '#ffd700',
+                        lineWidth: 1,
+                        lineStyle: LightweightCharts.LineStyle.Dashed,
+                        axisLabelVisible: true,
+                        title: 'IDR Low',
+                    });
+                }
+
+                // Fit content
+                chart.timeScale().fitContent();
+
+                // Handle resize
+                window.addEventListener('resize', () => {
+                    chart.applyOptions({ width: container.clientWidth });
+                });
+
+            } catch (error) {
+                console.error('Error loading chart:', error);
+                container.innerHTML = '<div class="no-data">Error loading chart data</div>';
+            }
+        }
+
+        function changeTimeframe(tf) {
+            currentTimeframe = tf;
+            document.querySelectorAll('.tf-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tf === tf);
+            });
+            loadChartData(tf);
+        }
+
+        function updateElement(id, value, className) {
+            const el = document.getElementById(id);
+            el.textContent = value;
+            if (className) {
+                el.className = 'value ' + className;
+            }
+        }
+
+        function getSignalClass(signal) {
+            if (!signal) return '';
+            signal = signal.toUpperCase();
+            if (signal.includes('BULLISH')) return 'bullish';
+            if (signal.includes('BEARISH')) return 'bearish';
+            return 'neutral';
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+    </script>
+</body>
+</html>

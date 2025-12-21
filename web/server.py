@@ -630,6 +630,499 @@ async def get_sbc_rules():
         return {"error": str(e)}
 
 
+@app.get("/sbc-backtest", response_class=HTMLResponse)
+async def sbc_backtest_page(request: Request):
+    """Serve SBC backtest dashboard."""
+    return templates.TemplateResponse("sbc_backtest.html", {"request": request})
+
+
+@app.get("/api/sbc/backtest/summary")
+async def get_sbc_backtest_summary():
+    """Get SBC backtest summary statistics."""
+    import sqlite3
+    try:
+        db_path = Path(__file__).parent.parent / "data" / "robo_trader.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Overall stats
+        cursor.execute("SELECT COUNT(*) as total FROM sbc_backtest_full")
+        total = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) as correct FROM sbc_backtest_full WHERE signal_correct = 'YES'")
+        correct = cursor.fetchone()['correct']
+
+        # Filtered stats
+        cursor.execute("SELECT COUNT(*) as filtered FROM sbc_backtest_full WHERE should_trade = 'YES'")
+        filtered_total = cursor.fetchone()['filtered']
+
+        cursor.execute("SELECT COUNT(*) as filtered_correct FROM sbc_backtest_full WHERE should_trade = 'YES' AND signal_correct = 'YES'")
+        filtered_correct = cursor.fetchone()['filtered_correct']
+
+        # By confidence level
+        cursor.execute("""
+            SELECT confidence_level,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct = 'YES' THEN 1 ELSE 0 END) as correct
+            FROM sbc_backtest_full
+            GROUP BY confidence_level
+        """)
+        by_confidence = [dict(row) for row in cursor.fetchall()]
+
+        # By signal type (filtered)
+        cursor.execute("""
+            SELECT signal,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct = 'YES' THEN 1 ELSE 0 END) as correct,
+                   AVG(ny_session_change_pct) as avg_change
+            FROM sbc_backtest_full
+            WHERE should_trade = 'YES'
+            GROUP BY signal
+        """)
+        by_signal = [dict(row) for row in cursor.fetchall()]
+
+        # By year (filtered)
+        cursor.execute("""
+            SELECT substr(date, 1, 4) as year,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct = 'YES' THEN 1 ELSE 0 END) as correct,
+                   SUM(CASE
+                       WHEN signal LIKE '%BULLISH%' THEN ny_session_change_pct
+                       WHEN signal LIKE '%BEARISH%' THEN -ny_session_change_pct
+                       ELSE 0
+                   END) as pnl
+            FROM sbc_backtest_full
+            WHERE should_trade = 'YES'
+            GROUP BY substr(date, 1, 4)
+            ORDER BY year
+        """)
+        by_year = [dict(row) for row in cursor.fetchall()]
+
+        # By day of week (filtered)
+        cursor.execute("""
+            SELECT day_of_week,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct = 'YES' THEN 1 ELSE 0 END) as correct
+            FROM sbc_backtest_full
+            WHERE should_trade = 'YES'
+            GROUP BY day_of_week
+        """)
+        by_day = [dict(row) for row in cursor.fetchall()]
+
+        # By moon nakshatra (filtered, top 15)
+        cursor.execute("""
+            SELECT moon_nakshatra,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct = 'YES' THEN 1 ELSE 0 END) as correct
+            FROM sbc_backtest_full
+            WHERE should_trade = 'YES'
+            GROUP BY moon_nakshatra
+            ORDER BY total DESC
+            LIMIT 15
+        """)
+        by_nakshatra = [dict(row) for row in cursor.fetchall()]
+
+        # Calculate cumulative P&L
+        cursor.execute("""
+            SELECT SUM(CASE
+                       WHEN signal LIKE '%BULLISH%' THEN ny_session_change_pct
+                       WHEN signal LIKE '%BEARISH%' THEN -ny_session_change_pct
+                       ELSE 0
+                   END) as cumulative_pnl
+            FROM sbc_backtest_full
+            WHERE should_trade = 'YES'
+        """)
+        cumulative_pnl = cursor.fetchone()['cumulative_pnl'] or 0
+
+        # Date range
+        cursor.execute("SELECT MIN(date) as start_date, MAX(date) as end_date FROM sbc_backtest_full")
+        date_range = dict(cursor.fetchone())
+
+        conn.close()
+
+        return {
+            "date_range": date_range,
+            "overall": {
+                "total_days": total,
+                "correct": correct,
+                "accuracy": round(correct / total * 100, 1) if total > 0 else 0
+            },
+            "filtered": {
+                "total_trades": filtered_total,
+                "correct": filtered_correct,
+                "accuracy": round(filtered_correct / filtered_total * 100, 1) if filtered_total > 0 else 0,
+                "cumulative_pnl": round(cumulative_pnl, 2)
+            },
+            "by_confidence": by_confidence,
+            "by_signal": by_signal,
+            "by_year": by_year,
+            "by_day": by_day,
+            "by_nakshatra": by_nakshatra
+        }
+    except Exception as e:
+        logger.error(f"Error getting backtest summary: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc/backtest/trades")
+async def get_sbc_backtest_trades(
+    year: str = None,
+    signal: str = None,
+    confidence: str = None,
+    correct: str = None,
+    limit: int = 100,
+    offset: int = 0
+):
+    """Get SBC backtest trades with filters."""
+    import sqlite3
+    try:
+        db_path = Path(__file__).parent.parent / "data" / "robo_trader.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        where_clauses = ["should_trade = 'YES'"]
+        params = []
+
+        if year:
+            where_clauses.append("substr(date, 1, 4) = ?")
+            params.append(year)
+        if signal:
+            where_clauses.append("signal = ?")
+            params.append(signal)
+        if confidence:
+            where_clauses.append("confidence_level = ?")
+            params.append(confidence)
+        if correct:
+            where_clauses.append("signal_correct = ?")
+            params.append(correct)
+
+        where_sql = " AND ".join(where_clauses)
+
+        cursor.execute(f"""
+            SELECT * FROM sbc_backtest_full
+            WHERE {where_sql}
+            ORDER BY date DESC
+            LIMIT ? OFFSET ?
+        """, params + [limit, offset])
+
+        trades = [dict(row) for row in cursor.fetchall()]
+
+        cursor.execute(f"SELECT COUNT(*) as total FROM sbc_backtest_full WHERE {where_sql}", params)
+        total = cursor.fetchone()['total']
+
+        conn.close()
+
+        return {
+            "trades": trades,
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }
+    except Exception as e:
+        logger.error(f"Error getting backtest trades: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc/backtest/equity-curve")
+async def get_sbc_equity_curve():
+    """Get equity curve data for charting."""
+    import sqlite3
+    try:
+        db_path = Path(__file__).parent.parent / "data" / "robo_trader.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT date, ny_session_change_pct, signal, signal_correct
+            FROM sbc_backtest_full
+            WHERE should_trade = 'YES'
+            ORDER BY date
+        """)
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        equity = 100
+        equity_curve = []
+
+        for row in rows:
+            change = row['ny_session_change_pct']
+            signal = row['signal']
+
+            if 'BULLISH' in signal:
+                pnl = change
+            elif 'BEARISH' in signal:
+                pnl = -change
+            else:
+                pnl = 0
+
+            equity *= (1 + pnl / 100)
+            equity_curve.append({
+                "date": row['date'],
+                "equity": round(equity, 2),
+                "pnl": round(pnl, 2),
+                "correct": row['signal_correct'] == 'YES'
+            })
+
+        return {"equity_curve": equity_curve}
+    except Exception as e:
+        logger.error(f"Error getting equity curve: {e}")
+        return {"error": str(e)}
+
+
+# ============================================
+# V6 BACKTEST API ENDPOINTS (PostgreSQL)
+# ============================================
+
+@app.get("/sbc-backtest-v6", response_class=HTMLResponse)
+async def sbc_backtest_v6_page(request: Request):
+    """Serve SBC V6 backtest dashboard."""
+    return templates.TemplateResponse("sbc_backtest_v6.html", {"request": request})
+
+
+@app.get("/api/sbc/backtest-v6/summary")
+async def get_sbc_backtest_v6_summary():
+    """Get V6 backtest summary statistics from PostgreSQL."""
+    import psycopg2
+    import psycopg2.extras
+    try:
+        conn = psycopg2.connect(dbname='robo_trader')
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Overall stats
+        cursor.execute("SELECT COUNT(*) as total FROM sbc_backtest_v6")
+        total = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) as correct FROM sbc_backtest_v6 WHERE signal_correct_v6 = 'YES'")
+        correct = cursor.fetchone()['correct']
+
+        # Filtered stats (V6)
+        cursor.execute("SELECT COUNT(*) as filtered FROM sbc_backtest_v6 WHERE should_trade = 'YES'")
+        filtered_total = cursor.fetchone()['filtered']
+
+        cursor.execute("SELECT COUNT(*) as filtered_correct FROM sbc_backtest_v6 WHERE should_trade = 'YES' AND signal_correct_v6 = 'YES'")
+        filtered_correct = cursor.fetchone()['filtered_correct']
+
+        # V6 P&L
+        cursor.execute("SELECT SUM(pnl_v6) as cumulative_pnl FROM sbc_backtest_v6 WHERE should_trade = 'YES'")
+        cumulative_pnl = cursor.fetchone()['cumulative_pnl'] or 0
+
+        # By confidence level
+        cursor.execute("""
+            SELECT confidence_level,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct_v6 = 'YES' THEN 1 ELSE 0 END) as correct
+            FROM sbc_backtest_v6
+            GROUP BY confidence_level
+        """)
+        by_confidence = [dict(row) for row in cursor.fetchall()]
+
+        # By V6 signal type (filtered)
+        cursor.execute("""
+            SELECT signal_v6 as signal,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct_v6 = 'YES' THEN 1 ELSE 0 END) as correct,
+                   AVG(ny_session_change_pct) as avg_change,
+                   SUM(pnl_v6) as pnl
+            FROM sbc_backtest_v6
+            WHERE should_trade = 'YES'
+            GROUP BY signal_v6
+            ORDER BY signal_v6
+        """)
+        by_signal = [dict(row) for row in cursor.fetchall()]
+
+        # By year (filtered, V6)
+        cursor.execute("""
+            SELECT EXTRACT(YEAR FROM date)::text as year,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct_v6 = 'YES' THEN 1 ELSE 0 END) as correct,
+                   SUM(pnl_v6) as pnl
+            FROM sbc_backtest_v6
+            WHERE should_trade = 'YES'
+            GROUP BY EXTRACT(YEAR FROM date)
+            ORDER BY year
+        """)
+        by_year = [dict(row) for row in cursor.fetchall()]
+
+        # By day of week (filtered)
+        cursor.execute("""
+            SELECT day_of_week,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct_v6 = 'YES' THEN 1 ELSE 0 END) as correct
+            FROM sbc_backtest_v6
+            WHERE should_trade = 'YES'
+            GROUP BY day_of_week
+        """)
+        by_day = [dict(row) for row in cursor.fetchall()]
+
+        # By moon nakshatra (filtered, top 15)
+        cursor.execute("""
+            SELECT moon_nakshatra,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN signal_correct_v6 = 'YES' THEN 1 ELSE 0 END) as correct
+            FROM sbc_backtest_v6
+            WHERE should_trade = 'YES'
+            GROUP BY moon_nakshatra
+            ORDER BY total DESC
+            LIMIT 15
+        """)
+        by_nakshatra = [dict(row) for row in cursor.fetchall()]
+
+        # Date range
+        cursor.execute("SELECT MIN(date) as start_date, MAX(date) as end_date FROM sbc_backtest_v6")
+        date_range = dict(cursor.fetchone())
+        date_range['start_date'] = str(date_range['start_date'])
+        date_range['end_date'] = str(date_range['end_date'])
+
+        # NEUTRAL reduction stats
+        cursor.execute("SELECT COUNT(*) as v5_neutral FROM sbc_backtest_v6 WHERE should_trade = 'YES' AND signal = 'NEUTRAL'")
+        v5_neutral = cursor.fetchone()['v5_neutral']
+        cursor.execute("SELECT COUNT(*) as v6_neutral FROM sbc_backtest_v6 WHERE should_trade = 'YES' AND signal_v6 = 'NEUTRAL'")
+        v6_neutral = cursor.fetchone()['v6_neutral']
+
+        conn.close()
+
+        return {
+            "version": "V6",
+            "date_range": date_range,
+            "overall": {
+                "total_days": total,
+                "correct": correct,
+                "accuracy": round(correct / total * 100, 1) if total > 0 else 0
+            },
+            "filtered": {
+                "total_trades": filtered_total,
+                "correct": filtered_correct,
+                "accuracy": round(filtered_correct / filtered_total * 100, 1) if filtered_total > 0 else 0,
+                "cumulative_pnl": round(float(cumulative_pnl), 2)
+            },
+            "neutral_reduction": {
+                "v5_neutral": v5_neutral,
+                "v6_neutral": v6_neutral,
+                "converted": v5_neutral - v6_neutral,
+                "conversion_rate": round((v5_neutral - v6_neutral) / v5_neutral * 100, 1) if v5_neutral > 0 else 0
+            },
+            "by_confidence": by_confidence,
+            "by_signal": by_signal,
+            "by_year": by_year,
+            "by_day": by_day,
+            "by_nakshatra": by_nakshatra
+        }
+    except Exception as e:
+        logger.error(f"Error getting V6 backtest summary: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc/backtest-v6/trades")
+async def get_sbc_backtest_v6_trades(
+    year: str = None,
+    signal: str = None,
+    confidence: str = None,
+    correct: str = None,
+    limit: int = 100,
+    offset: int = 0
+):
+    """Get V6 backtest trades with filters."""
+    import psycopg2
+    import psycopg2.extras
+    try:
+        conn = psycopg2.connect(dbname='robo_trader')
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        where_clauses = ["should_trade = 'YES'"]
+        params = []
+
+        if year:
+            where_clauses.append("EXTRACT(YEAR FROM date)::text = %s")
+            params.append(year)
+        if signal:
+            where_clauses.append("signal_v6 = %s")
+            params.append(signal)
+        if confidence:
+            where_clauses.append("confidence_level = %s")
+            params.append(confidence)
+        if correct:
+            where_clauses.append("signal_correct_v6 = %s")
+            params.append(correct)
+
+        where_sql = " AND ".join(where_clauses)
+
+        cursor.execute(f"""
+            SELECT date, day_of_week, signal, signal_v6, ny_session_change_pct,
+                   confidence_level, signal_correct, signal_correct_v6, pnl_v6,
+                   moon_nakshatra, tithi
+            FROM sbc_backtest_v6
+            WHERE {where_sql}
+            ORDER BY date DESC
+            LIMIT %s OFFSET %s
+        """, params + [limit, offset])
+
+        trades = []
+        for row in cursor.fetchall():
+            trade = dict(row)
+            trade['date'] = str(trade['date'])
+            trade['ny_session_change_pct'] = float(trade['ny_session_change_pct']) if trade['ny_session_change_pct'] else 0
+            trade['pnl_v6'] = float(trade['pnl_v6']) if trade['pnl_v6'] else 0
+            trades.append(trade)
+
+        cursor.execute(f"SELECT COUNT(*) as total FROM sbc_backtest_v6 WHERE {where_sql}", params)
+        total = cursor.fetchone()['total']
+
+        conn.close()
+
+        return {
+            "trades": trades,
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }
+    except Exception as e:
+        logger.error(f"Error getting V6 backtest trades: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc/backtest-v6/equity-curve")
+async def get_sbc_v6_equity_curve():
+    """Get V6 equity curve data for charting."""
+    import psycopg2
+    import psycopg2.extras
+    try:
+        conn = psycopg2.connect(dbname='robo_trader')
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        cursor.execute("""
+            SELECT date, ny_session_change_pct, signal_v6, signal_correct_v6, pnl_v6
+            FROM sbc_backtest_v6
+            WHERE should_trade = 'YES'
+            ORDER BY date
+        """)
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        equity = 100
+        equity_curve = []
+
+        for row in rows:
+            pnl = float(row['pnl_v6']) if row['pnl_v6'] else 0
+            equity *= (1 + pnl / 100)
+            equity_curve.append({
+                "date": str(row['date']),
+                "equity": round(equity, 2),
+                "pnl": round(pnl, 2),
+                "signal": row['signal_v6'],
+                "correct": row['signal_correct_v6'] == 'YES'
+            })
+
+        return {"equity_curve": equity_curve}
+    except Exception as e:
+        logger.error(f"Error getting V6 equity curve: {e}")
+        return {"error": str(e)}
+
+
 @app.post("/api/sbc/custom")
 async def get_custom_sbc_analysis(request: CustomSBCRequest):
     """Get custom SBC analysis for any person on any date."""
@@ -6294,6 +6787,536 @@ def execute_custom_python_indicator(
 
 
 # ================== END CUSTOM INDICATOR API ENDPOINTS ==================
+
+
+# ================== SBC + DR COMBINED STRATEGY DASHBOARD ==================
+
+@app.get("/sbc-dr-dashboard", response_class=HTMLResponse)
+async def sbc_dr_dashboard_page(request: Request):
+    """Serve the SBC + DR Combined Strategy Dashboard."""
+    return templates.TemplateResponse("sbc_dr_dashboard.html", {"request": request})
+
+
+@app.get("/api/sbc-dr/history")
+async def get_sbc_dr_history():
+    """Get full SBC + DR combined historical data from database."""
+    try:
+        import psycopg2
+        conn = psycopg2.connect(
+            host='localhost',
+            database='robo_trader',
+            user='utpalraina',
+            password=''
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT date, v5_signal, v6_signal, v6_reason, moon_nakshatra, tithi,
+                   nakshatra_net, tithi_net, rashi_net, akshara_net, swara_net,
+                   ny_session_change_pct, actual_direction, v5_correct, v6_correct, pnl_v6,
+                   dr_high, dr_low, breakout_direction, retracement_back_to_dr,
+                   session_high, session_low, dr_signal, sbc_dir, signals_agree,
+                   combined_signal, dr_correct, combined_correct, pnl_combined
+            FROM sbc_dr_combined
+            ORDER BY date DESC
+        """)
+
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+
+        history = []
+        for row in rows:
+            record = dict(zip(columns, row))
+            if record.get('date'):
+                record['date'] = str(record['date'])
+            history.append(convert_numpy_types(record))
+
+        return {"history": history, "total": len(history)}
+    except Exception as e:
+        logger.error(f"Error fetching SBC-DR history: {e}")
+        return {"error": str(e), "history": []}
+
+
+@app.get("/api/sbc-dr/today")
+async def get_sbc_dr_today():
+    """Get today's SBC + DR combined signal with decision basis."""
+    try:
+        import pytz
+        from datetime import datetime
+        from web.sbc_analysis import calculate_custom_sbc_analysis
+        from web.sbc_market_rules import decide_neutral_signal
+
+        ny_tz = pytz.timezone('America/New_York')
+        now_ny = datetime.now(ny_tz)
+        today_str = now_ny.strftime('%Y-%m-%d')
+        day_of_week = now_ny.strftime('%A')
+
+        # Get SBC analysis for today at NY open
+        sbc = calculate_custom_sbc_analysis(
+            name="Bitcoin",
+            birth_date="2009-01-03",
+            birth_time="18:15",
+            latitude=0.0,
+            longitude=0.0,
+            analysis_date=today_str,
+            analysis_time="09:30",
+            timezone="America/New_York"
+        )
+
+        if not sbc or 'error' in sbc:
+            return {"error": "Failed to calculate SBC analysis", "date": today_str}
+
+        # Extract SBC data
+        vw = sbc.get('vedha_weights', {})
+        net_weight = vw.get('net_score', 0)
+
+        vedhas_by_factor = sbc.get('vedhas_by_factor', {})
+        nakshatra_net = vedhas_by_factor.get('nakshatra', {}).get('net', 0)
+        tithi_net = vedhas_by_factor.get('tithi', {}).get('net', 0)
+        rashi_net = vedhas_by_factor.get('rashi', {}).get('net', 0)
+        akshara_net = vedhas_by_factor.get('akshara', {}).get('net', 0)
+        swara_net = vedhas_by_factor.get('swara', {}).get('net', 0)
+
+        tp = sbc.get('transit_positions', {})
+        moon_nakshatra = tp.get('Moon', {}).get('nakshatra', '')
+        current_tithi = sbc.get('current_tithi', '')
+
+        # Calculate V5 signal (crypto inverted)
+        if net_weight > 2.0:
+            v5_signal = 'STRONGLY_BEARISH'
+        elif net_weight > 0.5:
+            v5_signal = 'MODERATELY_BEARISH'
+        elif net_weight > -0.5:
+            v5_signal = 'NEUTRAL'
+        elif net_weight > -2.0:
+            v5_signal = 'MODERATELY_BULLISH'
+        else:
+            v5_signal = 'STRONGLY_BULLISH'
+
+        # Apply V6 rules if NEUTRAL
+        if v5_signal == 'NEUTRAL':
+            v6_signal, v6_reason = decide_neutral_signal(
+                v5_signal, moon_nakshatra,
+                nakshatra_net, tithi_net, rashi_net, akshara_net, swara_net,
+                current_tithi
+            )
+        else:
+            v6_signal = v5_signal
+            v6_reason = 'Already directional'
+
+        # Get DR signal from database for today
+        dr_signal = None
+        dr_high = None
+        dr_low = None
+        breakout_direction = None
+
+        import psycopg2
+        conn = psycopg2.connect(
+            host='localhost',
+            database='robo_trader',
+            user='utpalraina',
+            password=''
+        )
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT dr_signal, dr_high, dr_low, breakout_direction
+            FROM sbc_dr_combined
+            WHERE date = %s
+        """, (today_str,))
+        dr_row = cursor.fetchone()
+
+        if dr_row:
+            dr_signal, dr_high, dr_low, breakout_direction = dr_row
+
+        # Determine combined signal
+        sbc_dir = 'BULLISH' if 'BULLISH' in v6_signal else ('BEARISH' if 'BEARISH' in v6_signal else None)
+
+        if sbc_dir and dr_signal:
+            signals_agree = (sbc_dir == dr_signal)
+            if signals_agree:
+                combined_signal = sbc_dir
+                decision_reason = "SBC and DR both agree - HIGH CONFIDENCE"
+            else:
+                combined_signal = "CONFLICT"
+                decision_reason = f"SBC says {sbc_dir}, DR says {dr_signal} - Follow DR (60.4% win rate in conflicts)"
+        elif dr_signal:
+            signals_agree = None
+            combined_signal = dr_signal
+            decision_reason = "SBC is neutral, following DR signal"
+        elif sbc_dir:
+            signals_agree = None
+            combined_signal = sbc_dir
+            decision_reason = "No DR signal yet, following SBC"
+        else:
+            signals_agree = None
+            combined_signal = "NEUTRAL"
+            decision_reason = "Both SBC and DR are neutral - NO TRADE"
+
+        # Get historical accuracy for this nakshatra
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN combined_correct THEN 1 ELSE 0 END) as correct
+            FROM sbc_dr_combined
+            WHERE moon_nakshatra = %s AND signals_agree = true
+        """, (moon_nakshatra,))
+        nak_stats = cursor.fetchone()
+        nakshatra_accuracy = None
+        if nak_stats and nak_stats[0] and nak_stats[0] > 5:
+            nakshatra_accuracy = f"{nak_stats[1]}/{nak_stats[0]} ({nak_stats[1]/nak_stats[0]*100:.1f}%)"
+
+        return {
+            "date": today_str,
+            "day_of_week": day_of_week,
+            "v5_signal": v5_signal,
+            "v6_signal": v6_signal,
+            "v6_reason": v6_reason,
+            "moon_nakshatra": moon_nakshatra,
+            "tithi": current_tithi,
+            "nakshatra_net": nakshatra_net,
+            "tithi_net": tithi_net,
+            "rashi_net": rashi_net,
+            "akshara_net": akshara_net,
+            "swara_net": swara_net,
+            "net_weight": net_weight,
+            "dr_signal": dr_signal,
+            "dr_high": dr_high,
+            "dr_low": dr_low,
+            "breakout_direction": breakout_direction,
+            "signals_agree": signals_agree,
+            "combined_signal": combined_signal,
+            "decision_reason": decision_reason,
+            "nakshatra_accuracy": nakshatra_accuracy
+        }
+    except Exception as e:
+        logger.error(f"Error getting today's SBC-DR signal: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc-dr/similar-cases")
+async def get_similar_cases():
+    """Get similar historical cases based on today's Moon nakshatra."""
+    try:
+        import pytz
+        from datetime import datetime
+        from web.sbc_analysis import calculate_custom_sbc_analysis
+
+        ny_tz = pytz.timezone('America/New_York')
+        now_ny = datetime.now(ny_tz)
+        today_str = now_ny.strftime('%Y-%m-%d')
+
+        # Get today's SBC
+        sbc = calculate_custom_sbc_analysis(
+            name="Bitcoin",
+            birth_date="2009-01-03",
+            birth_time="18:15",
+            latitude=0.0,
+            longitude=0.0,
+            analysis_date=today_str,
+            analysis_time="09:30",
+            timezone="America/New_York"
+        )
+
+        if not sbc or 'error' in sbc:
+            return {"error": "Failed to calculate SBC", "cases": []}
+
+        tp = sbc.get('transit_positions', {})
+        moon_nakshatra = tp.get('Moon', {}).get('nakshatra', '')
+        current_tithi = sbc.get('current_tithi', '')
+
+        import psycopg2
+        conn = psycopg2.connect(
+            host='localhost',
+            database='robo_trader',
+            user='utpalraina',
+            password=''
+        )
+        cursor = conn.cursor()
+
+        # Find similar cases: same nakshatra
+        cursor.execute("""
+            SELECT date, moon_nakshatra, tithi, v6_signal, dr_signal,
+                   combined_signal, actual_direction, combined_correct, pnl_combined,
+                   signals_agree, ny_open, first_hour_high, first_hour_low, ny_close_1030,
+                   session_high_full, session_low_full, time_close_above_1hr_high, time_close_below_1hr_low
+            FROM sbc_dr_combined
+            WHERE moon_nakshatra = %s
+              AND signals_agree IS NOT NULL
+              AND date < %s
+            ORDER BY date DESC
+            LIMIT 20
+        """, (moon_nakshatra, today_str))
+
+        columns = ['date', 'moon_nakshatra', 'tithi', 'v6_signal', 'dr_signal',
+                   'combined_signal', 'actual_direction', 'combined_correct', 'pnl_combined',
+                   'signals_agree', 'ny_open', 'first_hour_high', 'first_hour_low', 'ny_close_1030',
+                   'session_high_full', 'session_low_full', 'time_close_above_1hr_high', 'time_close_below_1hr_low']
+        rows = cursor.fetchall()
+
+        cases = []
+        for row in rows:
+            record = dict(zip(columns, row))
+            if record.get('date'):
+                record['date'] = str(record['date'])
+            cases.append(convert_numpy_types(record))
+
+        return {
+            "today_nakshatra": moon_nakshatra,
+            "today_tithi": current_tithi,
+            "cases": cases
+        }
+    except Exception as e:
+        logger.error(f"Error getting similar cases: {e}")
+        return {"error": str(e), "cases": []}
+
+
+@app.get("/trade-detail", response_class=HTMLResponse)
+async def trade_detail_page(request: Request):
+    """Serve the trade detail page."""
+    return templates.TemplateResponse("trade_detail.html", {"request": request})
+
+
+@app.get("/api/sbc-dr/trade/{date}")
+async def get_trade_detail(date: str):
+    """Get detailed trade data for a specific date."""
+    try:
+        import psycopg2
+        conn = psycopg2.connect(
+            host='localhost',
+            database='robo_trader',
+            user='utpalraina',
+            password=''
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT date, v5_signal, v6_signal, v6_reason, moon_nakshatra, tithi,
+                   nakshatra_net, tithi_net, rashi_net, akshara_net, swara_net,
+                   ny_session_change_pct, actual_direction, v5_correct, v6_correct, pnl_v6,
+                   dr_high, dr_low, breakout_direction, retracement_back_to_dr,
+                   session_high, session_low, dr_signal, sbc_dir, signals_agree,
+                   combined_signal, dr_correct, combined_correct, pnl_combined
+            FROM sbc_dr_combined
+            WHERE date = %s
+        """, (date,))
+
+        row = cursor.fetchone()
+        if not row:
+            return {"error": "Trade not found"}
+
+        columns = [desc[0] for desc in cursor.description]
+        record = dict(zip(columns, row))
+        if record.get('date'):
+            record['date'] = str(record['date'])
+
+        conn.close()
+        return convert_numpy_types(record)
+    except Exception as e:
+        logger.error(f"Error getting trade detail: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/sbc-dr/chart/{date}")
+async def get_trade_chart(date: str, timeframe: str = "15m"):
+    """Get OHLC chart data for a specific trade date."""
+    try:
+        from datetime import datetime, timedelta
+        import pytz
+
+        ny_tz = pytz.timezone('America/New_York')
+
+        # Parse date
+        trade_date = datetime.strptime(date, '%Y-%m-%d')
+
+        # Map timeframe to Binance format
+        tf_map = {
+            '5m': '5m',
+            '15m': '15m',
+            '1h': '1h',
+            '1d': '1d'
+        }
+        binance_tf = tf_map.get(timeframe, '15m')
+
+        # Calculate time range for NY session (9:30 AM - 4:00 PM ET)
+        # We want data from 8:00 AM to 5:00 PM to see before/after session
+        start_dt = ny_tz.localize(datetime.combine(trade_date.date(), datetime.strptime('08:00', '%H:%M').time()))
+        end_dt = ny_tz.localize(datetime.combine(trade_date.date(), datetime.strptime('17:00', '%H:%M').time()))
+
+        # For daily timeframe, get surrounding days
+        if timeframe == '1d':
+            start_dt = trade_date - timedelta(days=30)
+            end_dt = trade_date + timedelta(days=5)
+
+        # Convert to timestamps
+        start_ts = int(start_dt.timestamp() * 1000)
+        end_ts = int(end_dt.timestamp() * 1000)
+
+        # Fetch from Binance
+        import requests
+        url = 'https://api.binance.com/api/v3/klines'
+        params = {
+            'symbol': 'BTCUSDT',
+            'interval': binance_tf,
+            'startTime': start_ts,
+            'endTime': end_ts,
+            'limit': 1000
+        }
+
+        response = requests.get(url, params=params, timeout=30)
+        if response.status_code != 200:
+            return {"error": "Failed to fetch data from Binance", "candles": []}
+
+        data = response.json()
+        if not data:
+            return {"error": "No data available", "candles": []}
+
+        # Convert to lightweight-charts format
+        candles = []
+        for kline in data:
+            candle_time = int(kline[0] / 1000)  # Convert to seconds
+            candles.append({
+                'time': candle_time,
+                'open': float(kline[1]),
+                'high': float(kline[2]),
+                'low': float(kline[3]),
+                'close': float(kline[4])
+            })
+
+        # Get DR range from database
+        import psycopg2
+        conn = psycopg2.connect(
+            host='localhost',
+            database='robo_trader',
+            user='utpalraina',
+            password=''
+        )
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT dr_high, dr_low, session_high, session_low
+            FROM sbc_dr_combined
+            WHERE date = %s
+        """, (date,))
+        dr_row = cursor.fetchone()
+        conn.close()
+
+        dr_high = dr_row[0] if dr_row else None
+        dr_low = dr_row[1] if dr_row else None
+        session_high = dr_row[2] if dr_row else None
+        session_low = dr_row[3] if dr_row else None
+
+        # Calculate DR time range (9:30-10:00 AM ET)
+        dr_start = ny_tz.localize(datetime.combine(trade_date.date(), datetime.strptime('09:30', '%H:%M').time()))
+        dr_end = ny_tz.localize(datetime.combine(trade_date.date(), datetime.strptime('10:00', '%H:%M').time()))
+        idr_end = ny_tz.localize(datetime.combine(trade_date.date(), datetime.strptime('10:30', '%H:%M').time()))
+
+        return {
+            "candles": candles,
+            "dr_high": dr_high,
+            "dr_low": dr_low,
+            "dr_start": int(dr_start.timestamp()),
+            "dr_end": int(dr_end.timestamp()),
+            "idr_high": session_high,  # Using session high/low as proxy for IDR
+            "idr_low": session_low,
+            "idr_end": int(idr_end.timestamp()),
+            "session_high": session_high,
+            "session_low": session_low
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting chart data: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e), "candles": []}
+
+
+@app.get("/api/sbc-dr/trades-list")
+async def get_trades_list(
+    start_date: str = None,
+    end_date: str = None,
+    signal_type: str = None,
+    nakshatra: str = None,
+    page: int = 1,
+    per_page: int = 50
+):
+    """Get paginated list of trades with optional filters."""
+    try:
+        import psycopg2
+        conn = psycopg2.connect(
+            host='localhost',
+            database='robo_trader',
+            user='utpalraina',
+            password=''
+        )
+        cursor = conn.cursor()
+
+        # Build query
+        where_clauses = []
+        params = []
+
+        if start_date:
+            where_clauses.append("date >= %s")
+            params.append(start_date)
+        if end_date:
+            where_clauses.append("date <= %s")
+            params.append(end_date)
+        if nakshatra:
+            where_clauses.append("moon_nakshatra = %s")
+            params.append(nakshatra)
+        if signal_type == 'AGREE':
+            where_clauses.append("signals_agree = true")
+        elif signal_type == 'CONFLICT':
+            where_clauses.append("signals_agree = false")
+        elif signal_type in ['BULLISH', 'BEARISH']:
+            where_clauses.append("combined_signal LIKE %s")
+            params.append(f'%{signal_type}%')
+
+        where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+
+        # Get total count
+        cursor.execute(f"SELECT COUNT(*) FROM sbc_dr_combined WHERE {where_sql}", params)
+        total = cursor.fetchone()[0]
+
+        # Get paginated results
+        offset = (page - 1) * per_page
+        cursor.execute(f"""
+            SELECT date, moon_nakshatra, tithi, v6_signal, dr_signal,
+                   combined_signal, actual_direction, combined_correct, pnl_combined,
+                   signals_agree, ny_session_change_pct
+            FROM sbc_dr_combined
+            WHERE {where_sql}
+            ORDER BY date DESC
+            LIMIT %s OFFSET %s
+        """, params + [per_page, offset])
+
+        columns = ['date', 'moon_nakshatra', 'tithi', 'v6_signal', 'dr_signal',
+                   'combined_signal', 'actual_direction', 'combined_correct', 'pnl_combined',
+                   'signals_agree', 'ny_session_change_pct']
+        rows = cursor.fetchall()
+
+        trades = []
+        for row in rows:
+            record = dict(zip(columns, row))
+            if record.get('date'):
+                record['date'] = str(record['date'])
+            trades.append(convert_numpy_types(record))
+
+        conn.close()
+
+        return {
+            "trades": trades,
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (total + per_page - 1) // per_page
+        }
+    except Exception as e:
+        logger.error(f"Error getting trades list: {e}")
+        return {"error": str(e), "trades": []}
+
+
+# ================== END SBC + DR COMBINED STRATEGY ==================
 
 
 def run_server(host: str = "0.0.0.0", port: int = 8000):
