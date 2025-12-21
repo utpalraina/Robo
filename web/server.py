@@ -6816,7 +6816,9 @@ async def get_sbc_dr_history():
                    ny_session_change_pct, actual_direction, v5_correct, v6_correct, pnl_v6,
                    dr_high, dr_low, breakout_direction, retracement_back_to_dr,
                    session_high, session_low, dr_signal, sbc_dir, signals_agree,
-                   combined_signal, dr_correct, combined_correct, pnl_combined
+                   combined_signal, dr_correct, combined_correct, pnl_combined,
+                   ny_open, first_hour_high, first_hour_low, ny_close_1030,
+                   session_high_full, session_low_full, time_close_above_1hr_high, time_close_below_1hr_low
             FROM sbc_dr_combined
             ORDER BY date DESC
         """)
@@ -7314,6 +7316,56 @@ async def get_trades_list(
     except Exception as e:
         logger.error(f"Error getting trades list: {e}")
         return {"error": str(e), "trades": []}
+
+
+@app.get("/sbc-dr-history", response_class=HTMLResponse)
+async def sbc_dr_history_page(request: Request):
+    """SBC + DR Historical Data page."""
+    return templates.TemplateResponse("sbc_dr_history.html", {"request": request})
+
+
+@app.get("/api/sbc-dr-history")
+async def get_sbc_dr_history():
+    """Get all historical SBC + DR data since 5-minute candles available (Sept 2017)."""
+    try:
+        import psycopg2
+        conn = psycopg2.connect(
+            host='localhost',
+            database='robo_trader',
+            user='utpalraina',
+            password=''
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT date, moon_nakshatra, tithi, v6_signal, dr_signal,
+                   combined_signal, actual_direction, combined_correct, pnl_combined,
+                   signals_agree, ny_open, first_hour_high, first_hour_low, ny_close_1030,
+                   session_high_full, session_low_full, time_close_above_1hr_high, time_close_below_1hr_low
+            FROM sbc_dr_combined
+            WHERE date >= '2017-09-01'
+            ORDER BY date DESC
+        """)
+
+        columns = ['date', 'moon_nakshatra', 'tithi', 'v6_signal', 'dr_signal',
+                   'combined_signal', 'actual_direction', 'combined_correct', 'pnl_combined',
+                   'signals_agree', 'ny_open', 'first_hour_high', 'first_hour_low', 'ny_close_1030',
+                   'session_high_full', 'session_low_full', 'time_close_above_1hr_high', 'time_close_below_1hr_low']
+        rows_data = cursor.fetchall()
+
+        rows = []
+        for row in rows_data:
+            record = dict(zip(columns, row))
+            if record.get('date'):
+                record['date'] = str(record['date'])
+            rows.append(convert_numpy_types(record))
+
+        conn.close()
+
+        return {"rows": rows, "total": len(rows)}
+    except Exception as e:
+        logger.error(f"Error getting SBC DR history: {e}")
+        return {"error": str(e), "rows": []}
 
 
 # ================== END SBC + DR COMBINED STRATEGY ==================

@@ -705,6 +705,7 @@
             <div class="table-controls">
                 <div>
                     <span id="showing-count">Showing 0-0 of 0</span>
+                    <a href="/sbc-dr-history" style="margin-left: 20px; color: #4ecdc4;">View All Data &rarr;</a>
                 </div>
                 <div class="pagination">
                     <button id="prev-page" onclick="prevPage()" disabled>&lt; Prev</button>
@@ -712,26 +713,34 @@
                     <button id="next-page" onclick="nextPage()">Next &gt;</button>
                 </div>
             </div>
+            <div style="overflow-x: auto;">
             <table class="cases-table" id="history-table">
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Day</th>
                         <th>Nakshatra</th>
                         <th>Tithi</th>
-                        <th>SBC V6</th>
+                        <th>NY Open</th>
+                        <th>1Hr High</th>
+                        <th>1Hr Low</th>
+                        <th>10:30 Close</th>
+                        <th>Sess High</th>
+                        <th>Sess Low</th>
+                        <th>Break High</th>
+                        <th>Break Low</th>
+                        <th>SBC</th>
                         <th>DR</th>
-                        <th>Agree?</th>
-                        <th>Decision</th>
+                        <th>Combined</th>
                         <th>Actual</th>
                         <th>Result</th>
                         <th>P&L</th>
                     </tr>
                 </thead>
                 <tbody id="history-body">
-                    <tr><td colspan="11" class="loading">Loading history...</td></tr>
+                    <tr><td colspan="17" class="loading">Loading history...</td></tr>
                 </tbody>
             </table>
+            </div>
         </section>
     </div>
 
@@ -1185,18 +1194,23 @@
 
             const tbody = document.getElementById('history-body');
             tbody.innerHTML = pageData.map(d => {
-                const dayOfWeek = new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' });
                 return `
                     <tr onclick="window.location='/trade-detail?date=${d.date}'" title="Click to view trade details">
                         <td>${formatDate(d.date)}</td>
-                        <td>${dayOfWeek}</td>
-                        <td>${d.moon_nakshatra || 'N/A'}</td>
-                        <td>${d.tithi || 'N/A'}</td>
+                        <td>${d.moon_nakshatra || '-'}</td>
+                        <td>${d.tithi || '-'}</td>
+                        <td style="color: #ffd700;">${d.ny_open ? '$' + formatPrice(d.ny_open) : '-'}</td>
+                        <td style="color: #00c853;">${d.first_hour_high ? '$' + formatPrice(d.first_hour_high) : '-'}</td>
+                        <td style="color: #ff5252;">${d.first_hour_low ? '$' + formatPrice(d.first_hour_low) : '-'}</td>
+                        <td style="color: #4ecdc4;">${d.ny_close_1030 ? '$' + formatPrice(d.ny_close_1030) : '-'}</td>
+                        <td style="color: #00c853;">${d.session_high_full ? '$' + formatPrice(d.session_high_full) : '-'}</td>
+                        <td style="color: #ff5252;">${d.session_low_full ? '$' + formatPrice(d.session_low_full) : '-'}</td>
+                        <td style="color: #00c853;">${d.time_close_above_1hr_high || '-'}</td>
+                        <td style="color: #ff5252;">${d.time_close_below_1hr_low || '-'}</td>
                         <td class="${getSignalColorClass(d.v6_signal)}">${formatSignal(d.v6_signal)}</td>
-                        <td class="${getSignalColorClass(d.dr_signal)}">${d.dr_signal || 'N/A'}</td>
-                        <td>${d.signals_agree ? '✓' : '✗'}</td>
-                        <td class="${getSignalColorClass(d.combined_signal)}">${d.combined_signal || 'N/A'}</td>
-                        <td>${d.actual_direction || 'N/A'}</td>
+                        <td class="${getSignalColorClass(d.dr_signal)}">${d.dr_signal || '-'}</td>
+                        <td class="${getSignalColorClass(d.combined_signal)}">${d.combined_signal || '-'}</td>
+                        <td>${d.actual_direction || '-'}</td>
                         <td class="${d.combined_correct ? 'result-correct' : (d.combined_correct === false ? 'result-wrong' : '')}">${d.combined_correct === true ? '✓' : (d.combined_correct === false ? '✗' : '-')}</td>
                         <td style="color: ${(d.pnl_combined || 0) >= 0 ? '#00c853' : '#ff5252'}">${(d.pnl_combined || 0).toFixed(2)}%</td>
                     </tr>

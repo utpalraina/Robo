@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBC + DR Historical Data</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        h1 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-box {
+            background: #1a1a2e;
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .stat-box h3 {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .stat-box .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .stat-box .value.green { color: #00c853; }
+        .stat-box .value.blue { color: #2196f3; }
+        .stat-box .value.yellow { color: #ffc107; }
+        .filters {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filters label {
+            color: #888;
+            font-size: 14px;
+        }
+        .filters select, .filters input {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .table-container {
+            overflow-x: auto;
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: #1a1a2e;
+            color: #888;
+            text-transform: uppercase;
+            font-size: 11px;
+            padding: 12px 8px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid #333;
+        }
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #222;
+        }
+        tr:hover {
+            background: #1a1a2e;
+        }
+        .bullish { color: #00c853; }
+        .bearish { color: #ff5252; }
+        .neutral { color: #888; }
+        .conflict { color: #ffc107; }
+        .correct { color: #00c853; }
+        .wrong { color: #ff5252; }
+        .price { color: #2196f3; }
+        .time { color: #9c27b0; }
+        .pnl-positive { color: #00c853; }
+        .pnl-negative { color: #ff5252; }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #2196f3;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .export-btn {
+            background: #2196f3;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .export-btn:hover {
+            background: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <a href="/sbc-dr-dashboard" class="back-link">&larr; Back to Dashboard</a>
+    <h1>SBC + DR Historical Data</h1>
+    <p style="color: #888; margin-bottom: 20px;">All trading days since September 2017 (5-minute candle data available)</p>
+
+    <div class="stats" id="stats">
+        <div class="stat-box">
+            <h3>Total Days</h3>
+            <div class="value blue" id="total-days">-</div>
+        </div>
+        <div class="stat-box">
+            <h3>DR Trades</h3>
+            <div class="value blue" id="dr-trades">-</div>
+        </div>
+        <div class="stat-box">
+            <h3>DR Accuracy</h3>
+            <div class="value green" id="dr-accuracy">-</div>
+        </div>
+        <div class="stat-box">
+            <h3>Combined Trades</h3>
+            <div class="value blue" id="combined-trades">-</div>
+        </div>
+        <div class="stat-box">
+            <h3>Combined Accuracy</h3>
+            <div class="value green" id="combined-accuracy">-</div>
+        </div>
+    </div>
+
+    <div class="filters">
+        <div>
+            <label>Year:</label>
+            <select id="year-filter">
+                <option value="">All Years</option>
+            </select>
+        </div>
+        <div>
+            <label>Nakshatra:</label>
+            <select id="nakshatra-filter">
+                <option value="">All</option>
+            </select>
+        </div>
+        <div>
+            <label>DR Signal:</label>
+            <select id="dr-filter">
+                <option value="">All</option>
+                <option value="BULLISH">Bullish</option>
+                <option value="BEARISH">Bearish</option>
+                <option value="NEUTRAL">Neutral</option>
+            </select>
+        </div>
+        <div>
+            <label>Combined:</label>
+            <select id="combined-filter">
+                <option value="">All</option>
+                <option value="BULLISH">Bullish</option>
+                <option value="BEARISH">Bearish</option>
+                <option value="CONFLICT">Conflict</option>
+            </select>
+        </div>
+        <div>
+            <label>Result:</label>
+            <select id="result-filter">
+                <option value="">All</option>
+                <option value="correct">Correct</option>
+                <option value="wrong">Wrong</option>
+            </select>
+        </div>
+        <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+    </div>
+
+    <div class="table-container">
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Nakshatra</th>
+                    <th>Tithi</th>
+                    <th>NY Open</th>
+                    <th>1Hr High</th>
+                    <th>1Hr Low</th>
+                    <th>10:30 Close</th>
+                    <th>Sess High</th>
+                    <th>Sess Low</th>
+                    <th>Break High</th>
+                    <th>Break Low</th>
+                    <th>SBC</th>
+                    <th>DR</th>
+                    <th>Combined</th>
+                    <th>Actual</th>
+                    <th>Result</th>
+                    <th>P&L %</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr><td colspan="17" style="text-align: center; padding: 40px;">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+
+        function formatPrice(price) {
+            if (!price) return '-';
+            return '$' + parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        }
+
+        function formatSignal(signal) {
+            if (!signal) return '-';
+            const signalMap = {
+                'STRONGLY_BULLISH': 'STRONG_BULL',
+                'MODERATELY_BULLISH': 'MOD_BULL',
+                'SLIGHTLY_BULLISH': 'SLIGHT_BULL',
+                'STRONGLY_BEARISH': 'STRONG_BEAR',
+                'MODERATELY_BEARISH': 'MOD_BEAR',
+                'SLIGHTLY_BEARISH': 'SLIGHT_BEAR',
+                'NEUTRAL': 'NEUTRAL'
+            };
+            return signalMap[signal] || signal;
+        }
+
+        function getSignalClass(signal) {
+            if (!signal) return '';
+            if (signal.includes('BULLISH') || signal === 'BULLISH') return 'bullish';
+            if (signal.includes('BEARISH') || signal === 'BEARISH') return 'bearish';
+            if (signal === 'CONFLICT') return 'conflict';
+            return 'neutral';
+        }
+
+        async function loadData() {
+            try {
+                const response = await fetch('/api/sbc-dr-history');
+                const data = await response.json();
+                allData = data.rows;
+
+                // Populate year filter
+                const years = [...new Set(allData.map(r => r.date.substring(0, 4)))].sort().reverse();
+                const yearSelect = document.getElementById('year-filter');
+                years.forEach(y => {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y;
+                    yearSelect.appendChild(opt);
+                });
+
+                // Populate nakshatra filter
+                const nakshatras = [...new Set(allData.map(r => r.moon_nakshatra).filter(n => n))].sort();
+                const nakSelect = document.getElementById('nakshatra-filter');
+                nakshatras.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n;
+                    opt.textContent = n;
+                    nakSelect.appendChild(opt);
+                });
+
+                applyFilters();
+            } catch (err) {
+                console.error('Error loading data:', err);
+                document.getElementById('table-body').innerHTML =
+                    '<tr><td colspan="17" style="text-align: center; color: #ff5252;">Error loading data</td></tr>';
+            }
+        }
+
+        function applyFilters() {
+            const yearFilter = document.getElementById('year-filter').value;
+            const nakFilter = document.getElementById('nakshatra-filter').value;
+            const drFilter = document.getElementById('dr-filter').value;
+            const combinedFilter = document.getElementById('combined-filter').value;
+            const resultFilter = document.getElementById('result-filter').value;
+
+            filteredData = allData.filter(row => {
+                if (yearFilter && !row.date.startsWith(yearFilter)) return false;
+                if (nakFilter && row.moon_nakshatra !== nakFilter) return false;
+                if (drFilter && row.dr_signal !== drFilter) return false;
+                if (combinedFilter && row.combined_signal !== combinedFilter) return false;
+                if (resultFilter === 'correct' && row.combined_correct !== true) return false;
+                if (resultFilter === 'wrong' && row.combined_correct !== false) return false;
+                return true;
+            });
+
+            updateStats();
+            renderTable();
+        }
+
+        function updateStats() {
+            document.getElementById('total-days').textContent = filteredData.length.toLocaleString();
+
+            const drTrades = filteredData.filter(r => r.dr_signal && r.dr_signal !== 'NEUTRAL');
+            const drCorrect = drTrades.filter(r =>
+                (r.dr_signal === 'BULLISH' && r.actual_direction === 'BULLISH') ||
+                (r.dr_signal === 'BEARISH' && r.actual_direction === 'BEARISH')
+            );
+            document.getElementById('dr-trades').textContent = drTrades.length.toLocaleString();
+            document.getElementById('dr-accuracy').textContent = drTrades.length > 0
+                ? (100 * drCorrect.length / drTrades.length).toFixed(1) + '%'
+                : '-';
+
+            const combinedTrades = filteredData.filter(r => r.signals_agree === true);
+            const combinedCorrect = combinedTrades.filter(r => r.combined_correct === true);
+            document.getElementById('combined-trades').textContent = combinedTrades.length.toLocaleString();
+            document.getElementById('combined-accuracy').textContent = combinedTrades.length > 0
+                ? (100 * combinedCorrect.length / combinedTrades.length).toFixed(1) + '%'
+                : '-';
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="17" style="text-align: center; padding: 40px;">No data matching filters</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredData.map(row => {
+                const resultClass = row.combined_correct === true ? 'correct' : (row.combined_correct === false ? 'wrong' : '');
+                const resultText = row.combined_correct === true ? '✓' : (row.combined_correct === false ? '✗' : '-');
+                const pnl = row.pnl_combined;
+                const pnlClass = pnl > 0 ? 'pnl-positive' : (pnl < 0 ? 'pnl-negative' : '');
+
+                return `<tr>
+                    <td>${row.date}</td>
+                    <td>${row.moon_nakshatra || '-'}</td>
+                    <td>${row.tithi || '-'}</td>
+                    <td class="price">${formatPrice(row.ny_open)}</td>
+                    <td class="bullish">${formatPrice(row.first_hour_high)}</td>
+                    <td class="bearish">${formatPrice(row.first_hour_low)}</td>
+                    <td class="price">${formatPrice(row.ny_close_1030)}</td>
+                    <td class="bullish">${formatPrice(row.session_high_full)}</td>
+                    <td class="bearish">${formatPrice(row.session_low_full)}</td>
+                    <td class="time">${row.time_close_above_1hr_high || '-'}</td>
+                    <td class="time">${row.time_close_below_1hr_low || '-'}</td>
+                    <td class="${getSignalClass(row.v6_signal)}">${formatSignal(row.v6_signal)}</td>
+                    <td class="${getSignalClass(row.dr_signal)}">${row.dr_signal || '-'}</td>
+                    <td class="${getSignalClass(row.combined_signal)}">${row.combined_signal || '-'}</td>
+                    <td class="${getSignalClass(row.actual_direction)}">${row.actual_direction || '-'}</td>
+                    <td class="${resultClass}">${resultText}</td>
+                    <td class="${pnlClass}">${pnl ? pnl.toFixed(2) + '%' : '-'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function exportCSV() {
+            const headers = ['Date', 'Nakshatra', 'Tithi', 'NY Open', '1Hr High', '1Hr Low', '10:30 Close',
+                           'Sess High', 'Sess Low', 'Break High', 'Break Low', 'SBC', 'DR', 'Combined',
+                           'Actual', 'Result', 'P&L %'];
+
+            const rows = filteredData.map(row => [
+                row.date,
+                row.moon_nakshatra || '',
+                row.tithi || '',
+                row.ny_open || '',
+                row.first_hour_high || '',
+                row.first_hour_low || '',
+                row.ny_close_1030 || '',
+                row.session_high_full || '',
+                row.session_low_full || '',
+                row.time_close_above_1hr_high || '',
+                row.time_close_below_1hr_low || '',
+                row.v6_signal || '',
+                row.dr_signal || '',
+                row.combined_signal || '',
+                row.actual_direction || '',
+                row.combined_correct === true ? 'Correct' : (row.combined_correct === false ? 'Wrong' : ''),
+                row.pnl_combined || ''
+            ]);
+
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sbc_dr_history_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        // Event listeners for filters
+        document.getElementById('year-filter').addEventListener('change', applyFilters);
+        document.getElementById('nakshatra-filter').addEventListener('change', applyFilters);
+        document.getElementById('dr-filter').addEventListener('change', applyFilters);
+        document.getElementById('combined-filter').addEventListener('change', applyFilters);
+        document.getElementById('result-filter').addEventListener('change', applyFilters);
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
