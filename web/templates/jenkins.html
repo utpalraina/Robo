@@ -1,359 +1,379 @@
-{% extends "base.html" %}
-
-{% block title %}Jenkins Trading Methods{% endblock %}
-
-{% block extra_css %}
-<style>
-    .jenkins-container {
-        max-width: 1600px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    .header-section {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-        border: 1px solid #0f3460;
-    }
-
-    .header-section h1 {
-        color: #e94560;
-        margin: 0 0 10px 0;
-        font-size: 1.8em;
-    }
-
-    .header-section p {
-        color: #a0a0a0;
-        margin: 0;
-    }
-
-    .input-section {
-        background: #1a1a2e;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-        border: 1px solid #0f3460;
-    }
-
-    .input-row {
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: end;
-    }
-
-    .input-group {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .input-group label {
-        color: #a0a0a0;
-        font-size: 0.85em;
-    }
-
-    .input-group input, .input-group select {
-        background: #16213e;
-        border: 1px solid #0f3460;
-        color: #fff;
-        padding: 10px 15px;
-        border-radius: 8px;
-        font-size: 1em;
-        min-width: 150px;
-    }
-
-    .input-group input:focus, .input-group select:focus {
-        outline: none;
-        border-color: #e94560;
-    }
-
-    .btn-analyze {
-        background: linear-gradient(135deg, #e94560 0%, #c73659 100%);
-        color: white;
-        border: none;
-        padding: 10px 25px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 1em;
-        font-weight: 600;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .btn-analyze:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
-    }
-
-    .btn-analyze:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .main-grid {
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 20px;
-    }
-
-    @media (max-width: 1200px) {
-        .main-grid {
-            grid-template-columns: 1fr;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jenkins Trading Methods</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    }
 
-    .chart-section {
-        background: #1a1a2e;
-        border-radius: 12px;
-        padding: 20px;
-        border: 1px solid #0f3460;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
 
-    #jenkins-chart {
-        width: 100%;
-        height: 500px;
-        background: #0d1117;
-        border-radius: 8px;
-    }
+        .jenkins-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-    .analysis-panel {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
+        .header-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #0f3460;
+        }
 
-    .analysis-card {
-        background: #1a1a2e;
-        border-radius: 12px;
-        padding: 15px;
-        border: 1px solid #0f3460;
-    }
+        .header-section h1 {
+            color: #e94560;
+            margin: 0 0 10px 0;
+            font-size: 1.8em;
+        }
 
-    .analysis-card h3 {
-        color: #e94560;
-        margin: 0 0 15px 0;
-        font-size: 1.1em;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #0f3460;
-    }
+        .header-section p {
+            color: #a0a0a0;
+            margin: 0;
+        }
 
-    .level-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
+        .input-section {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #0f3460;
+        }
 
-    .level-row:last-child {
-        border-bottom: none;
-    }
+        .input-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
 
-    .level-label {
-        color: #a0a0a0;
-        font-size: 0.9em;
-    }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
 
-    .level-value {
-        font-weight: 600;
-        font-family: 'Monaco', monospace;
-    }
+        .input-group label {
+            color: #a0a0a0;
+            font-size: 0.85em;
+        }
 
-    .level-value.support {
-        color: #00d26a;
-    }
+        .input-group input, .input-group select {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1em;
+            min-width: 150px;
+        }
 
-    .level-value.resistance {
-        color: #ff6b6b;
-    }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
 
-    .level-value.neutral {
-        color: #ffd93d;
-    }
+        .btn-analyze {
+            background: linear-gradient(135deg, #e94560 0%, #c73659 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-    .signal-badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 0.85em;
-        font-weight: 600;
-    }
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
 
-    .signal-badge.buy {
-        background: rgba(0, 210, 106, 0.2);
-        color: #00d26a;
-    }
+        .btn-analyze:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-    .signal-badge.sell {
-        background: rgba(255, 107, 107, 0.2);
-        color: #ff6b6b;
-    }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
 
-    .methods-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
-    }
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
-    .method-card {
-        background: #1a1a2e;
-        border-radius: 12px;
-        padding: 20px;
-        border: 1px solid #0f3460;
-    }
+        .chart-section {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #0f3460;
+        }
 
-    .method-card h4 {
-        color: #4fc3f7;
-        margin: 0 0 15px 0;
-        font-size: 1em;
-    }
+        #jenkins-chart {
+            width: 100%;
+            height: 500px;
+            background: #0d1117;
+            border-radius: 8px;
+        }
 
-    .time-cycle-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
+        .analysis-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
-    .cycle-badge {
-        background: #16213e;
-        color: #a0a0a0;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 0.85em;
-        font-family: 'Monaco', monospace;
-    }
+        .analysis-card {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #0f3460;
+        }
 
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.7);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
+        .analysis-card h3 {
+            color: #e94560;
+            margin: 0 0 15px 0;
+            font-size: 1.1em;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #0f3460;
+        }
 
-    .loading-overlay.active {
-        display: flex;
-    }
+        .level-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
 
-    .spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid #0f3460;
-        border-top-color: #e94560;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
+        .level-row:last-child {
+            border-bottom: none;
+        }
 
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
+        .level-label {
+            color: #a0a0a0;
+            font-size: 0.9em;
+        }
 
-    .tcb-visualization {
-        background: #16213e;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 10px;
-    }
+        .level-value {
+            font-weight: 600;
+            font-family: 'Monaco', monospace;
+        }
 
-    .tcb-bar {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
+        .level-value.support { color: #00d26a; }
+        .level-value.resistance { color: #ff6b6b; }
+        .level-value.neutral { color: #ffd93d; }
 
-    .tcb-bar-visual {
-        width: 20px;
-        background: linear-gradient(180deg, #ff6b6b 0%, #00d26a 100%);
-        border-radius: 2px;
-    }
+        .signal-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
 
-    .tcb-arrow {
-        font-size: 1.5em;
-        color: #4fc3f7;
-    }
+        .signal-badge.buy { background: rgba(0, 210, 106, 0.2); color: #00d26a; }
+        .signal-badge.sell { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
 
-    .tcb-time-visual {
-        height: 20px;
-        background: linear-gradient(90deg, #4fc3f7 0%, transparent 100%);
-        border-radius: 2px;
-    }
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
 
-    .chart-controls {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
-    }
+        .method-card {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #0f3460;
+        }
 
-    .chart-control-btn {
-        background: #16213e;
-        border: 1px solid #0f3460;
-        color: #a0a0a0;
-        padding: 8px 15px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.9em;
-        transition: all 0.2s;
-    }
+        .method-card h4 {
+            color: #4fc3f7;
+            margin: 0 0 15px 0;
+            font-size: 1em;
+        }
 
-    .chart-control-btn:hover, .chart-control-btn.active {
-        background: #0f3460;
-        color: #fff;
-        border-color: #e94560;
-    }
+        .time-cycle-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
-    .quick-calc {
-        background: #16213e;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 15px;
-    }
+        .cycle-badge {
+            background: #16213e;
+            color: #a0a0a0;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-family: 'Monaco', monospace;
+        }
 
-    .quick-calc-row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
 
-    .quick-calc input {
-        flex: 1;
-        background: #1a1a2e;
-        border: 1px solid #0f3460;
-        color: #fff;
-        padding: 8px 12px;
-        border-radius: 6px;
-    }
+        .loading-overlay.active { display: flex; }
 
-    .quick-calc button {
-        background: #0f3460;
-        border: none;
-        color: #fff;
-        padding: 8px 15px;
-        border-radius: 6px;
-        cursor: pointer;
-    }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #0f3460;
+            border-top-color: #e94560;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-    .quick-result {
-        margin-top: 10px;
-        padding: 10px;
-        background: #1a1a2e;
-        border-radius: 6px;
-        font-family: 'Monaco', monospace;
-        font-size: 0.85em;
-    }
-</style>
-{% endblock %}
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-{% block content %}
+        .tcb-visualization {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .tcb-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tcb-bar-visual {
+            width: 20px;
+            background: linear-gradient(180deg, #ff6b6b 0%, #00d26a 100%);
+            border-radius: 2px;
+        }
+
+        .tcb-arrow { font-size: 1.5em; color: #4fc3f7; }
+
+        .tcb-time-visual {
+            height: 20px;
+            background: linear-gradient(90deg, #4fc3f7 0%, transparent 100%);
+            border-radius: 2px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .chart-control-btn {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            color: #a0a0a0;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .chart-control-btn:hover, .chart-control-btn.active {
+            background: #0f3460;
+            color: #fff;
+            border-color: #e94560;
+        }
+
+        .quick-calc {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .quick-calc-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .quick-calc input {
+            flex: 1;
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .quick-calc button {
+            background: #0f3460;
+            border: none;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .quick-result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 6px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.85em;
+        }
+
+        .levels-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        .levels-table th, .levels-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .levels-table th {
+            color: #a0a0a0;
+            font-weight: normal;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #4fc3f7;
+            text-decoration: none;
+            margin-bottom: 10px;
+        }
+
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
 <div class="jenkins-container">
+    <a href="/" class="back-link">&larr; Back to Dashboard</a>
+
     <div class="header-section">
         <h1>Jenkins Trading Methods</h1>
         <p>Time & Price Geometry Analysis based on Michael S. Jenkins' methodologies</p>
@@ -423,7 +443,7 @@
         </div>
     </div>
 
-    <!-- Asset Birth Cycles (Jenkins: birth date determines all cycles) -->
+    <!-- Asset Birth Cycles -->
     <div id="birth-cycles-section" class="header-section" style="display: none; margin-bottom: 20px;">
         <h3 style="color: #e94560; margin: 0 0 15px 0;">
             <span id="birth-asset-name">Asset</span> Birth Cycles
@@ -431,27 +451,19 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
             <div class="method-card" style="margin: 0;">
                 <h4>Birth Data</h4>
-                <div id="birth-data">
-                    <p style="color: #a0a0a0;">Select asset profile</p>
-                </div>
+                <div id="birth-data"><p style="color: #a0a0a0;">Select asset profile</p></div>
             </div>
             <div class="method-card" style="margin: 0;">
                 <h4>Time Since Birth</h4>
-                <div id="time-since-birth">
-                    <p style="color: #a0a0a0;">Select asset profile</p>
-                </div>
+                <div id="time-since-birth"><p style="color: #a0a0a0;">Select asset profile</p></div>
             </div>
             <div class="method-card" style="margin: 0;">
                 <h4>ATH/ATL Cycles</h4>
-                <div id="ath-atl-cycles">
-                    <p style="color: #a0a0a0;">Select asset profile</p>
-                </div>
+                <div id="ath-atl-cycles"><p style="color: #a0a0a0;">Select asset profile</p></div>
             </div>
             <div class="method-card" style="margin: 0;">
                 <h4>Planetary Movement from Birth</h4>
-                <div id="planetary-from-birth">
-                    <p style="color: #a0a0a0;">Select asset profile</p>
-                </div>
+                <div id="planetary-from-birth"><p style="color: #a0a0a0;">Select asset profile</p></div>
             </div>
         </div>
     </div>
@@ -459,21 +471,10 @@
     <div class="main-grid">
         <div class="chart-section">
             <div class="chart-controls">
-                <button class="chart-control-btn active" onclick="toggleOverlay('sqrt')" id="btn-sqrt">
-                    Sqrt Levels
-                </button>
-                <button class="chart-control-btn" onclick="toggleOverlay('angles')" id="btn-angles">
-                    Gann Angles
-                </button>
-                <button class="chart-control-btn" onclick="toggleOverlay('overlap')" id="btn-overlap">
-                    Overlap Zones
-                </button>
-                <button class="chart-control-btn" onclick="toggleOverlay('signals')" id="btn-signals">
-                    Signals
-                </button>
-                <button class="chart-control-btn" onclick="toggleOverlay('circles')" id="btn-circles">
-                    Circle Arcs
-                </button>
+                <button class="chart-control-btn active" onclick="toggleOverlay('sqrt')" id="btn-sqrt">Sqrt Levels</button>
+                <button class="chart-control-btn" onclick="toggleOverlay('angles')" id="btn-angles">Gann Angles</button>
+                <button class="chart-control-btn" onclick="toggleOverlay('overlap')" id="btn-overlap">Overlap Zones</button>
+                <button class="chart-control-btn" onclick="toggleOverlay('signals')" id="btn-signals">Signals</button>
             </div>
             <div id="jenkins-chart"></div>
         </div>
@@ -481,25 +482,16 @@
         <div class="analysis-panel">
             <div class="analysis-card">
                 <h3>Square Root Levels (Jenkins Natural Ratio)</h3>
-                <div id="sqrt-levels">
-                    <p style="color: #a0a0a0; text-align: center;">Run analysis to see levels</p>
-                </div>
+                <div id="sqrt-levels"><p style="color: #a0a0a0; text-align: center;">Run analysis to see levels</p></div>
             </div>
-
             <div class="analysis-card">
                 <h3>Time Conversion Bar (TCB)</h3>
-                <div id="tcb-analysis">
-                    <p style="color: #a0a0a0; text-align: center;">Run analysis to see TCB</p>
-                </div>
+                <div id="tcb-analysis"><p style="color: #a0a0a0; text-align: center;">Run analysis to see TCB</p></div>
             </div>
-
             <div class="analysis-card">
                 <h3>Reversal Signals</h3>
-                <div id="signal-list">
-                    <p style="color: #a0a0a0; text-align: center;">Run analysis to see signals</p>
-                </div>
+                <div id="signal-list"><p style="color: #a0a0a0; text-align: center;">Run analysis to see signals</p></div>
             </div>
-
             <div class="analysis-card">
                 <h3>Quick Calculator</h3>
                 <div class="quick-calc">
@@ -516,82 +508,46 @@
     <div class="methods-grid">
         <div class="method-card">
             <h4>Measured Moves</h4>
-            <div id="measured-moves">
-                <p style="color: #a0a0a0;">Run analysis to see moves</p>
-            </div>
+            <div id="measured-moves"><p style="color: #a0a0a0;">Run analysis to see moves</p></div>
         </div>
-
         <div class="method-card">
             <h4>Overlap Zones</h4>
-            <div id="overlap-zones">
-                <p style="color: #a0a0a0;">Run analysis to see zones</p>
-            </div>
+            <div id="overlap-zones"><p style="color: #a0a0a0;">Run analysis to see zones</p></div>
         </div>
-
         <div class="method-card">
             <h4>Time-Price Square</h4>
-            <div id="time-price-square">
-                <p style="color: #a0a0a0;">Run analysis to see projections</p>
-            </div>
+            <div id="time-price-square"><p style="color: #a0a0a0;">Run analysis to see projections</p></div>
         </div>
-
         <div class="method-card" style="grid-column: span 2;">
             <h4>Time = Price Analysis (Core Jenkins Concept)</h4>
-            <p style="color: #a0a0a0; font-size: 0.85em; margin-bottom: 10px;">
-                When TIME passed = PRICE level, a turn occurs (Square Out)
-            </p>
-            <div id="time-equals-price">
-                <p style="color: #a0a0a0;">Run analysis to see square-outs</p>
-            </div>
+            <p style="color: #a0a0a0; font-size: 0.85em; margin-bottom: 10px;">When TIME passed = PRICE level, a turn occurs (Square Out)</p>
+            <div id="time-equals-price"><p style="color: #a0a0a0;">Run analysis to see square-outs</p></div>
         </div>
-
         <div class="method-card">
             <h4>Natural Square Time Cycles</h4>
-            <div id="natural-squares">
-                <div class="time-cycle-list">
-                    <span class="cycle-badge">4</span>
-                    <span class="cycle-badge">9</span>
-                    <span class="cycle-badge">16</span>
-                    <span class="cycle-badge">25</span>
-                    <span class="cycle-badge">36</span>
-                    <span class="cycle-badge">49</span>
-                    <span class="cycle-badge">64</span>
-                    <span class="cycle-badge">81</span>
-                    <span class="cycle-badge">100</span>
-                    <span class="cycle-badge">121</span>
-                    <span class="cycle-badge">144</span>
-                </div>
+            <div class="time-cycle-list">
+                <span class="cycle-badge">4</span><span class="cycle-badge">9</span><span class="cycle-badge">16</span>
+                <span class="cycle-badge">25</span><span class="cycle-badge">36</span><span class="cycle-badge">49</span>
+                <span class="cycle-badge">64</span><span class="cycle-badge">81</span><span class="cycle-badge">100</span>
+                <span class="cycle-badge">121</span><span class="cycle-badge">144</span>
             </div>
         </div>
-
         <div class="method-card">
             <h4>Fibonacci Time Cycles</h4>
-            <div id="fib-cycles">
-                <div class="time-cycle-list">
-                    <span class="cycle-badge">1</span>
-                    <span class="cycle-badge">2</span>
-                    <span class="cycle-badge">3</span>
-                    <span class="cycle-badge">5</span>
-                    <span class="cycle-badge">8</span>
-                    <span class="cycle-badge">13</span>
-                    <span class="cycle-badge">21</span>
-                    <span class="cycle-badge">34</span>
-                    <span class="cycle-badge">55</span>
-                    <span class="cycle-badge">89</span>
-                    <span class="cycle-badge">144</span>
-                </div>
+            <div class="time-cycle-list">
+                <span class="cycle-badge">1</span><span class="cycle-badge">2</span><span class="cycle-badge">3</span>
+                <span class="cycle-badge">5</span><span class="cycle-badge">8</span><span class="cycle-badge">13</span>
+                <span class="cycle-badge">21</span><span class="cycle-badge">34</span><span class="cycle-badge">55</span>
+                <span class="cycle-badge">89</span><span class="cycle-badge">144</span>
             </div>
         </div>
-
         <div class="method-card">
             <h4>PI Cycles</h4>
-            <div id="pi-cycles">
-                <p style="color: #a0a0a0;">Run analysis to see PI projections</p>
-            </div>
+            <div id="pi-cycles"><p style="color: #a0a0a0;">Run analysis to see PI projections</p></div>
         </div>
     </div>
 
-    <!-- Planetary Section (Jenkins Astro Methods) -->
+    <!-- Planetary Section -->
     <div class="header-section" style="margin-top: 30px;">
         <h2 style="color: #e94560; margin: 0;">Planetary Analysis (Jenkins Astro Methods)</h2>
         <p style="color: #a0a0a0; margin: 5px 0 0 0;">Geocentric & Heliocentric positions for square-outs and timing</p>
@@ -600,102 +556,69 @@
     <div class="methods-grid">
         <div class="method-card">
             <h4>Planetary Positions (Geocentric)</h4>
-            <div id="geo-positions">
-                <p style="color: #a0a0a0;">Run analysis to see positions</p>
-            </div>
+            <div id="geo-positions"><p style="color: #a0a0a0;">Run analysis to see positions</p></div>
         </div>
-
         <div class="method-card">
             <h4>Planetary Positions (Heliocentric)</h4>
-            <div id="helio-positions">
-                <p style="color: #a0a0a0;">Run analysis to see positions</p>
-            </div>
+            <div id="helio-positions"><p style="color: #a0a0a0;">Run analysis to see positions</p></div>
         </div>
-
         <div class="method-card">
             <h4>Price Square Outs</h4>
-            <div id="square-outs">
-                <p style="color: #a0a0a0;">Run analysis to see planetary matches</p>
-            </div>
+            <div id="square-outs"><p style="color: #a0a0a0;">Run analysis to see planetary matches</p></div>
         </div>
-
         <div class="method-card">
             <h4>Mars/Jupiter Cycle</h4>
-            <div id="mars-jupiter">
-                <p style="color: #a0a0a0;">Run analysis to see cycle</p>
-            </div>
+            <div id="mars-jupiter"><p style="color: #a0a0a0;">Run analysis to see cycle</p></div>
         </div>
-
         <div class="method-card">
             <h4>Jupiter/Saturn 20-Year Cycle</h4>
-            <div id="jupiter-saturn">
-                <p style="color: #a0a0a0;">Run analysis to see cycle</p>
-            </div>
+            <div id="jupiter-saturn"><p style="color: #a0a0a0;">Run analysis to see cycle</p></div>
         </div>
-
         <div class="method-card">
             <h4>Retrograde Status</h4>
-            <div id="retrogrades">
-                <p style="color: #a0a0a0;">Run analysis to see retrogrades</p>
-            </div>
+            <div id="retrogrades"><p style="color: #a0a0a0;">Run analysis to see retrogrades</p></div>
         </div>
-
         <div class="method-card" style="grid-column: span 2;">
             <h4>Current Planetary Aspects</h4>
-            <div id="planetary-aspects">
-                <p style="color: #a0a0a0;">Run analysis to see aspects</p>
-            </div>
+            <div id="planetary-aspects"><p style="color: #a0a0a0;">Run analysis to see aspects</p></div>
         </div>
     </div>
 
     <!-- Time as Longitude Section -->
     <div class="header-section" style="margin-top: 30px;">
         <h2 style="color: #e94560; margin: 0;">Time as Longitude</h2>
-        <p style="color: #a0a0a0; margin: 5px 0 0 0;">Earth rotates 360 degrees in 24 hours. 1 degree = 4 minutes. Price converts to time via longitude.</p>
+        <p style="color: #a0a0a0; margin: 5px 0 0 0;">Earth rotates 360 degrees in 24 hours. 1 degree = 4 minutes.</p>
     </div>
 
     <div class="methods-grid">
         <div class="method-card">
             <h4>Price to Time Conversion</h4>
-            <div id="price-to-time">
-                <p style="color: #a0a0a0;">Run analysis to see conversions</p>
-            </div>
+            <div id="price-to-time"><p style="color: #a0a0a0;">Run analysis to see conversions</p></div>
         </div>
-
         <div class="method-card">
             <h4>Scaled Time Cycles</h4>
-            <div id="scaled-cycles">
-                <p style="color: #a0a0a0;">Run analysis to see scaled cycles</p>
-            </div>
+            <div id="scaled-cycles"><p style="color: #a0a0a0;">Run analysis to see scaled cycles</p></div>
         </div>
-
         <div class="method-card">
             <h4>Natural Chart Intervals</h4>
-            <div id="natural-intervals">
-                <table class="levels-table">
-                    <tr><th>Interval</th><th>Degrees</th><th>Reason</th></tr>
-                    <tr><td>4 min</td><td>1°</td><td>1 degree Earth rotation</td></tr>
-                    <tr><td>15 min</td><td>3.75°</td><td>1/24th of day</td></tr>
-                    <tr><td>60 min</td><td>15°</td><td>1 hour = 15° longitude</td></tr>
-                    <tr><td>240 min</td><td>60°</td><td>4 hours = 60°</td></tr>
-                    <tr><td>390 min</td><td>97.5°</td><td>NYSE trading day</td></tr>
-                    <tr><td>1440 min</td><td>360°</td><td>Full day = 360°</td></tr>
-                </table>
-            </div>
+            <table class="levels-table">
+                <tr><th>Interval</th><th>Degrees</th><th>Reason</th></tr>
+                <tr><td>4 min</td><td>1</td><td>1 degree Earth rotation</td></tr>
+                <tr><td>15 min</td><td>3.75</td><td>1/24th of day</td></tr>
+                <tr><td>60 min</td><td>15</td><td>1 hour = 15 longitude</td></tr>
+                <tr><td>390 min</td><td>97.5</td><td>NYSE trading day</td></tr>
+                <tr><td>1440 min</td><td>360</td><td>Full day = 360</td></tr>
+            </table>
         </div>
-
         <div class="method-card">
             <h4>Market Longitude Offsets</h4>
-            <div id="market-offsets">
-                <table class="levels-table">
-                    <tr><th>Route</th><th>Hours</th><th>Degrees</th></tr>
-                    <tr><td>NY → London</td><td>5</td><td>75°</td></tr>
-                    <tr><td>NY → Tokyo</td><td>14</td><td>210°</td></tr>
-                    <tr><td>NY → Hong Kong</td><td>13</td><td>195°</td></tr>
-                    <tr><td>NY → Sydney</td><td>16</td><td>240°</td></tr>
-                </table>
-                <p style="color: #a0a0a0; font-size: 0.85em; margin-top: 10px;">Pattern offsets between markets based on longitude difference</p>
-            </div>
+            <table class="levels-table">
+                <tr><th>Route</th><th>Hours</th><th>Degrees</th></tr>
+                <tr><td>NY to London</td><td>5</td><td>75</td></tr>
+                <tr><td>NY to Tokyo</td><td>14</td><td>210</td></tr>
+                <tr><td>NY to Hong Kong</td><td>13</td><td>195</td></tr>
+                <tr><td>NY to Sydney</td><td>16</td><td>240</td></tr>
+            </table>
         </div>
     </div>
 </div>
@@ -703,89 +626,49 @@
 <div class="loading-overlay" id="loading">
     <div class="spinner"></div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
 <script>
     let chart = null;
     let candleSeries = null;
     let analysisData = null;
-    let overlays = {
-        sqrt: true,
-        angles: false,
-        overlap: false,
-        signals: false,
-        circles: false
-    };
+    let overlays = { sqrt: true, angles: false, overlap: false, signals: false };
     let overlayLines = [];
 
-    // Initialize chart
     function initChart() {
         const container = document.getElementById('jenkins-chart');
         chart = LightweightCharts.createChart(container, {
             width: container.clientWidth,
             height: 500,
-            layout: {
-                background: { color: '#0d1117' },
-                textColor: '#a0a0a0'
-            },
-            grid: {
-                vertLines: { color: 'rgba(255,255,255,0.05)' },
-                horzLines: { color: 'rgba(255,255,255,0.05)' }
-            },
-            crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal
-            },
-            rightPriceScale: {
-                borderColor: '#0f3460'
-            },
-            timeScale: {
-                borderColor: '#0f3460',
-                timeVisible: true
-            }
+            layout: { background: { color: '#0d1117' }, textColor: '#a0a0a0' },
+            grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.05)' } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            rightPriceScale: { borderColor: '#0f3460' },
+            timeScale: { borderColor: '#0f3460', timeVisible: true }
         });
-
         candleSeries = chart.addCandlestickSeries({
-            upColor: '#00d26a',
-            downColor: '#ff6b6b',
-            borderUpColor: '#00d26a',
-            borderDownColor: '#ff6b6b',
-            wickUpColor: '#00d26a',
-            wickDownColor: '#ff6b6b'
+            upColor: '#00d26a', downColor: '#ff6b6b',
+            borderUpColor: '#00d26a', borderDownColor: '#ff6b6b',
+            wickUpColor: '#00d26a', wickDownColor: '#ff6b6b'
         });
-
-        // Handle resize
-        window.addEventListener('resize', () => {
-            chart.applyOptions({ width: container.clientWidth });
-        });
+        window.addEventListener('resize', () => { chart.applyOptions({ width: container.clientWidth }); });
     }
 
-    // Run analysis
     async function runAnalysis() {
         const symbol = document.getElementById('symbol-input').value;
         const timeframe = document.getElementById('timeframe-select').value;
         const bars = document.getElementById('bars-select').value;
-
         document.getElementById('loading').classList.add('active');
         document.getElementById('analyze-btn').disabled = true;
-
         try {
             const response = await fetch('/api/jenkins/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ symbol, timeframe, bars: parseInt(bars) })
             });
-
             if (!response.ok) throw new Error('Analysis failed');
-
             const data = await response.json();
             analysisData = data;
-
-            // Update chart
             updateChart(data.candles);
-
-            // Update analysis panels
             updateSqrtLevels(data.analysis);
             updateTCB(data.analysis);
             updateSignals(data.analysis);
@@ -794,21 +677,14 @@
             updateTimePriceSquare(data.analysis);
             updateTimeEqualsPrice(data.analysis);
             updatePiCycles(data.analysis);
-
-            // Update planetary analysis
             updatePlanetaryPositions(data.analysis);
             updateSquareOuts(data.analysis);
             updateMarsJupiter(data.analysis);
             updateJupiterSaturn(data.analysis);
             updateRetrogrades(data.analysis);
             updatePlanetaryAspects(data.analysis);
-
-            // Update time as longitude
             updateTimeAsLongitude(data.analysis);
-
-            // Draw overlays
             drawOverlays();
-
         } catch (error) {
             console.error('Analysis error:', error);
             alert('Error running analysis: ' + error.message);
@@ -818,788 +694,288 @@
         }
     }
 
-    // Update chart with candles
     function updateChart(candles) {
         if (!candles || candles.length === 0) return;
-
-        const chartData = candles.map(c => ({
-            time: c.timestamp,
-            open: c.open,
-            high: c.high,
-            low: c.low,
-            close: c.close
-        }));
-
+        const chartData = candles.map(c => ({ time: c.timestamp, open: c.open, high: c.high, low: c.low, close: c.close }));
         candleSeries.setData(chartData);
         chart.timeScale().fitContent();
     }
 
-    // Toggle overlay visibility
     function toggleOverlay(type) {
         overlays[type] = !overlays[type];
         document.getElementById(`btn-${type}`).classList.toggle('active', overlays[type]);
         drawOverlays();
     }
 
-    // Draw overlays on chart
     function drawOverlays() {
-        // Clear existing lines
-        overlayLines.forEach(line => {
-            try { candleSeries.removePriceLine(line); } catch(e) {}
-        });
+        overlayLines.forEach(line => { try { candleSeries.removePriceLine(line); } catch(e) {} });
         overlayLines = [];
-
         if (!analysisData || !analysisData.analysis) return;
-
         const analysis = analysisData.analysis;
-
-        // Sqrt levels
         if (overlays.sqrt && analysis.sqrt_levels_high) {
             analysis.sqrt_levels_high.support.slice(0, 3).forEach((level, i) => {
-                const line = candleSeries.createPriceLine({
-                    price: level,
-                    color: '#00d26a',
-                    lineWidth: 1,
-                    lineStyle: 2,
-                    axisLabelVisible: true,
-                    title: `S${i+1}`
-                });
-                overlayLines.push(line);
+                overlayLines.push(candleSeries.createPriceLine({ price: level, color: '#00d26a', lineWidth: 1, lineStyle: 2, title: `S${i+1}` }));
             });
-
             analysis.sqrt_levels_low.resistance.slice(0, 3).forEach((level, i) => {
-                const line = candleSeries.createPriceLine({
-                    price: level,
-                    color: '#ff6b6b',
-                    lineWidth: 1,
-                    lineStyle: 2,
-                    axisLabelVisible: true,
-                    title: `R${i+1}`
-                });
-                overlayLines.push(line);
+                overlayLines.push(candleSeries.createPriceLine({ price: level, color: '#ff6b6b', lineWidth: 1, lineStyle: 2, title: `R${i+1}` }));
             });
-        }
-
-        // Overlap zones
-        if (overlays.overlap && analysis.overlap_zones) {
-            const oz = analysis.overlap_zones;
-
-            const buyUpper = candleSeries.createPriceLine({
-                price: oz.buy_zone.upper,
-                color: '#00d26a',
-                lineWidth: 1,
-                lineStyle: 1,
-                title: 'Buy+'
-            });
-            overlayLines.push(buyUpper);
-
-            const buyLower = candleSeries.createPriceLine({
-                price: oz.buy_zone.lower,
-                color: '#00d26a',
-                lineWidth: 1,
-                lineStyle: 1,
-                title: 'Buy-'
-            });
-            overlayLines.push(buyLower);
-
-            const sellUpper = candleSeries.createPriceLine({
-                price: oz.sell_zone.upper,
-                color: '#ff6b6b',
-                lineWidth: 1,
-                lineStyle: 1,
-                title: 'Sell+'
-            });
-            overlayLines.push(sellUpper);
-
-            const sellLower = candleSeries.createPriceLine({
-                price: oz.sell_zone.lower,
-                color: '#ff6b6b',
-                lineWidth: 1,
-                lineStyle: 1,
-                title: 'Sell-'
-            });
-            overlayLines.push(sellLower);
         }
     }
 
-    // Update sqrt levels panel
     function updateSqrtLevels(analysis) {
         if (!analysis) return;
-
         const container = document.getElementById('sqrt-levels');
         let html = '';
-
         if (analysis.sqrt_levels_high) {
-            html += `<div class="level-row">
-                <span class="level-label">From High (${analysis.significant_high})</span>
-                <span class="level-value neutral">sqrt: ${analysis.sqrt_levels_high.sqrt}</span>
-            </div>`;
-
+            html += `<div class="level-row"><span class="level-label">From High (${analysis.significant_high})</span><span class="level-value neutral">sqrt: ${analysis.sqrt_levels_high.sqrt}</span></div>`;
             analysis.sqrt_levels_high.support.slice(0, 3).forEach((level, i) => {
-                html += `<div class="level-row">
-                    <span class="level-label">Support ${i+1} (-${(i+1)*0.25})</span>
-                    <span class="level-value support">${level.toLocaleString()}</span>
-                </div>`;
+                html += `<div class="level-row"><span class="level-label">Support ${i+1}</span><span class="level-value support">${level.toLocaleString()}</span></div>`;
             });
         }
-
         if (analysis.sqrt_levels_low) {
-            html += `<div class="level-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #0f3460;">
-                <span class="level-label">From Low (${analysis.significant_low})</span>
-                <span class="level-value neutral">sqrt: ${analysis.sqrt_levels_low.sqrt}</span>
-            </div>`;
-
+            html += `<div class="level-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #0f3460;"><span class="level-label">From Low (${analysis.significant_low})</span><span class="level-value neutral">sqrt: ${analysis.sqrt_levels_low.sqrt}</span></div>`;
             analysis.sqrt_levels_low.resistance.slice(0, 3).forEach((level, i) => {
-                html += `<div class="level-row">
-                    <span class="level-label">Resistance ${i+1} (+${(i+1)*0.25})</span>
-                    <span class="level-value resistance">${level.toLocaleString()}</span>
-                </div>`;
+                html += `<div class="level-row"><span class="level-label">Resistance ${i+1}</span><span class="level-value resistance">${level.toLocaleString()}</span></div>`;
             });
         }
-
         container.innerHTML = html;
     }
 
-    // Update TCB panel
     function updateTCB(analysis) {
         if (!analysis || !analysis.tcb) return;
-
         const tcb = analysis.tcb;
-        const container = document.getElementById('tcb-analysis');
-
-        container.innerHTML = `
-            <div class="tcb-visualization">
-                <div class="tcb-bar">
-                    <div class="tcb-bar-visual" style="height: ${Math.min(tcb.bar_height * 0.5, 100)}px;"></div>
-                    <span class="tcb-arrow">→</span>
-                    <div class="tcb-time-visual" style="width: ${Math.min(tcb.time_units * 2, 200)}px;"></div>
-                </div>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Impulse Bar Height</span>
-                <span class="level-value neutral">${tcb.bar_height.toLocaleString()}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Time Projection (mins)</span>
-                <span class="level-value neutral">${tcb.minutes}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Time Projection (hours)</span>
-                <span class="level-value neutral">${tcb.hours}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Time Projection (days)</span>
-                <span class="level-value neutral">${tcb.days}</span>
-            </div>
-        `;
+        document.getElementById('tcb-analysis').innerHTML = `
+            <div class="level-row"><span class="level-label">Impulse Bar Height</span><span class="level-value neutral">${tcb.bar_height.toLocaleString()}</span></div>
+            <div class="level-row"><span class="level-label">Time Projection (hours)</span><span class="level-value neutral">${tcb.hours}</span></div>
+            <div class="level-row"><span class="level-label">Time Projection (days)</span><span class="level-value neutral">${tcb.days}</span></div>`;
     }
 
-    // Update signals panel
     function updateSignals(analysis) {
         if (!analysis) return;
-
         const container = document.getElementById('signal-list');
         const signals = analysis.reversal_signals || [];
-
-        if (signals.length === 0) {
-            container.innerHTML = '<p style="color: #a0a0a0; text-align: center;">No recent signals</p>';
-            return;
-        }
-
+        if (signals.length === 0) { container.innerHTML = '<p style="color: #a0a0a0;">No recent signals</p>'; return; }
         let html = '';
         signals.slice(-5).reverse().forEach(sig => {
-            html += `<div class="level-row">
-                <span class="signal-badge ${sig.type.toLowerCase()}">${sig.type}</span>
-                <span class="level-value neutral">${sig.price.toLocaleString()}</span>
-            </div>`;
+            html += `<div class="level-row"><span class="signal-badge ${sig.type.toLowerCase()}">${sig.type}</span><span class="level-value neutral">${sig.price.toLocaleString()}</span></div>`;
         });
-
         container.innerHTML = html;
     }
 
-    // Update measured moves
     function updateMeasuredMoves(analysis) {
         if (!analysis || !analysis.measured_moves) return;
-
         const mm = analysis.measured_moves;
-        const container = document.getElementById('measured-moves');
-
-        container.innerHTML = `
-            <div class="level-row">
-                <span class="level-label">Avg Bar Range</span>
-                <span class="level-value neutral">${mm.avg_bar_range.toLocaleString()}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Max Bar Range</span>
-                <span class="level-value neutral">${mm.max_bar_range.toLocaleString()}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Avg Swing</span>
-                <span class="level-value neutral">${mm.avg_swing.toLocaleString()}</span>
-            </div>
-            <div style="margin-top: 10px;">
-                <span class="level-label">Typical Projections:</span>
-                <div class="time-cycle-list" style="margin-top: 5px;">
-                    ${Object.entries(mm.typical_moves).map(([k, v]) =>
-                        `<span class="cycle-badge">${k}: ${v.toLocaleString()}</span>`
-                    ).join('')}
-                </div>
-            </div>
-        `;
+        document.getElementById('measured-moves').innerHTML = `
+            <div class="level-row"><span class="level-label">Avg Bar Range</span><span class="level-value neutral">${mm.avg_bar_range.toLocaleString()}</span></div>
+            <div class="level-row"><span class="level-label">Max Bar Range</span><span class="level-value neutral">${mm.max_bar_range.toLocaleString()}</span></div>
+            <div class="level-row"><span class="level-label">Avg Swing</span><span class="level-value neutral">${mm.avg_swing.toLocaleString()}</span></div>`;
     }
 
-    // Update overlap zones
     function updateOverlapZones(analysis) {
         if (!analysis || !analysis.overlap_zones) return;
-
         const oz = analysis.overlap_zones;
-        const container = document.getElementById('overlap-zones');
-
-        container.innerHTML = `
-            <div class="level-row">
-                <span class="level-label">Prior High</span>
-                <span class="level-value neutral">${oz.prev_high.toLocaleString()}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Prior Low</span>
-                <span class="level-value neutral">${oz.prev_low.toLocaleString()}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Range</span>
-                <span class="level-value neutral">${oz.range.toLocaleString()}</span>
-            </div>
-            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #0f3460;">
-                <div class="level-row">
-                    <span class="level-label">Buy Zone</span>
-                    <span class="level-value support">${oz.buy_zone.lower.toLocaleString()} - ${oz.buy_zone.upper.toLocaleString()}</span>
-                </div>
-                <div class="level-row">
-                    <span class="level-label">Sell Zone</span>
-                    <span class="level-value resistance">${oz.sell_zone.lower.toLocaleString()} - ${oz.sell_zone.upper.toLocaleString()}</span>
-                </div>
-            </div>
-        `;
+        document.getElementById('overlap-zones').innerHTML = `
+            <div class="level-row"><span class="level-label">Prior High</span><span class="level-value neutral">${oz.prev_high.toLocaleString()}</span></div>
+            <div class="level-row"><span class="level-label">Prior Low</span><span class="level-value neutral">${oz.prev_low.toLocaleString()}</span></div>
+            <div class="level-row"><span class="level-label">Buy Zone</span><span class="level-value support">${oz.buy_zone.lower.toLocaleString()} - ${oz.buy_zone.upper.toLocaleString()}</span></div>
+            <div class="level-row"><span class="level-label">Sell Zone</span><span class="level-value resistance">${oz.sell_zone.lower.toLocaleString()} - ${oz.sell_zone.upper.toLocaleString()}</span></div>`;
     }
 
-    // Update time-price square
     function updateTimePriceSquare(analysis) {
         if (!analysis || !analysis.time_price_square_high) return;
-
         const tps = analysis.time_price_square_high;
-        const container = document.getElementById('time-price-square');
-
-        container.innerHTML = `
-            <div class="level-row">
-                <span class="level-label">Price</span>
-                <span class="level-value neutral">${tps.price.toLocaleString()}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Square Days</span>
-                <span class="level-value neutral">${tps.square_out_days}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Square Weeks</span>
-                <span class="level-value neutral">${tps.square_out_weeks}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Sqrt Time</span>
-                <span class="level-value neutral">${tps.sqrt_time} bars</span>
-            </div>
-        `;
+        document.getElementById('time-price-square').innerHTML = `
+            <div class="level-row"><span class="level-label">Price</span><span class="level-value neutral">${tps.price.toLocaleString()}</span></div>
+            <div class="level-row"><span class="level-label">Square Days</span><span class="level-value neutral">${tps.square_out_days}</span></div>
+            <div class="level-row"><span class="level-label">Sqrt Time</span><span class="level-value neutral">${tps.sqrt_time} bars</span></div>`;
     }
 
-    // Update PI cycles
     function updatePiCycles(analysis) {
         if (!analysis || !analysis.pi_cycles) return;
-
         const pi = analysis.pi_cycles;
-        const container = document.getElementById('pi-cycles');
-
-        container.innerHTML = `
-            <div class="level-row">
-                <span class="level-label">Base (Range)</span>
-                <span class="level-value neutral">${pi.base.toLocaleString()}</span>
-            </div>
+        document.getElementById('pi-cycles').innerHTML = `
+            <div class="level-row"><span class="level-label">Base (Range)</span><span class="level-value neutral">${pi.base.toLocaleString()}</span></div>
             <div class="time-cycle-list" style="margin-top: 10px;">
                 <span class="cycle-badge">PI/4: ${pi.pi_quarter.toLocaleString()}</span>
-                <span class="cycle-badge">PI/2: ${pi.pi_half.toLocaleString()}</span>
                 <span class="cycle-badge">PI: ${pi.pi_1.toLocaleString()}</span>
                 <span class="cycle-badge">2*PI: ${pi.pi_2.toLocaleString()}</span>
-            </div>
-        `;
+            </div>`;
     }
 
-    // Update Time = Price analysis
     function updateTimeEqualsPrice(analysis) {
         if (!analysis || !analysis.time_equals_price) return;
-
         const tep = analysis.time_equals_price;
-        const container = document.getElementById('time-equals-price');
-
-        let html = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <strong style="color: #4fc3f7;">High: ${tep.high?.toLocaleString()}</strong>
-                    <div style="font-size: 0.85em; color: #a0a0a0; margin-top: 5px;">
-                        Bar ${tep.high_bar} | ${tep.bars_from_high} bars ago
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <div class="level-row"><span class="level-label">Direct</span><span class="level-value neutral">${tep.high_harmonics?.direct} bars</span></div>
-                        <div class="level-row"><span class="level-label">/100</span><span class="level-value neutral">${tep.high_harmonics?.div_100} bars</span></div>
-                        <div class="level-row"><span class="level-label">/1000</span><span class="level-value neutral">${tep.high_harmonics?.div_1000} bars</span></div>
-                        <div class="level-row"><span class="level-label">sqrt</span><span class="level-value neutral">${tep.high_harmonics?.sqrt} bars</span></div>
-                        <div class="level-row"><span class="level-label">sqrt(sqrt)</span><span class="level-value neutral">${tep.high_harmonics?.sqrt_sqrt} bars</span></div>
-                    </div>
-                </div>
-                <div>
-                    <strong style="color: #00d26a;">Low: ${tep.low?.toLocaleString()}</strong>
-                    <div style="font-size: 0.85em; color: #a0a0a0; margin-top: 5px;">
-                        Bar ${tep.low_bar} | ${tep.bars_from_low} bars ago
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <div class="level-row"><span class="level-label">Direct</span><span class="level-value neutral">${tep.low_harmonics?.direct} bars</span></div>
-                        <div class="level-row"><span class="level-label">/100</span><span class="level-value neutral">${tep.low_harmonics?.div_100} bars</span></div>
-                        <div class="level-row"><span class="level-label">/1000</span><span class="level-value neutral">${tep.low_harmonics?.div_1000} bars</span></div>
-                        <div class="level-row"><span class="level-label">sqrt</span><span class="level-value neutral">${tep.low_harmonics?.sqrt} bars</span></div>
-                        <div class="level-row"><span class="level-label">sqrt(sqrt)</span><span class="level-value neutral">${tep.low_harmonics?.sqrt_sqrt} bars</span></div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Range equality
-        if (tep.range_time_equality) {
-            const rte = tep.range_time_equality;
-            html += `
-                <div style="margin-top: 15px; padding: 10px; background: #16213e; border-radius: 8px;">
-                    <strong style="color: #ffd93d;">Range vs Time:</strong>
-                    <span style="margin-left: 10px;">
-                        ${rte.range_points?.toLocaleString()} pts / ${rte.bars_in_range} bars = ${rte.ratio}
-                        ${rte.is_squared ? '<span style="color: #00d26a;"> SQUARED!</span>' : ''}
-                    </span>
-                </div>
-            `;
-        }
-
-        // Upcoming square-outs
+        let html = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div><strong style="color: #4fc3f7;">High: ${tep.high?.toLocaleString()}</strong><br><small>Bar ${tep.high_bar} | ${tep.bars_from_high} bars ago</small></div>
+            <div><strong style="color: #00d26a;">Low: ${tep.low?.toLocaleString()}</strong><br><small>Bar ${tep.low_bar} | ${tep.bars_from_low} bars ago</small></div>
+        </div>`;
         if (tep.square_outs && tep.square_outs.length > 0) {
-            html += `<div style="margin-top: 15px;"><strong style="color: #e94560;">Upcoming Square-Outs:</strong></div>`;
-            html += '<div class="time-cycle-list" style="margin-top: 10px;">';
+            html += '<div style="margin-top: 15px;"><strong style="color: #e94560;">Upcoming Square-Outs:</strong></div><div class="time-cycle-list" style="margin-top: 10px;">';
             tep.square_outs.slice(0, 8).forEach(sq => {
-                const color = sq.status === 'NOW' ? '#e94560' : (sq.status === 'PAST' ? '#a0a0a0' : '#4fc3f7');
-                const badge = sq.status === 'NOW' ? 'NOW!' : (sq.bars_away > 0 ? `+${sq.bars_away}` : sq.bars_away);
-                html += `<span class="cycle-badge" style="border: 1px solid ${color};">
-                    ${sq.type} (${sq.scale}): ${badge} bars
-                </span>`;
+                const color = sq.status === 'NOW' ? '#e94560' : '#4fc3f7';
+                html += `<span class="cycle-badge" style="border: 1px solid ${color};">${sq.type} (${sq.scale}): ${sq.bars_away > 0 ? '+' : ''}${sq.bars_away}</span>`;
             });
             html += '</div>';
         }
-
-        container.innerHTML = html;
+        document.getElementById('time-equals-price').innerHTML = html;
     }
 
-    // Quick calculator
     function quickCalcSqrt() {
         const price = parseFloat(document.getElementById('calc-price').value);
-        if (isNaN(price) || price <= 0) {
-            alert('Please enter a valid price');
-            return;
-        }
-
+        if (isNaN(price) || price <= 0) { alert('Please enter a valid price'); return; }
         const sqrt = Math.sqrt(price);
         const levels = [];
-
         for (let i = -4; i <= 4; i++) {
             if (i === 0) continue;
             const newSqrt = sqrt + (0.25 * i);
-            if (newSqrt > 0) {
-                levels.push({
-                    label: i > 0 ? `+${i*0.25}` : `${i*0.25}`,
-                    value: Math.pow(newSqrt, 2).toFixed(2)
-                });
-            }
+            if (newSqrt > 0) levels.push({ label: i > 0 ? `+${i*0.25}` : `${i*0.25}`, value: Math.pow(newSqrt, 2).toFixed(2) });
         }
-
         const resultDiv = document.getElementById('quick-result');
         resultDiv.style.display = 'block';
-        resultDiv.innerHTML = `
-            <div>Price: ${price} | Sqrt: ${sqrt.toFixed(4)}</div>
-            <div style="margin-top: 8px;">
-                ${levels.map(l => `<span style="margin-right: 10px;">${l.label}: <strong>${l.value}</strong></span>`).join('')}
-            </div>
-        `;
+        resultDiv.innerHTML = `<div>Price: ${price} | Sqrt: ${sqrt.toFixed(4)}</div><div style="margin-top: 8px;">${levels.map(l => `<span style="margin-right: 10px;">${l.label}: <strong>${l.value}</strong></span>`).join('')}</div>`;
     }
 
-    // ===== PLANETARY UPDATE FUNCTIONS =====
-
-    // Update planetary positions (geo & helio)
     function updatePlanetaryPositions(analysis) {
         if (!analysis || !analysis.planetary_positions) return;
-
         const positions = analysis.planetary_positions;
-        const geoContainer = document.getElementById('geo-positions');
-        const helioContainer = document.getElementById('helio-positions');
-
-        // Geocentric
-        let geoHtml = '';
+        let geoHtml = '', helioHtml = '';
         if (positions.geocentric) {
             Object.entries(positions.geocentric).forEach(([planet, data]) => {
-                geoHtml += `<div class="level-row">
-                    <span class="level-label">${planet}</span>
-                    <span class="level-value neutral">${data.longitude}°</span>
-                </div>`;
+                geoHtml += `<div class="level-row"><span class="level-label">${planet}</span><span class="level-value neutral">${data.longitude}</span></div>`;
             });
         }
-        geoContainer.innerHTML = geoHtml || '<p style="color: #a0a0a0;">No data</p>';
-
-        // Heliocentric
-        let helioHtml = '';
         if (positions.heliocentric) {
             Object.entries(positions.heliocentric).forEach(([planet, data]) => {
-                helioHtml += `<div class="level-row">
-                    <span class="level-label">${planet}</span>
-                    <span class="level-value neutral">${data.longitude}°</span>
-                </div>`;
+                helioHtml += `<div class="level-row"><span class="level-label">${planet}</span><span class="level-value neutral">${data.longitude}</span></div>`;
             });
         }
-        helioContainer.innerHTML = helioHtml || '<p style="color: #a0a0a0;">No data</p>';
+        document.getElementById('geo-positions').innerHTML = geoHtml || '<p style="color: #a0a0a0;">No data</p>';
+        document.getElementById('helio-positions').innerHTML = helioHtml || '<p style="color: #a0a0a0;">No data</p>';
     }
 
-    // Update square outs
     function updateSquareOuts(analysis) {
         if (!analysis || !analysis.planetary_square_outs) return;
-
         const sq = analysis.planetary_square_outs;
-        const container = document.getElementById('square-outs');
-
-        let html = `<div class="level-row">
-            <span class="level-label">Price</span>
-            <span class="level-value neutral">${sq.price?.toLocaleString() || 'N/A'}</span>
-        </div>`;
-
+        let html = `<div class="level-row"><span class="level-label">Price</span><span class="level-value neutral">${sq.price?.toLocaleString() || 'N/A'}</span></div>`;
         if (sq.matches && sq.matches.length > 0) {
             html += '<div style="margin-top: 10px;"><strong style="color: #00d26a;">MATCHES:</strong></div>';
-            sq.matches.forEach(m => {
-                html += `<div class="level-row">
-                    <span class="level-label">${m.planet} (${m.type})</span>
-                    <span class="level-value support">${m.longitude}° (orb: ${m.orb}°)</span>
-                </div>`;
-            });
-        } else {
-            html += '<div style="margin-top: 10px; color: #a0a0a0;">No exact matches</div>';
+            sq.matches.forEach(m => { html += `<div class="level-row"><span class="level-label">${m.planet} (${m.type})</span><span class="level-value support">${m.longitude} (orb: ${m.orb})</span></div>`; });
         }
-
-        if (sq.near_matches && sq.near_matches.length > 0) {
-            html += '<div style="margin-top: 10px;"><strong style="color: #ffd93d;">NEAR MATCHES:</strong></div>';
-            sq.near_matches.slice(0, 5).forEach(m => {
-                html += `<div class="level-row">
-                    <span class="level-label">${m.planet} (${m.type})</span>
-                    <span class="level-value neutral">${m.longitude}° (orb: ${m.orb}°)</span>
-                </div>`;
-            });
-        }
-
-        container.innerHTML = html;
+        document.getElementById('square-outs').innerHTML = html;
     }
 
-    // Update Mars/Jupiter cycle
     function updateMarsJupiter(analysis) {
         if (!analysis || !analysis.mars_jupiter_cycle) return;
-
         const mj = analysis.mars_jupiter_cycle;
-        const container = document.getElementById('mars-jupiter');
-
-        container.innerHTML = `
-            <div class="level-row">
-                <span class="level-label">Mars Helio</span>
-                <span class="level-value neutral">${mj.mars_helio}°</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Jupiter Helio</span>
-                <span class="level-value neutral">${mj.jupiter_helio}°</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Separation</span>
-                <span class="level-value neutral">${mj.separation}°</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Cycle Position</span>
-                <span class="level-value neutral">${mj.cycle_position}%</span>
-            </div>
-            <div style="margin-top: 10px;">
-                <span class="level-label">Conjunction Price Levels:</span>
-                <div class="time-cycle-list" style="margin-top: 5px;">
-                    ${mj.conjunction_price_levels?.map(p => `<span class="cycle-badge">${p}</span>`).join('') || ''}
-                </div>
-            </div>
-        `;
+        document.getElementById('mars-jupiter').innerHTML = `
+            <div class="level-row"><span class="level-label">Mars Helio</span><span class="level-value neutral">${mj.mars_helio}</span></div>
+            <div class="level-row"><span class="level-label">Jupiter Helio</span><span class="level-value neutral">${mj.jupiter_helio}</span></div>
+            <div class="level-row"><span class="level-label">Separation</span><span class="level-value neutral">${mj.separation}</span></div>
+            <div class="level-row"><span class="level-label">Cycle Position</span><span class="level-value neutral">${mj.cycle_position}%</span></div>`;
     }
 
-    // Update Jupiter/Saturn cycle
     function updateJupiterSaturn(analysis) {
         if (!analysis || !analysis.jupiter_saturn_cycle) return;
-
         const js = analysis.jupiter_saturn_cycle;
-        const container = document.getElementById('jupiter-saturn');
-
-        const phaseColors = {
-            'Conjunction': '#00d26a',
-            'First Square': '#ffd93d',
-            'Opposition': '#ff6b6b',
-            'Last Square': '#ffd93d',
-            'Pre-Conjunction': '#4fc3f7'
-        };
-
-        container.innerHTML = `
-            <div class="level-row">
-                <span class="level-label">Phase</span>
-                <span class="level-value" style="color: ${phaseColors[js.phase] || '#fff'}">${js.phase}</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Jupiter Helio</span>
-                <span class="level-value neutral">${js.jupiter_helio}°</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Saturn Helio</span>
-                <span class="level-value neutral">${js.saturn_helio}°</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Separation</span>
-                <span class="level-value neutral">${js.separation}°</span>
-            </div>
-            <div class="level-row">
-                <span class="level-label">Years in Cycle</span>
-                <span class="level-value neutral">${js.years_in_cycle} / 20</span>
-            </div>
-        `;
+        document.getElementById('jupiter-saturn').innerHTML = `
+            <div class="level-row"><span class="level-label">Phase</span><span class="level-value neutral">${js.phase}</span></div>
+            <div class="level-row"><span class="level-label">Separation</span><span class="level-value neutral">${js.separation}</span></div>
+            <div class="level-row"><span class="level-label">Years in Cycle</span><span class="level-value neutral">${js.years_in_cycle} / 20</span></div>`;
     }
 
-    // Update retrograde status
     function updateRetrogrades(analysis) {
         if (!analysis || !analysis.retrograde_status) return;
-
         const retro = analysis.retrograde_status;
-        const container = document.getElementById('retrogrades');
-
         let html = '';
         if (retro.planets) {
             Object.entries(retro.planets).forEach(([planet, data]) => {
-                const isRetro = data.retrograde;
-                html += `<div class="level-row">
-                    <span class="level-label">${planet}</span>
-                    <span class="level-value ${isRetro ? 'resistance' : 'support'}">${isRetro ? 'Rx' : 'Direct'} (${data.daily_motion > 0 ? '+' : ''}${data.daily_motion}°/day)</span>
-                </div>`;
+                html += `<div class="level-row"><span class="level-label">${planet}</span><span class="level-value ${data.retrograde ? 'resistance' : 'support'}">${data.retrograde ? 'Rx' : 'Direct'}</span></div>`;
             });
         }
-        container.innerHTML = html || '<p style="color: #a0a0a0;">No data</p>';
+        document.getElementById('retrogrades').innerHTML = html || '<p style="color: #a0a0a0;">No data</p>';
     }
 
-    // Update planetary aspects
     function updatePlanetaryAspects(analysis) {
-        if (!analysis || !analysis.planetary_aspects) return;
-
-        const aspects = analysis.planetary_aspects;
-        const container = document.getElementById('planetary-aspects');
-
-        if (!aspects || aspects.length === 0) {
-            container.innerHTML = '<p style="color: #a0a0a0;">No major aspects within orb</p>';
+        if (!analysis || !analysis.planetary_aspects || analysis.planetary_aspects.length === 0) {
+            document.getElementById('planetary-aspects').innerHTML = '<p style="color: #a0a0a0;">No major aspects</p>';
             return;
         }
-
-        const aspectSymbols = {
-            'conjunction': '☌',
-            'sextile': '⚹',
-            'square': '□',
-            'trine': '△',
-            'opposition': '☍'
-        };
-
-        const aspectColors = {
-            'conjunction': '#4fc3f7',
-            'sextile': '#00d26a',
-            'square': '#ff6b6b',
-            'trine': '#00d26a',
-            'opposition': '#ff6b6b'
-        };
-
+        const symbols = { 'conjunction': ' conj ', 'sextile': ' sxt ', 'square': ' sq ', 'trine': ' tri ', 'opposition': ' opp ' };
         let html = '<div class="time-cycle-list">';
-        aspects.slice(0, 10).forEach(a => {
-            html += `<span class="cycle-badge" style="border: 1px solid ${aspectColors[a.aspect]}">
-                ${a.planet1} ${aspectSymbols[a.aspect] || ''} ${a.planet2} (${a.orb.toFixed(1)}°)
-            </span>`;
+        analysis.planetary_aspects.slice(0, 10).forEach(a => {
+            html += `<span class="cycle-badge">${a.planet1}${symbols[a.aspect] || ' '}${a.planet2} (${a.orb.toFixed(1)})</span>`;
         });
         html += '</div>';
-
-        container.innerHTML = html;
+        document.getElementById('planetary-aspects').innerHTML = html;
     }
 
     function updateTimeAsLongitude(analysis) {
         if (!analysis || !analysis.time_as_longitude) return;
-
         const data = analysis.time_as_longitude;
-        const priceContainer = document.getElementById('price-to-time');
-        const scaledContainer = document.getElementById('scaled-cycles');
-
-        // Price to Time conversions
         if (data.conversions) {
-            const conv = data.conversions;
-            priceContainer.innerHTML = `
+            document.getElementById('price-to-time').innerHTML = `
                 <table class="levels-table">
-                    <tr><th>Conversion</th><th>Value</th></tr>
-                    <tr><td>Price as Degrees</td><td>${conv.price_as_degrees}°</td></tr>
-                    <tr><td>Price → Minutes</td><td>${conv.price_to_minutes} min</td></tr>
-                    <tr><td>Price → Hours</td><td>${conv.price_to_hours} hrs</td></tr>
-                    <tr><td>Price → Days</td><td>${conv.price_to_days} days</td></tr>
-                </table>
-                <p style="color: #a0a0a0; font-size: 0.85em; margin-top: 10px;">
-                    Current price: $${data.price.toLocaleString()} | 1° = 4 minutes
-                </p>
-            `;
+                    <tr><td>Price as Degrees</td><td>${data.conversions.price_as_degrees}</td></tr>
+                    <tr><td>Price to Minutes</td><td>${data.conversions.price_to_minutes}</td></tr>
+                    <tr><td>Price to Hours</td><td>${data.conversions.price_to_hours}</td></tr>
+                    <tr><td>Price to Days</td><td>${data.conversions.price_to_days}</td></tr>
+                </table>`;
         }
-
-        // Scaled Time Cycles (for large prices like BTC)
         if (data.scaled_time_cycles) {
-            const cycles = data.scaled_time_cycles;
-            let html = '<table class="levels-table"><tr><th>Scale</th><th>Price</th><th>Months</th><th>Days</th></tr>';
-
-            for (const [scale, values] of Object.entries(cycles)) {
-                if (scale !== 'move_decimal_3') {  // Skip duplicate
-                    const label = scale.replace('_', ' ').replace('div ', '÷');
-                    html += `<tr>
-                        <td>${label}</td>
-                        <td>${values.scaled_price.toLocaleString()}</td>
-                        <td>${values.as_months}</td>
-                        <td>${Math.round(values.as_days)}</td>
-                    </tr>`;
+            let html = '<table class="levels-table"><tr><th>Scale</th><th>Price</th><th>Days</th></tr>';
+            for (const [scale, values] of Object.entries(data.scaled_time_cycles)) {
+                if (scale !== 'move_decimal_3') {
+                    html += `<tr><td>${scale}</td><td>${values.scaled_price}</td><td>${Math.round(values.as_days)}</td></tr>`;
                 }
             }
             html += '</table>';
-            html += `<p style="color: #a0a0a0; font-size: 0.85em; margin-top: 10px;">
-                Jenkins formula: Price × 30.4375 = days
-            </p>`;
-
-            scaledContainer.innerHTML = html;
+            document.getElementById('scaled-cycles').innerHTML = html;
         }
     }
 
-    // Asset Profile Functions
     async function selectAssetProfile() {
-        const select = document.getElementById('asset-profile-select');
-        const symbol = select.value;
-
-        if (!symbol) {
-            document.getElementById('birth-cycles-section').style.display = 'none';
-            return;
-        }
-
+        const symbol = document.getElementById('asset-profile-select').value;
+        if (!symbol) { document.getElementById('birth-cycles-section').style.display = 'none'; return; }
         try {
-            // Fetch birth cycles for the selected asset
             const response = await fetch(`/api/jenkins/birth-cycles/${symbol}`);
             if (!response.ok) throw new Error('Failed to fetch birth cycles');
-
             const cycles = await response.json();
             updateBirthCycles(cycles);
-
-            // Update symbol input based on asset type
-            const symbolInput = document.getElementById('symbol-input');
-            if (cycles.type === 'crypto') {
-                symbolInput.value = `${symbol}/USD`;
-            } else {
-                symbolInput.value = symbol;
-            }
-
-            // Show birth cycles section
+            document.getElementById('symbol-input').value = cycles.type === 'crypto' ? `${symbol}/USD` : symbol;
             document.getElementById('birth-cycles-section').style.display = 'block';
             document.getElementById('birth-asset-name').textContent = cycles.symbol;
-
-        } catch (error) {
-            console.error('Error fetching asset profile:', error);
-        }
+        } catch (error) { console.error('Error:', error); }
     }
 
     function updateBirthCycles(cycles) {
-        // Birth Data
-        const birthDataEl = document.getElementById('birth-data');
-        birthDataEl.innerHTML = `
+        document.getElementById('birth-data').innerHTML = `
             <table class="levels-table">
                 <tr><td>Birth Date</td><td>${cycles.birth_date}</td></tr>
                 <tr><td>Birth Price</td><td>$${cycles.birth_price.toLocaleString()}</td></tr>
-                <tr><td>Birth Price as °</td><td>${cycles.birth_price_as_degrees}°</td></tr>
-                <tr><td>Birth Price √</td><td>${cycles.birth_price_sqrt}</td></tr>
-            </table>
-        `;
-
-        // Time Since Birth
-        const timeSinceBirthEl = document.getElementById('time-since-birth');
-        timeSinceBirthEl.innerHTML = `
+                <tr><td>Birth Price as deg</td><td>${cycles.birth_price_as_degrees}</td></tr>
+            </table>`;
+        document.getElementById('time-since-birth').innerHTML = `
             <table class="levels-table">
                 <tr><td>Days</td><td>${cycles.days_since_birth.toLocaleString()}</td></tr>
-                <tr><td>Weeks</td><td>${cycles.weeks_since_birth.toLocaleString()}</td></tr>
-                <tr><td>Months</td><td>${cycles.months_since_birth.toLocaleString()}</td></tr>
                 <tr><td>Years</td><td>${cycles.years_since_birth}</td></tr>
-                <tr><td>Degrees Traveled</td><td>${cycles.degrees_traveled}° (${cycles.full_rotations} full rotations)</td></tr>
-            </table>
-            ${cycles.time_squares_birth_price ? '<p style="color: #00d26a; margin-top: 10px;">TIME SQUARES BIRTH PRICE!</p>' : ''}
-        `;
-
-        // ATH/ATL Cycles
-        const athAtlEl = document.getElementById('ath-atl-cycles');
-        let athAtlHtml = '<table class="levels-table">';
-        if (cycles.ath) {
-            athAtlHtml += `
-                <tr><td>ATH Price</td><td>$${cycles.ath.price.toLocaleString()}</td></tr>
-                <tr><td>ATH Date</td><td>${cycles.ath.date}</td></tr>
-                <tr><td>Days from ATH</td><td>${cycles.ath.days_ago}</td></tr>
-                <tr><td>ATH as °</td><td>${cycles.ath.ath_as_degrees}°</td></tr>
-            `;
-            if (cycles.ath.time_squares_ath) {
-                athAtlHtml += '<tr><td colspan="2" style="color: #00d26a;">TIME SQUARES ATH!</td></tr>';
-            }
-        }
-        if (cycles.atl) {
-            athAtlHtml += `
-                <tr><td>ATL Price</td><td>$${cycles.atl.price.toLocaleString()}</td></tr>
-                <tr><td>ATL Date</td><td>${cycles.atl.date}</td></tr>
-                <tr><td>Days from ATL</td><td>${cycles.atl.days_ago}</td></tr>
-            `;
-        }
-        athAtlHtml += '</table>';
-        athAtlEl.innerHTML = athAtlHtml;
-
-        // Planetary Movement from Birth
-        const planetaryEl = document.getElementById('planetary-from-birth');
+                <tr><td>Degrees Traveled</td><td>${cycles.degrees_traveled} (${cycles.full_rotations} rotations)</td></tr>
+            </table>`;
+        let athHtml = '<table class="levels-table">';
+        if (cycles.ath) athHtml += `<tr><td>ATH Price</td><td>$${cycles.ath.price.toLocaleString()}</td></tr><tr><td>ATH Date</td><td>${cycles.ath.date}</td></tr><tr><td>Days from ATH</td><td>${cycles.ath.days_ago}</td></tr>`;
+        if (cycles.atl) athHtml += `<tr><td>ATL Price</td><td>$${cycles.atl.price.toLocaleString()}</td></tr><tr><td>Days from ATL</td><td>${cycles.atl.days_ago}</td></tr>`;
+        athHtml += '</table>';
+        document.getElementById('ath-atl-cycles').innerHTML = athHtml;
         if (cycles.planetary_from_birth && !cycles.planetary_from_birth.error) {
-            let planetHtml = '<div style="max-height: 200px; overflow-y: auto;"><table class="levels-table">';
-            planetHtml += '<tr><th>Planet</th><th>° Moved</th><th>Current °</th></tr>';
-
-            // Show key planets first (Jenkins favorites)
-            const keyPlanets = ['Jupiter', 'Saturn', 'Mars', 'Sun'];
-            const allPlanets = Object.keys(cycles.planetary_from_birth);
-
-            // Sort: key planets first, then others
-            const sortedPlanets = [...keyPlanets.filter(p => allPlanets.includes(p)),
-                                   ...allPlanets.filter(p => !keyPlanets.includes(p))];
-
-            for (const planet of sortedPlanets) {
-                const data = cycles.planetary_from_birth[planet];
-                const isKey = keyPlanets.includes(planet);
-                planetHtml += `<tr style="${isKey ? 'color: #4fc3f7;' : ''}">
-                    <td>${planet}</td>
-                    <td>${data.degrees_moved.toFixed(1)}°</td>
-                    <td>${data.current_longitude.toFixed(1)}°</td>
-                </tr>`;
-            }
-            planetHtml += '</table></div>';
-            planetHtml += '<p style="color: #a0a0a0; font-size: 0.8em; margin-top: 8px;">Jenkins: "IPO @96, Jupiter moved 96 by certain date"</p>';
-            planetaryEl.innerHTML = planetHtml;
-        } else {
-            planetaryEl.innerHTML = '<p style="color: #a0a0a0;">Planetary data unavailable</p>';
+            let html = '<table class="levels-table"><tr><th>Planet</th><th>deg Moved</th></tr>';
+            ['Jupiter', 'Saturn', 'Mars'].forEach(p => {
+                if (cycles.planetary_from_birth[p]) html += `<tr><td>${p}</td><td>${cycles.planetary_from_birth[p].degrees_moved.toFixed(1)}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('planetary-from-birth').innerHTML = html;
         }
     }
 
-    // Initialize on load
-    document.addEventListener('DOMContentLoaded', () => {
-        initChart();
-    });
+    document.addEventListener('DOMContentLoaded', () => { initChart(); });
 </script>
-{% endblock %}
+</body>
+</html>
