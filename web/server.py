@@ -7475,7 +7475,14 @@ from web.jenkins_analysis import (
     calculate_time_conversion_bar,
     calculate_overlap_zones,
     calculate_gann_angles,
-    calculate_measured_moves
+    calculate_measured_moves,
+    # Planetary methods
+    get_planetary_positions,
+    calculate_planetary_square_outs,
+    calculate_planetary_aspects,
+    calculate_mars_jupiter_cycle,
+    calculate_jupiter_saturn_cycle,
+    get_retrograde_status
 )
 
 
@@ -7588,6 +7595,68 @@ async def get_gann_angles(price: float, time_units: int = 20, scale: float = 1.0
     try:
         angles = calculate_gann_angles(price, time_units, scale)
         return convert_numpy_types(angles)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---- Planetary Methods (Jenkins Astro) ----
+
+@app.get("/api/jenkins/planetary/positions")
+async def get_planetary_positions_api(lat: float = 40.7128, lon: float = -74.0060):
+    """Get current geocentric and heliocentric planetary positions."""
+    try:
+        positions = get_planetary_positions(location=(lat, lon))
+        return convert_numpy_types(positions)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/planetary/square-outs")
+async def get_planetary_square_outs_api(price: float):
+    """Find planetary square outs for a given price."""
+    try:
+        square_outs = calculate_planetary_square_outs(price)
+        return convert_numpy_types(square_outs)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/planetary/aspects")
+async def get_planetary_aspects_api():
+    """Get current planetary aspects."""
+    try:
+        aspects = calculate_planetary_aspects()
+        return convert_numpy_types(aspects)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/planetary/mars-jupiter")
+async def get_mars_jupiter_cycle_api():
+    """Get Mars/Jupiter synodic cycle information."""
+    try:
+        cycle = calculate_mars_jupiter_cycle()
+        return convert_numpy_types(cycle)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/planetary/jupiter-saturn")
+async def get_jupiter_saturn_cycle_api():
+    """Get Jupiter/Saturn 20-year cycle information."""
+    try:
+        cycle = calculate_jupiter_saturn_cycle()
+        return convert_numpy_types(cycle)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/planetary/retrogrades")
+async def get_retrogrades_api():
+    """Get current retrograde status of all planets."""
+    try:
+        status = get_retrograde_status()
+        return convert_numpy_types(status)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

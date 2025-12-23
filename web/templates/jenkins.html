@@ -515,6 +515,63 @@
             </div>
         </div>
     </div>
+
+    <!-- Planetary Section (Jenkins Astro Methods) -->
+    <div class="header-section" style="margin-top: 30px;">
+        <h2 style="color: #e94560; margin: 0;">Planetary Analysis (Jenkins Astro Methods)</h2>
+        <p style="color: #a0a0a0; margin: 5px 0 0 0;">Geocentric & Heliocentric positions for square-outs and timing</p>
+    </div>
+
+    <div class="methods-grid">
+        <div class="method-card">
+            <h4>Planetary Positions (Geocentric)</h4>
+            <div id="geo-positions">
+                <p style="color: #a0a0a0;">Run analysis to see positions</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h4>Planetary Positions (Heliocentric)</h4>
+            <div id="helio-positions">
+                <p style="color: #a0a0a0;">Run analysis to see positions</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h4>Price Square Outs</h4>
+            <div id="square-outs">
+                <p style="color: #a0a0a0;">Run analysis to see planetary matches</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h4>Mars/Jupiter Cycle</h4>
+            <div id="mars-jupiter">
+                <p style="color: #a0a0a0;">Run analysis to see cycle</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h4>Jupiter/Saturn 20-Year Cycle</h4>
+            <div id="jupiter-saturn">
+                <p style="color: #a0a0a0;">Run analysis to see cycle</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h4>Retrograde Status</h4>
+            <div id="retrogrades">
+                <p style="color: #a0a0a0;">Run analysis to see retrogrades</p>
+            </div>
+        </div>
+
+        <div class="method-card" style="grid-column: span 2;">
+            <h4>Current Planetary Aspects</h4>
+            <div id="planetary-aspects">
+                <p style="color: #a0a0a0;">Run analysis to see aspects</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="loading-overlay" id="loading">
@@ -610,6 +667,14 @@
             updateOverlapZones(data.analysis);
             updateTimePriceSquare(data.analysis);
             updatePiCycles(data.analysis);
+
+            // Update planetary analysis
+            updatePlanetaryPositions(data.analysis);
+            updateSquareOuts(data.analysis);
+            updateMarsJupiter(data.analysis);
+            updateJupiterSaturn(data.analysis);
+            updateRetrogrades(data.analysis);
+            updatePlanetaryAspects(data.analysis);
 
             // Draw overlays
             drawOverlays();
@@ -964,6 +1029,209 @@
                 ${levels.map(l => `<span style="margin-right: 10px;">${l.label}: <strong>${l.value}</strong></span>`).join('')}
             </div>
         `;
+    }
+
+    // ===== PLANETARY UPDATE FUNCTIONS =====
+
+    // Update planetary positions (geo & helio)
+    function updatePlanetaryPositions(analysis) {
+        if (!analysis || !analysis.planetary_positions) return;
+
+        const positions = analysis.planetary_positions;
+        const geoContainer = document.getElementById('geo-positions');
+        const helioContainer = document.getElementById('helio-positions');
+
+        // Geocentric
+        let geoHtml = '';
+        if (positions.geocentric) {
+            Object.entries(positions.geocentric).forEach(([planet, data]) => {
+                geoHtml += `<div class="level-row">
+                    <span class="level-label">${planet}</span>
+                    <span class="level-value neutral">${data.longitude}°</span>
+                </div>`;
+            });
+        }
+        geoContainer.innerHTML = geoHtml || '<p style="color: #a0a0a0;">No data</p>';
+
+        // Heliocentric
+        let helioHtml = '';
+        if (positions.heliocentric) {
+            Object.entries(positions.heliocentric).forEach(([planet, data]) => {
+                helioHtml += `<div class="level-row">
+                    <span class="level-label">${planet}</span>
+                    <span class="level-value neutral">${data.longitude}°</span>
+                </div>`;
+            });
+        }
+        helioContainer.innerHTML = helioHtml || '<p style="color: #a0a0a0;">No data</p>';
+    }
+
+    // Update square outs
+    function updateSquareOuts(analysis) {
+        if (!analysis || !analysis.planetary_square_outs) return;
+
+        const sq = analysis.planetary_square_outs;
+        const container = document.getElementById('square-outs');
+
+        let html = `<div class="level-row">
+            <span class="level-label">Price</span>
+            <span class="level-value neutral">${sq.price?.toLocaleString() || 'N/A'}</span>
+        </div>`;
+
+        if (sq.matches && sq.matches.length > 0) {
+            html += '<div style="margin-top: 10px;"><strong style="color: #00d26a;">MATCHES:</strong></div>';
+            sq.matches.forEach(m => {
+                html += `<div class="level-row">
+                    <span class="level-label">${m.planet} (${m.type})</span>
+                    <span class="level-value support">${m.longitude}° (orb: ${m.orb}°)</span>
+                </div>`;
+            });
+        } else {
+            html += '<div style="margin-top: 10px; color: #a0a0a0;">No exact matches</div>';
+        }
+
+        if (sq.near_matches && sq.near_matches.length > 0) {
+            html += '<div style="margin-top: 10px;"><strong style="color: #ffd93d;">NEAR MATCHES:</strong></div>';
+            sq.near_matches.slice(0, 5).forEach(m => {
+                html += `<div class="level-row">
+                    <span class="level-label">${m.planet} (${m.type})</span>
+                    <span class="level-value neutral">${m.longitude}° (orb: ${m.orb}°)</span>
+                </div>`;
+            });
+        }
+
+        container.innerHTML = html;
+    }
+
+    // Update Mars/Jupiter cycle
+    function updateMarsJupiter(analysis) {
+        if (!analysis || !analysis.mars_jupiter_cycle) return;
+
+        const mj = analysis.mars_jupiter_cycle;
+        const container = document.getElementById('mars-jupiter');
+
+        container.innerHTML = `
+            <div class="level-row">
+                <span class="level-label">Mars Helio</span>
+                <span class="level-value neutral">${mj.mars_helio}°</span>
+            </div>
+            <div class="level-row">
+                <span class="level-label">Jupiter Helio</span>
+                <span class="level-value neutral">${mj.jupiter_helio}°</span>
+            </div>
+            <div class="level-row">
+                <span class="level-label">Separation</span>
+                <span class="level-value neutral">${mj.separation}°</span>
+            </div>
+            <div class="level-row">
+                <span class="level-label">Cycle Position</span>
+                <span class="level-value neutral">${mj.cycle_position}%</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <span class="level-label">Conjunction Price Levels:</span>
+                <div class="time-cycle-list" style="margin-top: 5px;">
+                    ${mj.conjunction_price_levels?.map(p => `<span class="cycle-badge">${p}</span>`).join('') || ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // Update Jupiter/Saturn cycle
+    function updateJupiterSaturn(analysis) {
+        if (!analysis || !analysis.jupiter_saturn_cycle) return;
+
+        const js = analysis.jupiter_saturn_cycle;
+        const container = document.getElementById('jupiter-saturn');
+
+        const phaseColors = {
+            'Conjunction': '#00d26a',
+            'First Square': '#ffd93d',
+            'Opposition': '#ff6b6b',
+            'Last Square': '#ffd93d',
+            'Pre-Conjunction': '#4fc3f7'
+        };
+
+        container.innerHTML = `
+            <div class="level-row">
+                <span class="level-label">Phase</span>
+                <span class="level-value" style="color: ${phaseColors[js.phase] || '#fff'}">${js.phase}</span>
+            </div>
+            <div class="level-row">
+                <span class="level-label">Jupiter Helio</span>
+                <span class="level-value neutral">${js.jupiter_helio}°</span>
+            </div>
+            <div class="level-row">
+                <span class="level-label">Saturn Helio</span>
+                <span class="level-value neutral">${js.saturn_helio}°</span>
+            </div>
+            <div class="level-row">
+                <span class="level-label">Separation</span>
+                <span class="level-value neutral">${js.separation}°</span>
+            </div>
+            <div class="level-row">
+                <span class="level-label">Years in Cycle</span>
+                <span class="level-value neutral">${js.years_in_cycle} / 20</span>
+            </div>
+        `;
+    }
+
+    // Update retrograde status
+    function updateRetrogrades(analysis) {
+        if (!analysis || !analysis.retrograde_status) return;
+
+        const retro = analysis.retrograde_status;
+        const container = document.getElementById('retrogrades');
+
+        let html = '';
+        if (retro.planets) {
+            Object.entries(retro.planets).forEach(([planet, data]) => {
+                const isRetro = data.retrograde;
+                html += `<div class="level-row">
+                    <span class="level-label">${planet}</span>
+                    <span class="level-value ${isRetro ? 'resistance' : 'support'}">${isRetro ? 'Rx' : 'Direct'} (${data.daily_motion > 0 ? '+' : ''}${data.daily_motion}°/day)</span>
+                </div>`;
+            });
+        }
+        container.innerHTML = html || '<p style="color: #a0a0a0;">No data</p>';
+    }
+
+    // Update planetary aspects
+    function updatePlanetaryAspects(analysis) {
+        if (!analysis || !analysis.planetary_aspects) return;
+
+        const aspects = analysis.planetary_aspects;
+        const container = document.getElementById('planetary-aspects');
+
+        if (!aspects || aspects.length === 0) {
+            container.innerHTML = '<p style="color: #a0a0a0;">No major aspects within orb</p>';
+            return;
+        }
+
+        const aspectSymbols = {
+            'conjunction': '☌',
+            'sextile': '⚹',
+            'square': '□',
+            'trine': '△',
+            'opposition': '☍'
+        };
+
+        const aspectColors = {
+            'conjunction': '#4fc3f7',
+            'sextile': '#00d26a',
+            'square': '#ff6b6b',
+            'trine': '#00d26a',
+            'opposition': '#ff6b6b'
+        };
+
+        let html = '<div class="time-cycle-list">';
+        aspects.slice(0, 10).forEach(a => {
+            html += `<span class="cycle-badge" style="border: 1px solid ${aspectColors[a.aspect]}">
+                ${a.planet1} ${aspectSymbols[a.aspect] || ''} ${a.planet2} (${a.orb.toFixed(1)}°)
+            </span>`;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
     }
 
     // Initialize on load

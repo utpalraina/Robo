@@ -19,6 +19,13 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 import numpy as np
 
+# Planetary calculations using ephem
+try:
+    import ephem
+    EPHEM_AVAILABLE = True
+except ImportError:
+    EPHEM_AVAILABLE = False
+
 
 def calculate_square_root_levels(price: float, increments: int = 4) -> Dict[str, List[float]]:
     """
@@ -451,6 +458,435 @@ def calculate_pi_cycles(price_or_time: float) -> Dict:
     }
 
 
+# ================== PLANETARY CALCULATIONS (Jenkins Astro Methods) ==================
+
+def get_planetary_positions(date: datetime = None,
+                           location: Tuple[float, float] = (40.7128, -74.0060)) -> Dict:
+    """
+    Calculate geocentric and heliocentric planetary positions.
+
+    Jenkins uses both geocentric (Earth-centered) and heliocentric (Sun-centered)
+    positions for "square outs" where price = planetary longitude.
+
+    Args:
+        date: Date for calculations (default: now)
+        location: (latitude, longitude) tuple (default: NYC)
+
+    Returns:
+        Dict with planetary positions in degrees
+    """
+    if not EPHEM_AVAILABLE:
+        return {'error': 'ephem library not available'}
+
+    if date is None:
+        date = datetime.utcnow()
+
+    # Set up observer for location-based calculations (MC, ASC)
+    observer = ephem.Observer()
+    observer.lat = str(location[0])
+    observer.lon = str(location[1])
+    observer.date = date
+
+    # Planets to calculate
+    planets = {
+        'Sun': ephem.Sun(),
+        'Moon': ephem.Moon(),
+        'Mercury': ephem.Mercury(),
+        'Venus': ephem.Venus(),
+        'Mars': ephem.Mars(),
+        'Jupiter': ephem.Jupiter(),
+        'Saturn': ephem.Saturn(),
+        'Uranus': ephem.Uranus(),
+        'Neptune': ephem.Neptune(),
+        'Pluto': ephem.Pluto()
+    }
+
+    positions = {
+        'date': date.strftime('%Y-%m-%d %H:%M:%S'),
+        'location': {'lat': location[0], 'lon': location[1]},
+        'geocentric': {},
+        'heliocentric': {}
+    }
+
+    for name, planet in planets.items():
+        planet.compute(observer)
+
+        # Geocentric longitude (degrees)
+        geo_lon = math.degrees(float(planet.hlon)) if hasattr(planet, 'hlon') else math.degrees(float(planet.ra))
+        # For proper ecliptic longitude
+        geo_lon_ecliptic = math.degrees(float(planet.g_ra)) if hasattr(planet, 'g_ra') else geo_lon
+
+        positions['geocentric'][name] = {
+            'longitude': round(geo_lon_ecliptic % 360, 2),
+            'latitude': round(math.degrees(float(planet.dec)), 2) if hasattr(planet, 'dec') else 0,
+        }
+
+        # Heliocentric (Sun-centered) - only for planets, not Sun/Moon
+        if name not in ['Sun', 'Moon']:
+            try:
+                helio_lon = math.degrees(float(planet.hlon))
+                helio_lat = math.degrees(float(planet.hlat))
+                positions['heliocentric'][name] = {
+                    'longitude': round(helio_lon % 360, 2),
+                    'latitude': round(helio_lat, 2)
+                }
+            except:
+                pass
+
+    # Calculate MC (Midheaven) and ASC (Ascendant)
+    try:
+        # Sidereal time for MC calculation
+        sidereal = float(observer.sidereal_time())
+        mc_degrees = math.degrees(sidereal) % 360
+
+        # Simple ASC approximation (90 degrees from MC adjusted for latitude)
+        lat_rad = math.radians(location[0])
+        asc_degrees = (mc_degrees + 90 + math.degrees(lat_rad) * 0.5) % 360
+
+        positions['angles'] = {
+            'MC': round(mc_degrees, 2),
+            'ASC': round(asc_degrees, 2)
+        }
+    except:
+        pass
+
+    return positions
+
+
+def calculate_planetary_square_outs(price: float,
+                                    positions: Dict = None,
+                                    date: datetime = None) -> Dict:
+    """
+    Jenkins Planetary Square Outs.
+
+    Find planets whose longitude matches or is harmonically related to price.
+    Price "squares out" when price = planet degree (or multiples of 360).
+
+    Args:
+        price: Current price to check for square outs
+        positions: Pre-calculated positions (or will calculate)
+        date: Date for calculations
+
+    Returns:
+        Dict with square out matches
+    """
+    if positions is None:
+        positions = get_planetary_positions(date)
+
+    if 'error' in positions:
+        return positions
+
+    # Normalize price to 0-360 range (for direct comparison)
+    price_mod_360 = price % 360
+
+    # Also check price / 10, / 100 for larger prices
+    price_scales = [
+        ('direct', price % 360),
+        ('div_10', (price / 10) % 360),
+        ('div_100', (price / 100) % 360),
+    ]
+
+    # For crypto, also check larger scales
+    if price > 1000:
+        price_scales.append(('div_1000', (price / 1000) % 360))
+
+    square_outs = {
+        'price': price,
+        'matches': [],
+        'near_matches': []
+    }
+
+    orb = 2.0  # Degrees of allowable orb for match
+
+    for scale_name, scaled_price in price_scales:
+        # Check geocentric positions
+        for planet, data in positions.get('geocentric', {}).items():
+            lon = data.get('longitude', 0)
+            diff = abs(scaled_price - lon)
+            diff = min(diff, 360 - diff)  # Account for wrap-around
+
+            if diff <= orb:
+                square_outs['matches'].append({
+                    'planet': planet,
+                    'type': 'geocentric',
+                    'longitude': lon,
+                    'price_scale': scale_name,
+                    'scaled_price': round(scaled_price, 2),
+                    'orb': round(diff, 2)
+                })
+            elif diff <= 5.0:
+                square_outs['near_matches'].append({
+                    'planet': planet,
+                    'type': 'geocentric',
+                    'longitude': lon,
+                    'price_scale': scale_name,
+                    'orb': round(diff, 2)
+                })
+
+        # Check heliocentric positions
+        for planet, data in positions.get('heliocentric', {}).items():
+            lon = data.get('longitude', 0)
+            diff = abs(scaled_price - lon)
+            diff = min(diff, 360 - diff)
+
+            if diff <= orb:
+                square_outs['matches'].append({
+                    'planet': planet,
+                    'type': 'heliocentric',
+                    'longitude': lon,
+                    'price_scale': scale_name,
+                    'scaled_price': round(scaled_price, 2),
+                    'orb': round(diff, 2)
+                })
+            elif diff <= 5.0:
+                square_outs['near_matches'].append({
+                    'planet': planet,
+                    'type': 'heliocentric',
+                    'longitude': lon,
+                    'price_scale': scale_name,
+                    'orb': round(diff, 2)
+                })
+
+    return square_outs
+
+
+def calculate_planetary_aspects(positions: Dict = None,
+                               date: datetime = None) -> List[Dict]:
+    """
+    Calculate major planetary aspects (angles between planets).
+
+    Jenkins uses conjunctions (0°), squares (90°), trines (120°),
+    oppositions (180°) for timing.
+
+    Args:
+        positions: Pre-calculated positions
+        date: Date for calculations
+
+    Returns:
+        List of current aspects
+    """
+    if positions is None:
+        positions = get_planetary_positions(date)
+
+    if 'error' in positions:
+        return []
+
+    # Major aspects and their orbs
+    aspects = {
+        'conjunction': (0, 8),
+        'sextile': (60, 4),
+        'square': (90, 6),
+        'trine': (120, 6),
+        'opposition': (180, 8)
+    }
+
+    found_aspects = []
+    geo_planets = positions.get('geocentric', {})
+    planet_names = list(geo_planets.keys())
+
+    for i, p1 in enumerate(planet_names):
+        for p2 in planet_names[i+1:]:
+            lon1 = geo_planets[p1].get('longitude', 0)
+            lon2 = geo_planets[p2].get('longitude', 0)
+
+            diff = abs(lon1 - lon2)
+            if diff > 180:
+                diff = 360 - diff
+
+            for aspect_name, (angle, orb) in aspects.items():
+                aspect_diff = abs(diff - angle)
+                if aspect_diff <= orb:
+                    found_aspects.append({
+                        'planet1': p1,
+                        'planet2': p2,
+                        'aspect': aspect_name,
+                        'angle': angle,
+                        'actual_diff': round(diff, 2),
+                        'orb': round(aspect_diff, 2),
+                        'applying': lon1 < lon2  # Simplified
+                    })
+
+    # Sort by orb (tighter aspects first)
+    found_aspects.sort(key=lambda x: x['orb'])
+
+    return found_aspects
+
+
+def calculate_mars_jupiter_cycle(date: datetime = None) -> Dict:
+    """
+    Mars/Jupiter synodic cycle - key Jenkins timing tool.
+
+    The Mars/Jupiter conjunction cycle is approximately 2.24 years.
+    Jenkins tracks degrees moved from conjunctions for "square outs".
+
+    Args:
+        date: Date for calculation
+
+    Returns:
+        Dict with cycle information
+    """
+    if not EPHEM_AVAILABLE:
+        return {'error': 'ephem library not available'}
+
+    if date is None:
+        date = datetime.utcnow()
+
+    observer = ephem.Observer()
+    observer.date = date
+
+    mars = ephem.Mars()
+    jupiter = ephem.Jupiter()
+    mars.compute(observer)
+    jupiter.compute(observer)
+
+    # Heliocentric longitudes
+    mars_lon = math.degrees(float(mars.hlon)) % 360
+    jupiter_lon = math.degrees(float(jupiter.hlon)) % 360
+
+    # Angular separation
+    separation = (mars_lon - jupiter_lon) % 360
+    if separation > 180:
+        separation = 360 - separation
+
+    return {
+        'date': date.strftime('%Y-%m-%d'),
+        'mars_helio': round(mars_lon, 2),
+        'jupiter_helio': round(jupiter_lon, 2),
+        'separation': round(separation, 2),
+        'cycle_position': round(separation / 360 * 100, 1),  # % through cycle
+        'days_to_conjunction': round((360 - separation) / 0.44, 0) if separation > 10 else 0,
+        'conjunction_price_levels': [
+            round(mars_lon, 0),
+            round(mars_lon + 360, 0),
+            round(mars_lon + 720, 0)
+        ]
+    }
+
+
+def calculate_jupiter_saturn_cycle(date: datetime = None) -> Dict:
+    """
+    Jupiter/Saturn 20-year cycle - major economic cycle.
+
+    Jenkins emphasizes the 20-year conjunction cycle and its
+    subdivision points (90°, 180°, 270°).
+
+    Args:
+        date: Date for calculation
+
+    Returns:
+        Dict with cycle information
+    """
+    if not EPHEM_AVAILABLE:
+        return {'error': 'ephem library not available'}
+
+    if date is None:
+        date = datetime.utcnow()
+
+    observer = ephem.Observer()
+    observer.date = date
+
+    jupiter = ephem.Jupiter()
+    saturn = ephem.Saturn()
+    jupiter.compute(observer)
+    saturn.compute(observer)
+
+    # Heliocentric longitudes
+    jupiter_lon = math.degrees(float(jupiter.hlon)) % 360
+    saturn_lon = math.degrees(float(saturn.hlon)) % 360
+
+    # Angular separation
+    separation = (jupiter_lon - saturn_lon) % 360
+
+    # Determine phase
+    if separation < 45:
+        phase = 'Conjunction'
+    elif separation < 135:
+        phase = 'First Square'
+    elif separation < 225:
+        phase = 'Opposition'
+    elif separation < 315:
+        phase = 'Last Square'
+    else:
+        phase = 'Pre-Conjunction'
+
+    return {
+        'date': date.strftime('%Y-%m-%d'),
+        'jupiter_helio': round(jupiter_lon, 2),
+        'saturn_helio': round(saturn_lon, 2),
+        'separation': round(separation, 2),
+        'phase': phase,
+        'cycle_position': round(separation / 360 * 100, 1),
+        'years_in_cycle': round(separation / 360 * 20, 1)
+    }
+
+
+def get_retrograde_status(date: datetime = None) -> Dict:
+    """
+    Check retrograde status of planets.
+
+    Jenkins notes that retrogrades mark important reversal zones.
+
+    Args:
+        date: Date for calculation
+
+    Returns:
+        Dict with retrograde status for each planet
+    """
+    if not EPHEM_AVAILABLE:
+        return {'error': 'ephem library not available'}
+
+    if date is None:
+        date = datetime.utcnow()
+
+    observer = ephem.Observer()
+    observer.date = date
+
+    # Check a day later to determine motion direction
+    observer_next = ephem.Observer()
+    observer_next.date = date + timedelta(days=1)
+
+    planets = {
+        'Mercury': ephem.Mercury(),
+        'Venus': ephem.Venus(),
+        'Mars': ephem.Mars(),
+        'Jupiter': ephem.Jupiter(),
+        'Saturn': ephem.Saturn(),
+        'Uranus': ephem.Uranus(),
+        'Neptune': ephem.Neptune(),
+        'Pluto': ephem.Pluto()
+    }
+
+    retrograde_status = {}
+
+    for name, planet in planets.items():
+        planet.compute(observer)
+        lon_today = math.degrees(float(planet.g_ra))
+
+        planet2 = planets[name].__class__()
+        planet2.compute(observer_next)
+        lon_tomorrow = math.degrees(float(planet2.g_ra))
+
+        # If longitude decreasing, planet is retrograde
+        diff = lon_tomorrow - lon_today
+        if diff > 180:
+            diff -= 360
+        elif diff < -180:
+            diff += 360
+
+        retrograde_status[name] = {
+            'retrograde': diff < 0,
+            'daily_motion': round(diff, 3)
+        }
+
+    return {
+        'date': date.strftime('%Y-%m-%d'),
+        'planets': retrograde_status
+    }
+
+
+# ================== END PLANETARY CALCULATIONS ==================
+
+
 def full_jenkins_analysis(candles: List[Dict],
                           current_price: float = None,
                           significant_high: float = None,
@@ -528,7 +964,15 @@ def full_jenkins_analysis(candles: List[Dict],
         # Time Cycles
         'natural_squares': calculate_natural_squares_time(),
         'fibonacci_time': calculate_fibonacci_time(),
-        'pi_cycles': calculate_pi_cycles(significant_high - significant_low)
+        'pi_cycles': calculate_pi_cycles(significant_high - significant_low),
+
+        # Planetary Analysis (Jenkins Astro Methods)
+        'planetary_positions': get_planetary_positions(),
+        'planetary_square_outs': calculate_planetary_square_outs(current_price),
+        'planetary_aspects': calculate_planetary_aspects(),
+        'mars_jupiter_cycle': calculate_mars_jupiter_cycle(),
+        'jupiter_saturn_cycle': calculate_jupiter_saturn_cycle(),
+        'retrograde_status': get_retrograde_status()
     }
 
 
