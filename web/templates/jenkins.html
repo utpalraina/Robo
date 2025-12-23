@@ -470,6 +470,16 @@
             </div>
         </div>
 
+        <div class="method-card" style="grid-column: span 2;">
+            <h4>Time = Price Analysis (Core Jenkins Concept)</h4>
+            <p style="color: #a0a0a0; font-size: 0.85em; margin-bottom: 10px;">
+                When TIME passed = PRICE level, a turn occurs (Square Out)
+            </p>
+            <div id="time-equals-price">
+                <p style="color: #a0a0a0;">Run analysis to see square-outs</p>
+            </div>
+        </div>
+
         <div class="method-card">
             <h4>Natural Square Time Cycles</h4>
             <div id="natural-squares">
@@ -666,6 +676,7 @@
             updateMeasuredMoves(data.analysis);
             updateOverlapZones(data.analysis);
             updateTimePriceSquare(data.analysis);
+            updateTimeEqualsPrice(data.analysis);
             updatePiCycles(data.analysis);
 
             // Update planetary analysis
@@ -997,6 +1008,75 @@
                 <span class="cycle-badge">2*PI: ${pi.pi_2.toLocaleString()}</span>
             </div>
         `;
+    }
+
+    // Update Time = Price analysis
+    function updateTimeEqualsPrice(analysis) {
+        if (!analysis || !analysis.time_equals_price) return;
+
+        const tep = analysis.time_equals_price;
+        const container = document.getElementById('time-equals-price');
+
+        let html = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <strong style="color: #4fc3f7;">High: ${tep.high?.toLocaleString()}</strong>
+                    <div style="font-size: 0.85em; color: #a0a0a0; margin-top: 5px;">
+                        Bar ${tep.high_bar} | ${tep.bars_from_high} bars ago
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div class="level-row"><span class="level-label">Direct</span><span class="level-value neutral">${tep.high_harmonics?.direct} bars</span></div>
+                        <div class="level-row"><span class="level-label">/100</span><span class="level-value neutral">${tep.high_harmonics?.div_100} bars</span></div>
+                        <div class="level-row"><span class="level-label">/1000</span><span class="level-value neutral">${tep.high_harmonics?.div_1000} bars</span></div>
+                        <div class="level-row"><span class="level-label">sqrt</span><span class="level-value neutral">${tep.high_harmonics?.sqrt} bars</span></div>
+                        <div class="level-row"><span class="level-label">sqrt(sqrt)</span><span class="level-value neutral">${tep.high_harmonics?.sqrt_sqrt} bars</span></div>
+                    </div>
+                </div>
+                <div>
+                    <strong style="color: #00d26a;">Low: ${tep.low?.toLocaleString()}</strong>
+                    <div style="font-size: 0.85em; color: #a0a0a0; margin-top: 5px;">
+                        Bar ${tep.low_bar} | ${tep.bars_from_low} bars ago
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div class="level-row"><span class="level-label">Direct</span><span class="level-value neutral">${tep.low_harmonics?.direct} bars</span></div>
+                        <div class="level-row"><span class="level-label">/100</span><span class="level-value neutral">${tep.low_harmonics?.div_100} bars</span></div>
+                        <div class="level-row"><span class="level-label">/1000</span><span class="level-value neutral">${tep.low_harmonics?.div_1000} bars</span></div>
+                        <div class="level-row"><span class="level-label">sqrt</span><span class="level-value neutral">${tep.low_harmonics?.sqrt} bars</span></div>
+                        <div class="level-row"><span class="level-label">sqrt(sqrt)</span><span class="level-value neutral">${tep.low_harmonics?.sqrt_sqrt} bars</span></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Range equality
+        if (tep.range_time_equality) {
+            const rte = tep.range_time_equality;
+            html += `
+                <div style="margin-top: 15px; padding: 10px; background: #16213e; border-radius: 8px;">
+                    <strong style="color: #ffd93d;">Range vs Time:</strong>
+                    <span style="margin-left: 10px;">
+                        ${rte.range_points?.toLocaleString()} pts / ${rte.bars_in_range} bars = ${rte.ratio}
+                        ${rte.is_squared ? '<span style="color: #00d26a;"> SQUARED!</span>' : ''}
+                    </span>
+                </div>
+            `;
+        }
+
+        // Upcoming square-outs
+        if (tep.square_outs && tep.square_outs.length > 0) {
+            html += `<div style="margin-top: 15px;"><strong style="color: #e94560;">Upcoming Square-Outs:</strong></div>`;
+            html += '<div class="time-cycle-list" style="margin-top: 10px;">';
+            tep.square_outs.slice(0, 8).forEach(sq => {
+                const color = sq.status === 'NOW' ? '#e94560' : (sq.status === 'PAST' ? '#a0a0a0' : '#4fc3f7');
+                const badge = sq.status === 'NOW' ? 'NOW!' : (sq.bars_away > 0 ? `+${sq.bars_away}` : sq.bars_away);
+                html += `<span class="cycle-badge" style="border: 1px solid ${color};">
+                    ${sq.type} (${sq.scale}): ${badge} bars
+                </span>`;
+            });
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
     }
 
     // Quick calculator

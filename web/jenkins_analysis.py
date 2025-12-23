@@ -339,6 +339,147 @@ def calculate_time_price_square(price: float) -> Dict:
     }
 
 
+def calculate_time_equals_price(high: float, low: float, high_bar: int, low_bar: int,
+                                 current_bar: int) -> Dict:
+    """
+    Jenkins Time = Price Analysis.
+
+    Core principle: Time and Price are interchangeable.
+    - A $50 high spins out 50 unit time harmonics
+    - When time passed = price level, a turn (square out) occurs
+
+    Three types of square outs:
+    1. Square the High: time from high = high price
+    2. Square the Low: time from low = low price
+    3. Square the Range: time duration = price range
+
+    For large prices (like BTC), we use scaled versions:
+    - Direct price
+    - Price / 10, / 100, / 1000
+    - Sqrt(price)
+    - Sqrt(sqrt(price))
+
+    Args:
+        high: The significant high price
+        low: The significant low price
+        high_bar: Bar index of the high
+        low_bar: Bar index of the low
+        current_bar: Current bar index
+
+    Returns:
+        Dict with time=price analysis and projected square-out bars
+    """
+    range_size = high - low
+    bars_from_high = current_bar - high_bar
+    bars_from_low = current_bar - low_bar
+    bars_in_range = abs(high_bar - low_bar)
+
+    # Calculate various price-to-time conversions
+    # For large prices like BTC at 96000, we need scaled versions
+
+    def get_time_harmonics(price: float, label: str) -> Dict:
+        """Get time harmonics for a price level."""
+        return {
+            'label': label,
+            'price': price,
+            'direct': round(price, 0),
+            'div_10': round(price / 10, 1),
+            'div_100': round(price / 100, 2),
+            'div_1000': round(price / 1000, 3),
+            'sqrt': round(math.sqrt(price), 2),
+            'sqrt_sqrt': round(math.sqrt(math.sqrt(price)), 2)
+        }
+
+    # Square the High projections
+    high_harmonics = get_time_harmonics(high, 'High')
+
+    # Square the Low projections
+    low_harmonics = get_time_harmonics(low, 'Low')
+
+    # Square the Range projections
+    range_harmonics = get_time_harmonics(range_size, 'Range')
+
+    # Find upcoming square-out bars
+    square_outs = []
+
+    # Check which harmonics are approaching
+    for harmonics, origin_bar, origin_name in [
+        (high_harmonics, high_bar, 'High'),
+        (low_harmonics, low_bar, 'Low')
+    ]:
+        for scale_name in ['direct', 'div_10', 'div_100', 'div_1000', 'sqrt', 'sqrt_sqrt']:
+            time_units = harmonics[scale_name]
+            if time_units > 0:
+                target_bar = origin_bar + int(time_units)
+                bars_away = target_bar - current_bar
+
+                # Only show upcoming or recent square-outs
+                if -10 <= bars_away <= 100:
+                    square_outs.append({
+                        'type': f'Square {origin_name}',
+                        'scale': scale_name,
+                        'price_value': harmonics['price'],
+                        'time_units': time_units,
+                        'target_bar': target_bar,
+                        'bars_away': bars_away,
+                        'status': 'NOW' if abs(bars_away) <= 2 else ('PAST' if bars_away < 0 else 'UPCOMING')
+                    })
+
+    # Sort by bars_away (closest first)
+    square_outs.sort(key=lambda x: abs(x['bars_away']))
+
+    # 45-degree angle analysis (1x1 line where time = price)
+    # From the high going down, where does 1x1 line hit key levels?
+    angle_45_from_high = []
+    for bars_forward in [10, 20, 30, 50, 100]:
+        price_at_angle = high - bars_forward  # 1 point per bar down
+        angle_45_from_high.append({
+            'bars': bars_forward,
+            'price': round(price_at_angle, 2)
+        })
+
+    # From the low going up
+    angle_45_from_low = []
+    for bars_forward in [10, 20, 30, 50, 100]:
+        price_at_angle = low + bars_forward  # 1 point per bar up
+        angle_45_from_low.append({
+            'bars': bars_forward,
+            'price': round(price_at_angle, 2)
+        })
+
+    return {
+        'high': high,
+        'low': low,
+        'range': range_size,
+        'high_bar': high_bar,
+        'low_bar': low_bar,
+        'current_bar': current_bar,
+        'bars_from_high': bars_from_high,
+        'bars_from_low': bars_from_low,
+        'bars_in_range': bars_in_range,
+
+        # Time harmonics for each price level
+        'high_harmonics': high_harmonics,
+        'low_harmonics': low_harmonics,
+        'range_harmonics': range_harmonics,
+
+        # Upcoming square-outs
+        'square_outs': square_outs[:15],  # Top 15 closest
+
+        # 45-degree (1x1) projections
+        'angle_45_from_high': angle_45_from_high,
+        'angle_45_from_low': angle_45_from_low,
+
+        # Key insight: Range should equal time
+        'range_time_equality': {
+            'range_points': range_size,
+            'bars_in_range': bars_in_range,
+            'ratio': round(range_size / bars_in_range, 2) if bars_in_range > 0 else 0,
+            'is_squared': abs(range_size - bars_in_range) < (range_size * 0.1)  # Within 10%
+        }
+    }
+
+
 def calculate_circle_projection(high: float, low: float, bars: int) -> Dict:
     """
     Circular arc projection from a swing.
@@ -921,6 +1062,16 @@ def full_jenkins_analysis(candles: List[Dict],
     largest_bar = max(candles, key=lambda c: c['high'] - c['low'])
     impulse_height = largest_bar['high'] - largest_bar['low']
 
+    # Find bar indices for high and low
+    high_bar = 0
+    low_bar = 0
+    for i, c in enumerate(candles):
+        if c['high'] == significant_high:
+            high_bar = i
+        if c['low'] == significant_low:
+            low_bar = i
+    current_bar = len(candles) - 1
+
     return {
         'timestamp': datetime.now().isoformat(),
         'current_price': current_price,
@@ -952,9 +1103,14 @@ def full_jenkins_analysis(candles: List[Dict],
         'gann_angles_high': calculate_gann_angles(significant_high, 20),
         'gann_angles_low': calculate_gann_angles(significant_low, 20),
 
-        # Time-Price Square
+        # Time-Price Square (simple)
         'time_price_square_high': calculate_time_price_square(significant_high),
         'time_price_square_low': calculate_time_price_square(significant_low),
+
+        # Time = Price Analysis (comprehensive Jenkins method)
+        'time_equals_price': calculate_time_equals_price(
+            significant_high, significant_low, high_bar, low_bar, current_bar
+        ),
 
         # Circle Projection
         'circle_projection': calculate_circle_projection(
