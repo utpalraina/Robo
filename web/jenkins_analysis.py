@@ -153,6 +153,66 @@ ASSET_PROFILES = {
         'notes': 'Hunt Brothers squeeze in 1980'
     },
 
+    # Commodities
+    'CL': {
+        'name': 'Crude Oil (WTI)',
+        'type': 'commodity',
+        'birth_date': '1983-03-30',  # NYMEX futures start
+        'birth_price': 29.00,
+        'first_trade_date': '1983-03-30',
+        'first_trade_price': 29.00,
+        'ath_price': 147.27,
+        'ath_date': '2008-07-11',
+        'atl_price': -37.63,  # Apr 2020 negative!
+        'atl_date': '2020-04-20',
+        'exchange_longitude': -74.006,  # NYMEX NYC
+        'notes': 'Went negative in Apr 2020'
+    },
+    'NG': {
+        'name': 'Natural Gas',
+        'type': 'commodity',
+        'birth_date': '1990-04-03',
+        'birth_price': 1.64,
+        'first_trade_date': '1990-04-03',
+        'first_trade_price': 1.64,
+        'ath_price': 15.78,
+        'ath_date': '2005-12-13',
+        'atl_price': 1.02,
+        'atl_date': '1992-01-28',
+        'exchange_longitude': -74.006,
+        'notes': 'Highly volatile commodity'
+    },
+
+    # S&P 500 Futures (ES)
+    'ES': {
+        'name': 'S&P 500 E-mini Futures',
+        'type': 'index',
+        'birth_date': '1997-09-09',
+        'birth_price': 927.00,
+        'first_trade_date': '1997-09-09',
+        'first_trade_price': 927.00,
+        'ath_price': 6100,
+        'ath_date': '2024-12-06',
+        'atl_price': 666.75,
+        'atl_date': '2009-03-06',
+        'exchange_longitude': -87.630,  # CME Chicago
+        'notes': 'Most liquid futures contract'
+    },
+    'NQ': {
+        'name': 'Nasdaq 100 E-mini Futures',
+        'type': 'index',
+        'birth_date': '1999-06-21',
+        'birth_price': 2100.00,
+        'first_trade_date': '1999-06-21',
+        'first_trade_price': 2100.00,
+        'ath_price': 22000,
+        'ath_date': '2024-12-16',
+        'atl_price': 795.00,
+        'atl_date': '2002-10-10',
+        'exchange_longitude': -87.630,  # CME Chicago
+        'notes': 'Tech-heavy index futures'
+    },
+
     # Major Stocks (Jenkins recommends 20-30 stocks for life)
     'AAPL': {
         'name': 'Apple Inc',
@@ -405,6 +465,150 @@ def get_all_asset_profiles() -> Dict:
 def get_assets_by_type(asset_type: str) -> Dict:
     """Get all assets of a specific type (crypto, stock, index, metal)."""
     return {k: v for k, v in ASSET_PROFILES.items() if v.get('type') == asset_type}
+
+
+def calculate_daily_square_outs(high: float, low: float, high_idx: int, low_idx: int,
+                                 current_idx: int, asset_type: str = 'crypto') -> Dict:
+    """
+    Jenkins Time = Price for Daily High/Low analysis.
+
+    For intraday/daily charts, different scale factors work:
+    - Crypto (5-6 digits): ÷10000, √÷10, mod360
+    - Stocks (2-3 digits): ÷10, √, direct
+    - Indices (3-4 digits): ÷100, √, mod360
+
+    Args:
+        high: Daily/swing high price
+        low: Daily/swing low price
+        high_idx: Bar index of high
+        low_idx: Bar index of low
+        current_idx: Current bar index
+        asset_type: 'crypto', 'stock', 'index', 'metal'
+
+    Returns:
+        Dict with daily square-out analysis
+    """
+    range_size = high - low
+    bars_from_high = current_idx - high_idx
+    bars_from_low = current_idx - low_idx
+    bars_in_range = abs(high_idx - low_idx)
+
+    # Scale factors based on asset type
+    if asset_type == 'crypto':
+        # BTC ~100000, ETH ~3000
+        scale_factors = [
+            ('÷10000', lambda p: p / 10000),
+            ('÷1000', lambda p: p / 1000),
+            ('√÷10', lambda p: math.sqrt(p) / 10),
+            ('√', lambda p: math.sqrt(p)),
+            ('mod360', lambda p: p % 360),
+            ('last2dig', lambda p: p % 100),
+        ]
+    elif asset_type == 'stock':
+        # AAPL ~200, TSLA ~400
+        scale_factors = [
+            ('direct', lambda p: p),
+            ('÷10', lambda p: p / 10),
+            ('√', lambda p: math.sqrt(p)),
+            ('mod360', lambda p: p % 360),
+        ]
+    elif asset_type == 'index':
+        # SPY ~500, QQQ ~500
+        scale_factors = [
+            ('direct', lambda p: p),
+            ('÷10', lambda p: p / 10),
+            ('÷100', lambda p: p / 100),
+            ('√', lambda p: math.sqrt(p)),
+        ]
+    elif asset_type == 'commodity':
+        # CL ~70, NG ~3
+        scale_factors = [
+            ('direct', lambda p: p),
+            ('×10', lambda p: p * 10),
+            ('√', lambda p: math.sqrt(p)),
+            ('mod360', lambda p: p % 360),
+        ]
+    else:  # metal
+        # GOLD ~2700, SILVER ~30
+        scale_factors = [
+            ('direct', lambda p: p),
+            ('÷10', lambda p: p / 10),
+            ('÷100', lambda p: p / 100),
+            ('√', lambda p: math.sqrt(p)),
+        ]
+
+    def find_matches(price: float, bars: int, label: str) -> List[Dict]:
+        """Find scale factors where time ≈ price."""
+        matches = []
+        for scale_name, scale_fn in scale_factors:
+            scaled = scale_fn(price)
+            if scaled > 0 and bars > 0:
+                diff = abs(bars - scaled)
+                pct = (diff / bars) * 100
+                if pct < 20:  # Within 20%
+                    matches.append({
+                        'price_label': label,
+                        'scale': scale_name,
+                        'scaled_price': round(scaled, 1),
+                        'bars': bars,
+                        'diff': round(diff, 1),
+                        'pct_diff': round(pct, 1),
+                        'is_exact': pct < 3,
+                        'is_close': pct < 10
+                    })
+        return sorted(matches, key=lambda x: x['pct_diff'])
+
+    # Check square-outs from high
+    high_matches = find_matches(high, bars_from_high, 'High')
+
+    # Check square-outs from low
+    low_matches = find_matches(low, bars_from_low, 'Low')
+
+    # Check range vs time
+    range_matches = find_matches(range_size, bars_in_range, 'Range')
+
+    # Project upcoming square-outs
+    upcoming = []
+    for price, label, origin_idx in [(high, 'High', high_idx), (low, 'Low', low_idx)]:
+        for scale_name, scale_fn in scale_factors:
+            scaled = scale_fn(price)
+            if scaled > 0:
+                target_bar = origin_idx + int(scaled)
+                bars_away = target_bar - current_idx
+                if -5 <= bars_away <= 30:
+                    upcoming.append({
+                        'from': label,
+                        'scale': scale_name,
+                        'target_bar': target_bar,
+                        'bars_away': bars_away,
+                        'status': 'NOW!' if abs(bars_away) <= 1 else ('SOON' if bars_away <= 5 else 'UPCOMING')
+                    })
+
+    upcoming.sort(key=lambda x: abs(x['bars_away']))
+
+    return {
+        'high': high,
+        'low': low,
+        'range': range_size,
+        'bars_from_high': bars_from_high,
+        'bars_from_low': bars_from_low,
+        'bars_in_range': bars_in_range,
+        'asset_type': asset_type,
+
+        # Best matches found
+        'high_matches': high_matches[:3],
+        'low_matches': low_matches[:3],
+        'range_matches': range_matches[:3],
+
+        # All exact matches (< 3%)
+        'exact_matches': [m for m in high_matches + low_matches + range_matches if m['is_exact']],
+
+        # Upcoming square-outs
+        'upcoming': upcoming[:10],
+
+        # Summary
+        'has_active_square_out': any(m['is_exact'] for m in high_matches + low_matches + range_matches)
+    }
 
 
 def calculate_square_root_levels(price: float, increments: int = 4) -> Dict[str, List[float]]:
@@ -1514,7 +1718,8 @@ def get_retrograde_status(date: datetime = None) -> Dict:
 def full_jenkins_analysis(candles: List[Dict],
                           current_price: float = None,
                           significant_high: float = None,
-                          significant_low: float = None) -> Dict:
+                          significant_low: float = None,
+                          asset_type: str = 'crypto') -> Dict:
     """
     Complete Jenkins analysis combining all methods.
 
@@ -1523,6 +1728,7 @@ def full_jenkins_analysis(candles: List[Dict],
         current_price: Current price (default: last close)
         significant_high: Major high to analyze (default: period high)
         significant_low: Major low to analyze (default: period low)
+        asset_type: 'crypto', 'stock', 'index', 'metal' for proper scaling
 
     Returns:
         Comprehensive Jenkins analysis dict
@@ -1616,7 +1822,12 @@ def full_jenkins_analysis(candles: List[Dict],
         # Time as Longitude (Earth rotation = degrees = time)
         'time_as_longitude': calculate_time_as_longitude(current_price),
         'time_as_longitude_high': calculate_time_as_longitude(significant_high),
-        'time_as_longitude_low': calculate_time_as_longitude(significant_low)
+        'time_as_longitude_low': calculate_time_as_longitude(significant_low),
+
+        # Daily Square-Outs (Time = Price for daily high/low)
+        'daily_square_outs': calculate_daily_square_outs(
+            significant_high, significant_low, high_bar, low_bar, current_bar, asset_type
+        )
     }
 
 

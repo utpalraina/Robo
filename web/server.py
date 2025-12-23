@@ -7488,6 +7488,7 @@ from web.jenkins_analysis import (
     get_all_asset_profiles,
     get_assets_by_type,
     calculate_birth_cycles,
+    calculate_daily_square_outs,
     ASSET_PROFILES
 )
 
@@ -7547,8 +7548,21 @@ async def jenkins_analyze(req: JenkinsAnalyzeRequest):
                 'volume': float(row.get('volume', 0))
             })
 
-        # Run Jenkins analysis
-        analysis = full_jenkins_analysis(candles)
+        # Detect asset type from symbol
+        symbol_upper = req.symbol.upper()
+        if any(x in symbol_upper for x in ['BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'AVAX', 'DOT']):
+            asset_type = 'crypto'
+        elif any(x in symbol_upper for x in ['SPY', 'QQQ', 'DJI', 'IWM', 'ES', 'NQ', 'YM', 'RTY']):
+            asset_type = 'index'
+        elif any(x in symbol_upper for x in ['GOLD', 'XAU', 'SILVER', 'XAG', 'GC', 'SI', 'HG', 'PL']):
+            asset_type = 'metal'
+        elif any(x in symbol_upper for x in ['CL', 'CRUDE', 'OIL', 'NG', 'RB', 'HO']):
+            asset_type = 'commodity'
+        else:
+            asset_type = 'stock'
+
+        # Run Jenkins analysis with asset type
+        analysis = full_jenkins_analysis(candles, asset_type=asset_type)
 
         return convert_numpy_types({
             "symbol": req.symbol,
