@@ -655,6 +655,11 @@
                 <h4>Scale Factor Performance</h4>
                 <div id="backtest-scales"><p style="color: #a0a0a0;">Run backtest to see results</p></div>
             </div>
+            <div class="method-card" style="grid-column: span 2; background: linear-gradient(135deg, #1a2e1a 0%, #162e16 100%); border-color: #2d5a2d;">
+                <h4 style="color: #00d26a;">UPCOMING PREDICTED TURNS</h4>
+                <p style="color: #a0a0a0; font-size: 0.85em; margin-bottom: 10px;">Based on recent swing highs/lows and proven scale factors</p>
+                <div id="backtest-predictions" style="max-height: 300px; overflow-y: auto;"><p style="color: #a0a0a0;">Run backtest to see predictions</p></div>
+            </div>
             <div class="method-card" style="grid-column: span 2;">
                 <h4>Swing-by-Swing Results (Last 50)</h4>
                 <div id="backtest-swings" style="max-height: 400px; overflow-y: auto;"><p style="color: #a0a0a0;">Run backtest to see results</p></div>
@@ -1097,6 +1102,36 @@
             });
             swingHtml += '</table>';
             document.getElementById('backtest-swings').innerHTML = swingHtml;
+        }
+
+        // Upcoming Predictions
+        if (bt.upcoming_predictions && bt.upcoming_predictions.length > 0) {
+            let predHtml = '<table class="levels-table"><tr><th>Status</th><th>From</th><th>Price</th><th>Scale</th><th>Target Bar</th><th>Bars Away</th><th>Est. Date</th></tr>';
+            bt.upcoming_predictions.forEach(p => {
+                const statusColor = p.status === 'NOW!' ? '#e94560' : (p.status === 'SOON' ? '#ffd93d' : '#4fc3f7');
+                const fromColor = p.from_type === 'high' ? '#ff6b6b' : '#00d26a';
+
+                // Format target date
+                let dateStr = '-';
+                if (p.target_timestamp) {
+                    const d = new Date(p.target_timestamp * 1000);
+                    dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+                }
+
+                predHtml += `<tr>
+                    <td style="color: ${statusColor}; font-weight: bold;">${p.status}</td>
+                    <td style="color: ${fromColor};">${p.from_type.toUpperCase()}</td>
+                    <td>$${p.from_price.toLocaleString()}</td>
+                    <td>${p.scale}</td>
+                    <td>${p.predicted_bar}</td>
+                    <td style="color: ${p.bars_away <= 0 ? '#a0a0a0' : '#fff'};">${p.bars_away > 0 ? '+' : ''}${p.bars_away}</td>
+                    <td style="color: #4fc3f7;">${dateStr}</td>
+                </tr>`;
+            });
+            predHtml += '</table>';
+            document.getElementById('backtest-predictions').innerHTML = predHtml;
+        } else {
+            document.getElementById('backtest-predictions').innerHTML = '<p style="color: #a0a0a0;">No upcoming predictions in range</p>';
         }
     }
 

@@ -757,6 +757,48 @@ def backtest_jenkins_square_outs(candles: List[Dict], asset_type: str = 'crypto'
 
     best_scale = max(scale_hits.items(), key=lambda x: x[1]['total'])[0] if scale_hits else None
 
+    # Generate UPCOMING predictions from the last few swings
+    upcoming_predictions = []
+    current_bar = len(candles) - 1
+    last_timestamp = candles[-1].get('timestamp', 0)
+
+    # Use last 5 swings for predictions
+    recent_swings = swings[-5:] if len(swings) >= 5 else swings
+
+    for swing in recent_swings:
+        bars_since_swing = current_bar - swing['idx']
+
+        for scale_name, scale_fn in scale_factors:
+            scaled_price = scale_fn(swing['price'])
+            if scaled_price > 0:
+                target_bar = swing['idx'] + int(scaled_price)
+                bars_until_target = target_bar - current_bar
+
+                # Only show predictions that are upcoming (within next 30 bars) or just passed (within 5 bars)
+                if -5 <= bars_until_target <= 30:
+                    # Calculate target date if we have timestamps
+                    target_timestamp = None
+                    if last_timestamp > 0 and len(candles) > 1:
+                        # Estimate bar duration from recent candles
+                        bar_duration = 86400  # Default 1 day
+                        if candles[-1].get('timestamp') and candles[-2].get('timestamp'):
+                            bar_duration = candles[-1]['timestamp'] - candles[-2]['timestamp']
+                        target_timestamp = last_timestamp + (bars_until_target * bar_duration)
+
+                    upcoming_predictions.append({
+                        'from_type': swing['type'],
+                        'from_price': swing['price'],
+                        'from_bar': swing['idx'],
+                        'scale': scale_name,
+                        'predicted_bar': target_bar,
+                        'bars_away': bars_until_target,
+                        'target_timestamp': target_timestamp,
+                        'status': 'NOW!' if abs(bars_until_target) <= 1 else ('SOON' if bars_until_target <= 5 else 'UPCOMING')
+                    })
+
+    # Sort by bars_away
+    upcoming_predictions.sort(key=lambda x: abs(x['bars_away']))
+
     return {
         'total_candles': len(candles),
         'total_swings': total_swings,
@@ -767,7 +809,8 @@ def backtest_jenkins_square_outs(candles: List[Dict], asset_type: str = 'crypto'
         'scale_performance': scale_hits,
         'best_scale': best_scale,
         'asset_type': asset_type,
-        'results': results[-50:]  # Last 50 for display
+        'results': results[-50:],  # Last 50 for display
+        'upcoming_predictions': upcoming_predictions[:20]  # Next 20 predictions
     }
 
 
