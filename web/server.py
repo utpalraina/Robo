@@ -369,8 +369,35 @@ async def startup():
         asyncio.create_task(state.candle_collector.run(interval_seconds=300))
         print("5-minute candle collector started")
 
+        # Start SBC+DR data updater (runs at startup and every 4 hours)
+        asyncio.create_task(sbc_dr_data_updater())
+        print("SBC+DR data updater started")
+
     except Exception as e:
         print(f"Warning: Could not fully initialize: {e}")
+
+
+async def sbc_dr_data_updater():
+    """Background task to populate missing SBC+DR data on startup and periodically."""
+    import subprocess
+    while True:
+        try:
+            # Run the populate_missing_days.py script
+            result = subprocess.run(
+                ['python3', '/Users/utpalraina/robo-trader/populate_missing_days.py'],
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+            if result.returncode == 0:
+                logger.info(f"SBC+DR data update completed: {result.stdout.strip().split(chr(10))[-1]}")
+            else:
+                logger.warning(f"SBC+DR data update failed: {result.stderr}")
+        except Exception as e:
+            logger.error(f"SBC+DR data update error: {e}")
+
+        # Wait 4 hours before next update
+        await asyncio.sleep(4 * 60 * 60)
 
 
 # WebSocket connection manager
@@ -1961,6 +1988,11 @@ async def get_daily_ohlc(symbol: str, date: str, timezone: str = None):
     try:
         # Parse the date
         target_date = datetime.strptime(date, '%Y-%m-%d')
+
+        # Check if date is in the future
+        today = datetime.now()
+        if target_date.date() > today.date():
+            return {"error": "Cannot fetch OHLC data for future dates", "is_future": True}
 
         # Timezone display names
         timezone_names = {
@@ -6818,6 +6850,7 @@ async def get_sbc_dr_history():
                    session_high, session_low, dr_signal, sbc_dir, signals_agree,
                    combined_signal, dr_correct, combined_correct, pnl_combined,
                    ny_open, first_hour_high, first_hour_low, ny_close_1030,
+                   post_1hr_high, post_1hr_low,
                    session_high_full, session_low_full, time_close_above_1hr_high, time_close_below_1hr_low
             FROM sbc_dr_combined
             ORDER BY date DESC
@@ -6844,7 +6877,8 @@ async def get_sbc_dr_today():
     """Get today's SBC + DR combined signal with decision basis."""
     try:
         import pytz
-        from datetime import datetime
+        import requests
+        from datetime import datetime, time
         from web.sbc_analysis import calculate_custom_sbc_analysis
         from web.sbc_market_rules import decide_neutral_signal
 
@@ -6927,8 +6961,70 @@ async def get_sbc_dr_today():
         """, (today_str,))
         dr_row = cursor.fetchone()
 
-        if dr_row:
+        if dr_row and dr_row[0]:
             dr_signal, dr_high, dr_low, breakout_direction = dr_row
+        else:
+            # Database doesn't have DR data for today - fetch real-time from Binance
+            # Check if first hour has completed (after 10:30 AM NY)
+            first_hour_complete = now_ny.time() >= time(10, 30)
+
+            if first_hour_complete:
+                # Calculate first hour time range
+                first_hour_start = ny_tz.localize(datetime(now_ny.year, now_ny.month, now_ny.day, 9, 30))
+                first_hour_end = ny_tz.localize(datetime(now_ny.year, now_ny.month, now_ny.day, 10, 30))
+
+                # Convert to UTC timestamps for Binance
+                start_ms = int(first_hour_start.astimezone(pytz.UTC).timestamp() * 1000)
+                end_ms = int(first_hour_end.astimezone(pytz.UTC).timestamp() * 1000)
+
+                # Fetch first hour candles from Binance
+                url = "https://api.binance.com/api/v3/klines"
+                params = {
+                    'symbol': 'BTCUSDT',
+                    'interval': '5m',
+                    'startTime': start_ms,
+                    'endTime': end_ms,
+                    'limit': 15
+                }
+
+                try:
+                    resp = requests.get(url, params=params, timeout=10)
+                    if resp.status_code == 200:
+                        klines = resp.json()
+                        if klines and len(klines) > 0:
+                            # Calculate first hour high and low
+                            dr_high = max(float(k[2]) for k in klines)
+                            dr_low = min(float(k[3]) for k in klines)
+
+                            # Now check for breakout - fetch candles after first hour to current time
+                            post_hour_start = end_ms
+                            now_ms = int(now_ny.astimezone(pytz.UTC).timestamp() * 1000)
+
+                            params2 = {
+                                'symbol': 'BTCUSDT',
+                                'interval': '5m',
+                                'startTime': post_hour_start,
+                                'endTime': now_ms,
+                                'limit': 100
+                            }
+                            resp2 = requests.get(url, params=params2, timeout=10)
+                            if resp2.status_code == 200:
+                                post_klines = resp2.json()
+                                if post_klines and len(post_klines) > 0:
+                                    # Check for breakout (close above/below DR levels)
+                                    for k in post_klines:
+                                        close = float(k[4])
+                                        if close > dr_high:
+                                            breakout_direction = 'BULLISH'
+                                            dr_signal = 'BULLISH'
+                                            break
+                                        elif close < dr_low:
+                                            breakout_direction = 'BEARISH'
+                                            dr_signal = 'BEARISH'
+                                            break
+
+                except Exception as e:
+                    logger.warning(f"Failed to fetch real-time DR data: {e}")
 
         # Determine combined signal
         sbc_dir = 'BULLISH' if 'BULLISH' in v6_signal else ('BEARISH' if 'BEARISH' in v6_signal else None)
@@ -7369,6 +7465,134 @@ async def get_sbc_dr_history():
 
 
 # ================== END SBC + DR COMBINED STRATEGY ==================
+
+
+# ================== JENKINS TRADING METHODS ==================
+
+from web.jenkins_analysis import (
+    full_jenkins_analysis,
+    calculate_square_root_levels,
+    calculate_time_conversion_bar,
+    calculate_overlap_zones,
+    calculate_gann_angles,
+    calculate_measured_moves
+)
+
+
+class JenkinsAnalyzeRequest(BaseModel):
+    symbol: str
+    timeframe: str = "1h"
+    bars: int = 100
+
+
+@app.get("/jenkins", response_class=HTMLResponse)
+async def jenkins_page(request: Request):
+    """Jenkins Trading Methods page."""
+    return templates.TemplateResponse("jenkins.html", {"request": request})
+
+
+@app.post("/api/jenkins/analyze")
+async def jenkins_analyze(req: JenkinsAnalyzeRequest):
+    """Run full Jenkins analysis on a symbol."""
+    try:
+        # Map timeframe to exchange format
+        tf_map = {
+            '5m': '5m', '15m': '15m', '1h': '1h', '4h': '4h',
+            '1d': '1d', '1w': '1w'
+        }
+        timeframe = tf_map.get(req.timeframe, '1h')
+
+        # Fetch candle data
+        if state.data_fetcher is None:
+            # Initialize data fetcher if not available
+            config = load_config()
+            exchange = get_exchange(config)
+            data_fetcher = DataFetcher(exchange, config)
+        else:
+            data_fetcher = state.data_fetcher
+
+        # Fetch OHLCV data
+        df = await run_in_executor(
+            data_fetcher.fetch_ohlcv,
+            req.symbol,
+            timeframe,
+            limit=req.bars
+        )
+
+        if df is None or df.empty:
+            raise HTTPException(status_code=404, detail=f"No data found for {req.symbol}")
+
+        # Convert to list of candle dicts
+        candles = []
+        for idx, row in df.iterrows():
+            candles.append({
+                'timestamp': int(idx.timestamp()) if hasattr(idx, 'timestamp') else int(row.get('timestamp', 0)),
+                'open': float(row['open']),
+                'high': float(row['high']),
+                'low': float(row['low']),
+                'close': float(row['close']),
+                'volume': float(row.get('volume', 0))
+            })
+
+        # Run Jenkins analysis
+        analysis = full_jenkins_analysis(candles)
+
+        return convert_numpy_types({
+            "symbol": req.symbol,
+            "timeframe": req.timeframe,
+            "bars": len(candles),
+            "candles": candles,
+            "analysis": analysis
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Jenkins analysis error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/sqrt-levels")
+async def get_sqrt_levels(price: float):
+    """Calculate square root support/resistance levels for a price."""
+    try:
+        levels = calculate_square_root_levels(price)
+        return convert_numpy_types(levels)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/tcb")
+async def get_tcb(bar_height: float, scale: float = 1.0):
+    """Calculate Time Conversion Bar projections."""
+    try:
+        tcb = calculate_time_conversion_bar(bar_height, scale)
+        return convert_numpy_types(tcb)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/overlap")
+async def get_overlap(prev_high: float, prev_low: float):
+    """Calculate overlap zones for counter-trend entries."""
+    try:
+        zones = calculate_overlap_zones(prev_high, prev_low)
+        return convert_numpy_types(zones)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/gann-angles")
+async def get_gann_angles(price: float, time_units: int = 20, scale: float = 1.0):
+    """Calculate Gann angle projections from a pivot."""
+    try:
+        angles = calculate_gann_angles(price, time_units, scale)
+        return convert_numpy_types(angles)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ================== END JENKINS TRADING METHODS ==================
 
 
 def run_server(host: str = "0.0.0.0", port: int = 8000):
