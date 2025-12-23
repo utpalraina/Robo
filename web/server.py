@@ -7525,12 +7525,13 @@ async def jenkins_analyze(req: JenkinsAnalyzeRequest):
         else:
             data_fetcher = state.data_fetcher
 
-        # Fetch OHLCV data
+        # Fetch OHLCV data (signature: symbol, timeframe, since=None, limit=1000)
         df = await run_in_executor(
             data_fetcher.fetch_ohlcv,
             req.symbol,
             timeframe,
-            limit=req.bars
+            None,  # since - not needed
+            req.bars  # limit
         )
 
         if df is None or df.empty:
@@ -7539,8 +7540,17 @@ async def jenkins_analyze(req: JenkinsAnalyzeRequest):
         # Convert to list of candle dicts
         candles = []
         for idx, row in df.iterrows():
+            # Handle various timestamp formats
+            if hasattr(idx, 'timestamp'):
+                ts = int(idx.timestamp())
+            elif 'timestamp' in row:
+                ts = int(row['timestamp'])
+            elif isinstance(idx, (int, float)):
+                ts = int(idx)
+            else:
+                ts = 0
             candles.append({
-                'timestamp': int(idx.timestamp()) if hasattr(idx, 'timestamp') else int(row.get('timestamp', 0)),
+                'timestamp': ts,
                 'open': float(row['open']),
                 'high': float(row['high']),
                 'low': float(row['low']),
@@ -7575,7 +7585,8 @@ async def jenkins_analyze(req: JenkinsAnalyzeRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Jenkins analysis error: {e}")
+        import traceback
+        logger.error(f"Jenkins analysis error: {e}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
