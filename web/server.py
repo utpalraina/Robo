@@ -7489,6 +7489,7 @@ from web.jenkins_analysis import (
     get_assets_by_type,
     calculate_birth_cycles,
     calculate_daily_square_outs,
+    backtest_jenkins_square_outs,
     ASSET_PROFILES
 )
 
@@ -7738,6 +7739,96 @@ async def get_birth_cycles(symbol: str):
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class JenkinsBacktestRequest(BaseModel):
+    symbol: str
+    timeframe: str = "1d"
+    bars: int = 365
+
+
+@app.post("/api/jenkins/backtest")
+async def jenkins_backtest(req: JenkinsBacktestRequest):
+    """
+    Backtest Jenkins Time = Price methodology on historical data.
+    Returns accuracy stats and individual swing predictions.
+    """
+    try:
+        # Map timeframe
+        timeframe_map = {
+            '1m': '1m', '5m': '5m', '15m': '15m', '30m': '30m',
+            '1h': '1h', '4h': '4h', '1d': '1d', '1w': '1w'
+        }
+        timeframe = timeframe_map.get(req.timeframe, '1d')
+
+        # Get data fetcher
+        if state.data_fetcher is None:
+            config = load_config()
+            exchange = get_exchange(config)
+            data_fetcher = DataFetcher(exchange, config)
+        else:
+            data_fetcher = state.data_fetcher
+
+        # Fetch historical data
+        df = await run_in_executor(
+            data_fetcher.fetch_ohlcv,
+            req.symbol,
+            timeframe,
+            None,
+            req.bars
+        )
+
+        if df is None or df.empty:
+            raise HTTPException(status_code=404, detail=f"No data found for {req.symbol}")
+
+        # Convert to candle dicts
+        candles = []
+        for idx, row in df.iterrows():
+            if hasattr(idx, 'timestamp'):
+                ts = int(idx.timestamp())
+            elif 'timestamp' in row:
+                ts = int(row['timestamp'])
+            elif isinstance(idx, (int, float)):
+                ts = int(idx)
+            else:
+                ts = 0
+            candles.append({
+                'timestamp': ts,
+                'open': float(row['open']),
+                'high': float(row['high']),
+                'low': float(row['low']),
+                'close': float(row['close'])
+            })
+
+        # Detect asset type
+        symbol_upper = req.symbol.upper()
+        if any(x in symbol_upper for x in ['BTC', 'ETH', 'SOL', 'XRP', 'ADA']):
+            asset_type = 'crypto'
+        elif any(x in symbol_upper for x in ['SPY', 'QQQ', 'ES', 'NQ']):
+            asset_type = 'index'
+        elif any(x in symbol_upper for x in ['GOLD', 'XAU', 'SILVER']):
+            asset_type = 'metal'
+        elif any(x in symbol_upper for x in ['CL', 'NG']):
+            asset_type = 'commodity'
+        else:
+            asset_type = 'stock'
+
+        # Run backtest
+        results = backtest_jenkins_square_outs(candles, asset_type)
+
+        return convert_numpy_types({
+            "symbol": req.symbol,
+            "timeframe": req.timeframe,
+            "bars": len(candles),
+            "backtest": results
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        logger.error(f"Jenkins backtest error: {e}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -621,6 +621,46 @@
             </table>
         </div>
     </div>
+
+    <!-- Backtest Section -->
+    <div class="header-section" style="margin-top: 30px;">
+        <h2 style="color: #e94560; margin: 0;">Backtest Time = Price</h2>
+        <p style="color: #a0a0a0; margin: 5px 0 0 0;">Verify Jenkins methodology on historical daily data</p>
+    </div>
+
+    <div class="input-section">
+        <div class="input-row">
+            <div class="input-group">
+                <label>Backtest Period</label>
+                <select id="backtest-bars">
+                    <option value="90">90 Days</option>
+                    <option value="180">180 Days</option>
+                    <option value="365" selected>1 Year</option>
+                    <option value="730">2 Years</option>
+                </select>
+            </div>
+            <button class="btn-analyze" id="backtest-btn" onclick="runBacktest()">
+                Run Backtest
+            </button>
+        </div>
+    </div>
+
+    <div id="backtest-results" style="display: none;">
+        <div class="methods-grid">
+            <div class="method-card">
+                <h4>Accuracy Summary</h4>
+                <div id="backtest-summary"><p style="color: #a0a0a0;">Run backtest to see results</p></div>
+            </div>
+            <div class="method-card">
+                <h4>Scale Factor Performance</h4>
+                <div id="backtest-scales"><p style="color: #a0a0a0;">Run backtest to see results</p></div>
+            </div>
+            <div class="method-card" style="grid-column: span 2;">
+                <h4>Swing-by-Swing Results (Last 50)</h4>
+                <div id="backtest-swings" style="max-height: 400px; overflow-y: auto;"><p style="color: #a0a0a0;">Run backtest to see results</p></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="loading-overlay" id="loading">
@@ -972,6 +1012,91 @@
             });
             html += '</table>';
             document.getElementById('planetary-from-birth').innerHTML = html;
+        }
+    }
+
+    // Backtest Functions
+    async function runBacktest() {
+        const symbol = document.getElementById('symbol-input').value;
+        const bars = parseInt(document.getElementById('backtest-bars').value);
+
+        document.getElementById('loading').classList.add('active');
+        document.getElementById('backtest-btn').disabled = true;
+
+        try {
+            const response = await fetch('/api/jenkins/backtest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symbol, timeframe: '1d', bars })
+            });
+
+            if (!response.ok) throw new Error('Backtest failed');
+
+            const data = await response.json();
+            updateBacktestResults(data.backtest);
+            document.getElementById('backtest-results').style.display = 'block';
+
+        } catch (error) {
+            console.error('Backtest error:', error);
+            alert('Error running backtest: ' + error.message);
+        } finally {
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('backtest-btn').disabled = false;
+        }
+    }
+
+    function updateBacktestResults(bt) {
+        if (!bt || bt.error) {
+            document.getElementById('backtest-summary').innerHTML = `<p style="color: #ff6b6b;">${bt?.error || 'Error'}</p>`;
+            return;
+        }
+
+        // Summary
+        const accuracyColor = bt.accuracy_pct >= 50 ? '#00d26a' : (bt.accuracy_pct >= 30 ? '#ffd93d' : '#ff6b6b');
+        document.getElementById('backtest-summary').innerHTML = `
+            <table class="levels-table">
+                <tr><td>Total Candles</td><td>${bt.total_candles}</td></tr>
+                <tr><td>Total Swings Found</td><td>${bt.total_swings}</td></tr>
+                <tr><td>Predicted Swings (≤10% diff)</td><td>${bt.predicted_swings}</td></tr>
+                <tr><td style="font-weight: bold;">Accuracy</td><td style="color: ${accuracyColor}; font-weight: bold; font-size: 1.2em;">${bt.accuracy_pct}%</td></tr>
+                <tr><td>Exact Hits (≤3% diff)</td><td>${bt.exact_hits}</td></tr>
+                <tr><td>Exact Accuracy</td><td>${bt.exact_accuracy_pct}%</td></tr>
+                <tr><td>Best Scale Factor</td><td style="color: #4fc3f7;">${bt.best_scale || 'N/A'}</td></tr>
+            </table>
+        `;
+
+        // Scale Performance
+        if (bt.scale_performance) {
+            let scaleHtml = '<table class="levels-table"><tr><th>Scale</th><th>Hits</th><th>Exact</th></tr>';
+            for (const [scale, data] of Object.entries(bt.scale_performance)) {
+                scaleHtml += `<tr><td>${scale}</td><td>${data.total}</td><td>${data.exact}</td></tr>`;
+            }
+            scaleHtml += '</table>';
+            document.getElementById('backtest-scales').innerHTML = scaleHtml;
+        }
+
+        // Swing Results
+        if (bt.results && bt.results.length > 0) {
+            let swingHtml = '<table class="levels-table"><tr><th>Bar</th><th>Type</th><th>Price</th><th>Predicted?</th><th>Best Match</th></tr>';
+            bt.results.forEach(r => {
+                const predicted = r.predicted ? '<span style="color: #00d26a;">YES</span>' : '<span style="color: #a0a0a0;">no</span>';
+                let bestMatch = '-';
+                if (r.predictions && r.predictions.length > 0) {
+                    const best = r.predictions.sort((a, b) => a.pct_diff - b.pct_diff)[0];
+                    const exactBadge = best.exact ? ' <span style="color: #00d26a;">EXACT</span>' : '';
+                    bestMatch = `${best.scale}: ${best.predicted_bars} → ${best.actual_bars} (${best.pct_diff}%)${exactBadge}`;
+                }
+                const typeColor = r.type === 'high' ? '#ff6b6b' : '#00d26a';
+                swingHtml += `<tr>
+                    <td>${r.idx}</td>
+                    <td style="color: ${typeColor};">${r.type.toUpperCase()}</td>
+                    <td>$${r.price.toLocaleString()}</td>
+                    <td>${predicted}</td>
+                    <td style="font-size: 0.85em;">${bestMatch}</td>
+                </tr>`;
+            });
+            swingHtml += '</table>';
+            document.getElementById('backtest-swings').innerHTML = swingHtml;
         }
     }
 

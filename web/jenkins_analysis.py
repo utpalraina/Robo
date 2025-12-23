@@ -611,6 +611,166 @@ def calculate_daily_square_outs(high: float, low: float, high_idx: int, low_idx:
     }
 
 
+def backtest_jenkins_square_outs(candles: List[Dict], asset_type: str = 'crypto',
+                                   lookback: int = 3) -> Dict:
+    """
+    Backtest Jenkins Time = Price on historical data.
+
+    For each swing high/low, check if it occurred at a predicted square-out
+    from a prior swing.
+
+    Args:
+        candles: List of OHLC candles with 'timestamp', 'high', 'low', 'close'
+        asset_type: 'crypto', 'stock', 'index', 'metal', 'commodity'
+        lookback: Bars to look back/forward for swing detection
+
+    Returns:
+        Dict with backtest results including accuracy stats
+    """
+    if len(candles) < lookback * 3:
+        return {'error': 'Not enough data for backtest'}
+
+    # Scale factors based on asset type
+    if asset_type == 'crypto':
+        scale_factors = [
+            ('÷10000', lambda p: p / 10000),
+            ('÷1000', lambda p: p / 1000),
+            ('√÷10', lambda p: math.sqrt(p) / 10),
+            ('mod360', lambda p: p % 360),
+        ]
+    elif asset_type == 'stock':
+        scale_factors = [
+            ('direct', lambda p: p),
+            ('÷10', lambda p: p / 10),
+            ('√', lambda p: math.sqrt(p)),
+        ]
+    elif asset_type == 'index':
+        scale_factors = [
+            ('÷10', lambda p: p / 10),
+            ('÷100', lambda p: p / 100),
+            ('√', lambda p: math.sqrt(p)),
+        ]
+    else:  # metal, commodity
+        scale_factors = [
+            ('direct', lambda p: p),
+            ('÷10', lambda p: p / 10),
+            ('√', lambda p: math.sqrt(p)),
+        ]
+
+    # Find all swing highs and lows
+    swings = []
+    for i in range(lookback, len(candles) - lookback):
+        candle = candles[i]
+
+        # Check for swing high
+        is_high = all(candle['high'] >= candles[i-j]['high'] for j in range(1, lookback+1))
+        is_high = is_high and all(candle['high'] >= candles[i+j]['high'] for j in range(1, lookback+1))
+
+        # Check for swing low
+        is_low = all(candle['low'] <= candles[i-j]['low'] for j in range(1, lookback+1))
+        is_low = is_low and all(candle['low'] <= candles[i+j]['low'] for j in range(1, lookback+1))
+
+        if is_high:
+            swings.append({
+                'idx': i,
+                'type': 'high',
+                'price': candle['high'],
+                'timestamp': candle.get('timestamp', i)
+            })
+        if is_low:
+            swings.append({
+                'idx': i,
+                'type': 'low',
+                'price': candle['low'],
+                'timestamp': candle.get('timestamp', i)
+            })
+
+    # Sort swings by index
+    swings.sort(key=lambda x: x['idx'])
+
+    # For each swing, check if it was predicted by prior swings
+    results = []
+    total_swings = 0
+    predicted_swings = 0
+
+    for i, swing in enumerate(swings):
+        if i == 0:
+            continue  # Skip first swing, nothing to predict from
+
+        total_swings += 1
+        swing_result = {
+            'idx': swing['idx'],
+            'type': swing['type'],
+            'price': swing['price'],
+            'timestamp': swing['timestamp'],
+            'predicted': False,
+            'predictions': []
+        }
+
+        # Check against all prior swings
+        for prior in swings[:i]:
+            bars_elapsed = swing['idx'] - prior['idx']
+            if bars_elapsed <= 0:
+                continue
+
+            # Check each scale factor
+            for scale_name, scale_fn in scale_factors:
+                scaled_price = scale_fn(prior['price'])
+                if scaled_price > 0:
+                    diff = abs(bars_elapsed - scaled_price)
+                    pct_diff = (diff / bars_elapsed) * 100 if bars_elapsed > 0 else 100
+
+                    # Consider it a hit if within 10%
+                    if pct_diff <= 10:
+                        swing_result['predictions'].append({
+                            'from_idx': prior['idx'],
+                            'from_type': prior['type'],
+                            'from_price': prior['price'],
+                            'scale': scale_name,
+                            'predicted_bars': round(scaled_price, 1),
+                            'actual_bars': bars_elapsed,
+                            'diff': round(diff, 1),
+                            'pct_diff': round(pct_diff, 1),
+                            'exact': pct_diff <= 3
+                        })
+                        swing_result['predicted'] = True
+
+        if swing_result['predicted']:
+            predicted_swings += 1
+
+        results.append(swing_result)
+
+    # Calculate statistics
+    accuracy = (predicted_swings / total_swings * 100) if total_swings > 0 else 0
+    exact_hits = sum(1 for r in results if any(p.get('exact') for p in r['predictions']))
+
+    # Find best scale factor
+    scale_hits = {}
+    for r in results:
+        for p in r['predictions']:
+            scale = p['scale']
+            if scale not in scale_hits:
+                scale_hits[scale] = {'total': 0, 'exact': 0}
+            scale_hits[scale]['total'] += 1
+            if p.get('exact'):
+                scale_hits[scale]['exact'] += 1
+
+    best_scale = max(scale_hits.items(), key=lambda x: x[1]['total'])[0] if scale_hits else None
+
+    return {
+        'total_candles': len(candles),
+        'total_swings': total_swings,
+        'predicted_swings': predicted_swings,
+        'accuracy_pct': round(accuracy, 1),
+        'exact_hits': exact_hits,
+        'exact_accuracy_pct': round(exact_hits / total_swings * 100, 1) if total_swings > 0 else 0,
+        'scale_performance': scale_hits,
+        'best_scale': best_scale,
+        'asset_type': asset_type,
+        'results': results[-50:]  # Last 50 for display
+    }
+
+
 def calculate_square_root_levels(price: float, increments: int = 4) -> Dict[str, List[float]]:
     """
     Jenkins Natural Ratio - Square root support/resistance levels.
