@@ -582,6 +582,57 @@
             </div>
         </div>
     </div>
+
+    <!-- Time as Longitude Section -->
+    <div class="header-section" style="margin-top: 30px;">
+        <h2 style="color: #e94560; margin: 0;">Time as Longitude</h2>
+        <p style="color: #a0a0a0; margin: 5px 0 0 0;">Earth rotates 360 degrees in 24 hours. 1 degree = 4 minutes. Price converts to time via longitude.</p>
+    </div>
+
+    <div class="methods-grid">
+        <div class="method-card">
+            <h4>Price to Time Conversion</h4>
+            <div id="price-to-time">
+                <p style="color: #a0a0a0;">Run analysis to see conversions</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h4>Scaled Time Cycles</h4>
+            <div id="scaled-cycles">
+                <p style="color: #a0a0a0;">Run analysis to see scaled cycles</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h4>Natural Chart Intervals</h4>
+            <div id="natural-intervals">
+                <table class="levels-table">
+                    <tr><th>Interval</th><th>Degrees</th><th>Reason</th></tr>
+                    <tr><td>4 min</td><td>1°</td><td>1 degree Earth rotation</td></tr>
+                    <tr><td>15 min</td><td>3.75°</td><td>1/24th of day</td></tr>
+                    <tr><td>60 min</td><td>15°</td><td>1 hour = 15° longitude</td></tr>
+                    <tr><td>240 min</td><td>60°</td><td>4 hours = 60°</td></tr>
+                    <tr><td>390 min</td><td>97.5°</td><td>NYSE trading day</td></tr>
+                    <tr><td>1440 min</td><td>360°</td><td>Full day = 360°</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h4>Market Longitude Offsets</h4>
+            <div id="market-offsets">
+                <table class="levels-table">
+                    <tr><th>Route</th><th>Hours</th><th>Degrees</th></tr>
+                    <tr><td>NY → London</td><td>5</td><td>75°</td></tr>
+                    <tr><td>NY → Tokyo</td><td>14</td><td>210°</td></tr>
+                    <tr><td>NY → Hong Kong</td><td>13</td><td>195°</td></tr>
+                    <tr><td>NY → Sydney</td><td>16</td><td>240°</td></tr>
+                </table>
+                <p style="color: #a0a0a0; font-size: 0.85em; margin-top: 10px;">Pattern offsets between markets based on longitude difference</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="loading-overlay" id="loading">
@@ -686,6 +737,9 @@
             updateJupiterSaturn(data.analysis);
             updateRetrogrades(data.analysis);
             updatePlanetaryAspects(data.analysis);
+
+            // Update time as longitude
+            updateTimeAsLongitude(data.analysis);
 
             // Draw overlays
             drawOverlays();
@@ -1312,6 +1366,55 @@
         html += '</div>';
 
         container.innerHTML = html;
+    }
+
+    function updateTimeAsLongitude(analysis) {
+        if (!analysis || !analysis.time_as_longitude) return;
+
+        const data = analysis.time_as_longitude;
+        const priceContainer = document.getElementById('price-to-time');
+        const scaledContainer = document.getElementById('scaled-cycles');
+
+        // Price to Time conversions
+        if (data.conversions) {
+            const conv = data.conversions;
+            priceContainer.innerHTML = `
+                <table class="levels-table">
+                    <tr><th>Conversion</th><th>Value</th></tr>
+                    <tr><td>Price as Degrees</td><td>${conv.price_as_degrees}°</td></tr>
+                    <tr><td>Price → Minutes</td><td>${conv.price_to_minutes} min</td></tr>
+                    <tr><td>Price → Hours</td><td>${conv.price_to_hours} hrs</td></tr>
+                    <tr><td>Price → Days</td><td>${conv.price_to_days} days</td></tr>
+                </table>
+                <p style="color: #a0a0a0; font-size: 0.85em; margin-top: 10px;">
+                    Current price: $${data.price.toLocaleString()} | 1° = 4 minutes
+                </p>
+            `;
+        }
+
+        // Scaled Time Cycles (for large prices like BTC)
+        if (data.scaled_time_cycles) {
+            const cycles = data.scaled_time_cycles;
+            let html = '<table class="levels-table"><tr><th>Scale</th><th>Price</th><th>Months</th><th>Days</th></tr>';
+
+            for (const [scale, values] of Object.entries(cycles)) {
+                if (scale !== 'move_decimal_3') {  // Skip duplicate
+                    const label = scale.replace('_', ' ').replace('div ', '÷');
+                    html += `<tr>
+                        <td>${label}</td>
+                        <td>${values.scaled_price.toLocaleString()}</td>
+                        <td>${values.as_months}</td>
+                        <td>${Math.round(values.as_days)}</td>
+                    </tr>`;
+                }
+            }
+            html += '</table>';
+            html += `<p style="color: #a0a0a0; font-size: 0.85em; margin-top: 10px;">
+                Jenkins formula: Price × 30.4375 = days
+            </p>`;
+
+            scaledContainer.innerHTML = html;
+        }
     }
 
     // Initialize on load

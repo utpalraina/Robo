@@ -480,6 +480,109 @@ def calculate_time_equals_price(high: float, low: float, high_bar: int, low_bar:
     }
 
 
+def calculate_time_as_longitude(price: float, time_minutes: int = None,
+                                 time_days: int = None) -> Dict:
+    """
+    Jenkins Time-Longitude Conversion.
+
+    Core principle: Earth rotates 360° in 24 hours.
+    - 1 degree = 4 minutes
+    - 15 degrees = 1 hour (sun moves 15° per hour)
+    - 360 degrees = 1 day
+
+    Price can be converted to degrees, then to time:
+    - Price as degrees → time cycles
+    - Price / 10 (move decimal) → degrees → months/days
+
+    Args:
+        price: Price to convert to time via longitude
+        time_minutes: Optional - convert minutes to degrees
+        time_days: Optional - convert days to degrees
+
+    Returns:
+        Dict with time-longitude conversions
+    """
+    # Constants
+    DEGREES_PER_DAY = 360
+    DEGREES_PER_HOUR = 15
+    MINUTES_PER_DEGREE = 4
+    DAYS_PER_MONTH_AVG = 30.4375  # Jenkins uses this
+
+    result = {
+        'price': price,
+        'conversions': {}
+    }
+
+    # Price as degrees → time conversions
+    price_as_degrees = price % 360  # Normalize to 360 circle
+
+    # Direct price interpretations
+    result['conversions']['price_as_degrees'] = round(price_as_degrees, 2)
+    result['conversions']['price_to_minutes'] = round(price * MINUTES_PER_DEGREE, 0)
+    result['conversions']['price_to_hours'] = round(price / DEGREES_PER_HOUR, 2)
+    result['conversions']['price_to_days'] = round(price / DEGREES_PER_DAY, 4)
+
+    # Scaled price versions (for large prices like BTC)
+    scaled_versions = {
+        'div_10': price / 10,
+        'div_100': price / 100,
+        'div_1000': price / 1000,
+        'move_decimal_2': price / 100,  # 96000 → 960
+        'move_decimal_3': price / 1000,  # 96000 → 96
+    }
+
+    result['scaled_time_cycles'] = {}
+    for label, scaled_price in scaled_versions.items():
+        # Convert scaled price to days using Jenkins' month formula
+        # Price (with decimal moved) × 30.4375 = days
+        days_from_price = scaled_price * DAYS_PER_MONTH_AVG
+        result['scaled_time_cycles'][label] = {
+            'scaled_price': round(scaled_price, 2),
+            'as_months': round(scaled_price, 2),
+            'as_days': round(days_from_price, 0),
+            'as_degrees': round(scaled_price % 360, 2)
+        }
+
+    # If time_minutes provided, convert to degrees
+    if time_minutes is not None:
+        result['time_to_degrees'] = {
+            'minutes': time_minutes,
+            'degrees': round(time_minutes / MINUTES_PER_DEGREE, 2),
+            'hours': round(time_minutes / 60, 2)
+        }
+
+    # If time_days provided, convert to degrees
+    if time_days is not None:
+        result['days_to_degrees'] = {
+            'days': time_days,
+            'degrees': round(time_days * DEGREES_PER_DAY, 0),
+            'full_rotations': time_days,
+            'longitude_equivalent': round((time_days * DEGREES_PER_DAY) % 360, 2)
+        }
+
+    # Geographic longitude market offsets (Jenkins arbitrage concept)
+    # New York to London = ~5 hours = 75°
+    # New York to Tokyo = ~14 hours = 210°
+    result['market_longitude_offsets'] = {
+        'ny_to_london': {'hours': 5, 'degrees': 75},
+        'ny_to_tokyo': {'hours': 14, 'degrees': 210},
+        'ny_to_hong_kong': {'hours': 13, 'degrees': 195},
+        'ny_to_sydney': {'hours': 16, 'degrees': 240}
+    }
+
+    # Natural chart intervals based on Earth rotation
+    result['natural_chart_intervals'] = {
+        '4_min': {'degrees': 1, 'reason': '1 degree Earth rotation'},
+        '15_min': {'degrees': 3.75, 'reason': '1/24th of day'},
+        '60_min': {'degrees': 15, 'reason': '1 hour = 15° longitude'},
+        '240_min': {'degrees': 60, 'reason': '4 hours = 60°'},
+        '390_min': {'degrees': 97.5, 'reason': 'NYSE trading day (6.5 hours)'},
+        '1440_min': {'degrees': 360, 'reason': 'Full day = 360°'}
+    }
+
+    return result
+
+
 def calculate_circle_projection(high: float, low: float, bars: int) -> Dict:
     """
     Circular arc projection from a swing.
@@ -1128,7 +1231,12 @@ def full_jenkins_analysis(candles: List[Dict],
         'planetary_aspects': calculate_planetary_aspects(),
         'mars_jupiter_cycle': calculate_mars_jupiter_cycle(),
         'jupiter_saturn_cycle': calculate_jupiter_saturn_cycle(),
-        'retrograde_status': get_retrograde_status()
+        'retrograde_status': get_retrograde_status(),
+
+        # Time as Longitude (Earth rotation = degrees = time)
+        'time_as_longitude': calculate_time_as_longitude(current_price),
+        'time_as_longitude_high': calculate_time_as_longitude(significant_high),
+        'time_as_longitude_low': calculate_time_as_longitude(significant_low)
     }
 
 
