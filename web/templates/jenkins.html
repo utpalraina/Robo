@@ -362,6 +362,32 @@
     <div class="input-section">
         <div class="input-row">
             <div class="input-group">
+                <label>Asset Profile</label>
+                <select id="asset-profile-select" onchange="selectAssetProfile()">
+                    <option value="">-- Select Asset --</option>
+                    <optgroup label="Crypto">
+                        <option value="BTC">BTC - Bitcoin</option>
+                        <option value="ETH">ETH - Ethereum</option>
+                        <option value="SOL">SOL - Solana</option>
+                    </optgroup>
+                    <optgroup label="Indices">
+                        <option value="SPY">SPY - S&P 500</option>
+                        <option value="QQQ">QQQ - Nasdaq 100</option>
+                        <option value="DJI">DJI - Dow Jones</option>
+                    </optgroup>
+                    <optgroup label="Metals">
+                        <option value="GOLD">Gold</option>
+                        <option value="SILVER">Silver</option>
+                    </optgroup>
+                    <optgroup label="Stocks">
+                        <option value="AAPL">AAPL - Apple</option>
+                        <option value="MSFT">MSFT - Microsoft</option>
+                        <option value="NVDA">NVDA - NVIDIA</option>
+                        <option value="TSLA">TSLA - Tesla</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="input-group">
                 <label>Symbol</label>
                 <input type="text" id="symbol-input" value="BTC/USD" placeholder="e.g., BTC/USD, AAPL">
             </div>
@@ -388,6 +414,39 @@
             <button class="btn-analyze" id="analyze-btn" onclick="runAnalysis()">
                 Analyze
             </button>
+        </div>
+    </div>
+
+    <!-- Asset Birth Cycles (Jenkins: birth date determines all cycles) -->
+    <div id="birth-cycles-section" class="header-section" style="display: none; margin-bottom: 20px;">
+        <h3 style="color: #e94560; margin: 0 0 15px 0;">
+            <span id="birth-asset-name">Asset</span> Birth Cycles
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div class="method-card" style="margin: 0;">
+                <h4>Birth Data</h4>
+                <div id="birth-data">
+                    <p style="color: #a0a0a0;">Select asset profile</p>
+                </div>
+            </div>
+            <div class="method-card" style="margin: 0;">
+                <h4>Time Since Birth</h4>
+                <div id="time-since-birth">
+                    <p style="color: #a0a0a0;">Select asset profile</p>
+                </div>
+            </div>
+            <div class="method-card" style="margin: 0;">
+                <h4>ATH/ATL Cycles</h4>
+                <div id="ath-atl-cycles">
+                    <p style="color: #a0a0a0;">Select asset profile</p>
+                </div>
+            </div>
+            <div class="method-card" style="margin: 0;">
+                <h4>Planetary Movement from Birth</h4>
+                <div id="planetary-from-birth">
+                    <p style="color: #a0a0a0;">Select asset profile</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1414,6 +1473,121 @@
             </p>`;
 
             scaledContainer.innerHTML = html;
+        }
+    }
+
+    // Asset Profile Functions
+    async function selectAssetProfile() {
+        const select = document.getElementById('asset-profile-select');
+        const symbol = select.value;
+
+        if (!symbol) {
+            document.getElementById('birth-cycles-section').style.display = 'none';
+            return;
+        }
+
+        try {
+            // Fetch birth cycles for the selected asset
+            const response = await fetch(`/api/jenkins/birth-cycles/${symbol}`);
+            if (!response.ok) throw new Error('Failed to fetch birth cycles');
+
+            const cycles = await response.json();
+            updateBirthCycles(cycles);
+
+            // Update symbol input based on asset type
+            const symbolInput = document.getElementById('symbol-input');
+            if (cycles.type === 'crypto') {
+                symbolInput.value = `${symbol}/USD`;
+            } else {
+                symbolInput.value = symbol;
+            }
+
+            // Show birth cycles section
+            document.getElementById('birth-cycles-section').style.display = 'block';
+            document.getElementById('birth-asset-name').textContent = cycles.symbol;
+
+        } catch (error) {
+            console.error('Error fetching asset profile:', error);
+        }
+    }
+
+    function updateBirthCycles(cycles) {
+        // Birth Data
+        const birthDataEl = document.getElementById('birth-data');
+        birthDataEl.innerHTML = `
+            <table class="levels-table">
+                <tr><td>Birth Date</td><td>${cycles.birth_date}</td></tr>
+                <tr><td>Birth Price</td><td>$${cycles.birth_price.toLocaleString()}</td></tr>
+                <tr><td>Birth Price as °</td><td>${cycles.birth_price_as_degrees}°</td></tr>
+                <tr><td>Birth Price √</td><td>${cycles.birth_price_sqrt}</td></tr>
+            </table>
+        `;
+
+        // Time Since Birth
+        const timeSinceBirthEl = document.getElementById('time-since-birth');
+        timeSinceBirthEl.innerHTML = `
+            <table class="levels-table">
+                <tr><td>Days</td><td>${cycles.days_since_birth.toLocaleString()}</td></tr>
+                <tr><td>Weeks</td><td>${cycles.weeks_since_birth.toLocaleString()}</td></tr>
+                <tr><td>Months</td><td>${cycles.months_since_birth.toLocaleString()}</td></tr>
+                <tr><td>Years</td><td>${cycles.years_since_birth}</td></tr>
+                <tr><td>Degrees Traveled</td><td>${cycles.degrees_traveled}° (${cycles.full_rotations} full rotations)</td></tr>
+            </table>
+            ${cycles.time_squares_birth_price ? '<p style="color: #00d26a; margin-top: 10px;">TIME SQUARES BIRTH PRICE!</p>' : ''}
+        `;
+
+        // ATH/ATL Cycles
+        const athAtlEl = document.getElementById('ath-atl-cycles');
+        let athAtlHtml = '<table class="levels-table">';
+        if (cycles.ath) {
+            athAtlHtml += `
+                <tr><td>ATH Price</td><td>$${cycles.ath.price.toLocaleString()}</td></tr>
+                <tr><td>ATH Date</td><td>${cycles.ath.date}</td></tr>
+                <tr><td>Days from ATH</td><td>${cycles.ath.days_ago}</td></tr>
+                <tr><td>ATH as °</td><td>${cycles.ath.ath_as_degrees}°</td></tr>
+            `;
+            if (cycles.ath.time_squares_ath) {
+                athAtlHtml += '<tr><td colspan="2" style="color: #00d26a;">TIME SQUARES ATH!</td></tr>';
+            }
+        }
+        if (cycles.atl) {
+            athAtlHtml += `
+                <tr><td>ATL Price</td><td>$${cycles.atl.price.toLocaleString()}</td></tr>
+                <tr><td>ATL Date</td><td>${cycles.atl.date}</td></tr>
+                <tr><td>Days from ATL</td><td>${cycles.atl.days_ago}</td></tr>
+            `;
+        }
+        athAtlHtml += '</table>';
+        athAtlEl.innerHTML = athAtlHtml;
+
+        // Planetary Movement from Birth
+        const planetaryEl = document.getElementById('planetary-from-birth');
+        if (cycles.planetary_from_birth && !cycles.planetary_from_birth.error) {
+            let planetHtml = '<div style="max-height: 200px; overflow-y: auto;"><table class="levels-table">';
+            planetHtml += '<tr><th>Planet</th><th>° Moved</th><th>Current °</th></tr>';
+
+            // Show key planets first (Jenkins favorites)
+            const keyPlanets = ['Jupiter', 'Saturn', 'Mars', 'Sun'];
+            const allPlanets = Object.keys(cycles.planetary_from_birth);
+
+            // Sort: key planets first, then others
+            const sortedPlanets = [...keyPlanets.filter(p => allPlanets.includes(p)),
+                                   ...allPlanets.filter(p => !keyPlanets.includes(p))];
+
+            for (const planet of sortedPlanets) {
+                const data = cycles.planetary_from_birth[planet];
+                const isKey = keyPlanets.includes(planet);
+                planetHtml += `<tr style="${isKey ? 'color: #4fc3f7;' : ''}">
+                    <td>${planet}</td>
+                    <td>${data.degrees_moved.toFixed(1)}°</td>
+                    <td>${data.current_longitude.toFixed(1)}°</td>
+                </tr>`;
+            }
+            planetHtml += '</table></div>';
+            planetHtml += '<p style="color: #a0a0a0; font-size: 0.8em; margin-top: 8px;">Jenkins: "IPO @96, Jupiter moved 96 by certain date"</p>';
+            planetaryEl.innerHTML = planetHtml;
+        } else {
+            planetaryEl.innerHTML = '<p style="color: #a0a0a0;">Planetary data unavailable</p>';
         }
     }
 

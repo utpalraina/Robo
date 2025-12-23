@@ -7482,7 +7482,13 @@ from web.jenkins_analysis import (
     calculate_planetary_aspects,
     calculate_mars_jupiter_cycle,
     calculate_jupiter_saturn_cycle,
-    get_retrograde_status
+    get_retrograde_status,
+    # Asset profiles
+    get_asset_profile,
+    get_all_asset_profiles,
+    get_assets_by_type,
+    calculate_birth_cycles,
+    ASSET_PROFILES
 )
 
 
@@ -7657,6 +7663,55 @@ async def get_retrogrades_api():
     try:
         status = get_retrograde_status()
         return convert_numpy_types(status)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Asset Profile Endpoints
+@app.get("/api/jenkins/assets")
+async def get_all_assets():
+    """Get all predefined asset profiles."""
+    try:
+        return convert_numpy_types(get_all_asset_profiles())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/assets/{symbol}")
+async def get_asset(symbol: str):
+    """Get asset profile by symbol."""
+    try:
+        profile = get_asset_profile(symbol)
+        if not profile:
+            raise HTTPException(status_code=404, detail=f"Asset {symbol} not found")
+        return convert_numpy_types(profile)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/assets/type/{asset_type}")
+async def get_assets_by_type_api(asset_type: str):
+    """Get all assets of a specific type (crypto, stock, index, metal)."""
+    try:
+        assets = get_assets_by_type(asset_type)
+        return convert_numpy_types(assets)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jenkins/birth-cycles/{symbol}")
+async def get_birth_cycles(symbol: str):
+    """Get Jenkins birth-based cycles for an asset."""
+    try:
+        profile = get_asset_profile(symbol)
+        if not profile:
+            raise HTTPException(status_code=404, detail=f"Asset {symbol} not found")
+        cycles = calculate_birth_cycles(profile)
+        return convert_numpy_types(cycles)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

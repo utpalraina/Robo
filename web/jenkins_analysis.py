@@ -12,6 +12,7 @@ Core Concepts:
 2. Square roots define support/resistance
 3. Time Conversion Bars (TCB) predict corrections
 4. Geometric angles and circles for turns
+5. Each asset has a birth date/price that seeds all cycles
 """
 
 import math
@@ -25,6 +26,385 @@ try:
     EPHEM_AVAILABLE = True
 except ImportError:
     EPHEM_AVAILABLE = False
+
+
+# =============================================================================
+# ASSET PROFILES - Birth data for specific assets (Jenkins: "from the date of
+# birth of the stock it could be determined for once and for all time what
+# time factor would be used")
+# =============================================================================
+
+ASSET_PROFILES = {
+    # Cryptocurrencies
+    'BTC': {
+        'name': 'Bitcoin',
+        'type': 'crypto',
+        'birth_date': '2009-01-03',  # Genesis block
+        'birth_price': 0.0,  # No price initially
+        'first_trade_date': '2010-07-17',  # First exchange trade
+        'first_trade_price': 0.05,  # ~$0.05
+        'ath_price': 108364,  # All-time high
+        'ath_date': '2024-12-17',
+        'atl_price': 0.05,
+        'atl_date': '2010-07-17',
+        'exchange_longitude': -74.006,  # NYC (major exchange hub)
+        'notes': 'Genesis block mined by Satoshi'
+    },
+    'ETH': {
+        'name': 'Ethereum',
+        'type': 'crypto',
+        'birth_date': '2015-07-30',  # Frontier launch
+        'birth_price': 0.31,  # ICO price ~$0.31
+        'first_trade_date': '2015-08-07',
+        'first_trade_price': 2.77,
+        'ath_price': 4878,
+        'ath_date': '2021-11-10',
+        'atl_price': 0.42,
+        'atl_date': '2015-10-21',
+        'exchange_longitude': -74.006,
+        'notes': 'Vitalik Buterin launch'
+    },
+    'SOL': {
+        'name': 'Solana',
+        'type': 'crypto',
+        'birth_date': '2020-03-16',  # Mainnet beta
+        'birth_price': 0.22,
+        'first_trade_date': '2020-04-10',
+        'first_trade_price': 0.95,
+        'ath_price': 263.83,
+        'ath_date': '2024-11-23',
+        'atl_price': 0.50,
+        'atl_date': '2020-05-11',
+        'exchange_longitude': -74.006,
+        'notes': 'High-speed blockchain'
+    },
+
+    # Stock Indices
+    'SPY': {
+        'name': 'S&P 500 ETF',
+        'type': 'index',
+        'birth_date': '1993-01-22',  # SPY inception
+        'birth_price': 43.94,
+        'first_trade_date': '1993-01-29',
+        'first_trade_price': 43.97,
+        'ath_price': 609.07,
+        'ath_date': '2024-12-06',
+        'atl_price': 43.94,
+        'atl_date': '1993-01-29',
+        'exchange_longitude': -74.006,  # NYSE
+        'notes': 'Tracks S&P 500 index'
+    },
+    'QQQ': {
+        'name': 'Nasdaq 100 ETF',
+        'type': 'index',
+        'birth_date': '1999-03-10',
+        'birth_price': 51.13,
+        'first_trade_date': '1999-03-10',
+        'first_trade_price': 51.13,
+        'ath_price': 538.28,
+        'ath_date': '2024-12-16',
+        'atl_price': 19.76,
+        'atl_date': '2002-10-10',
+        'exchange_longitude': -74.006,  # NASDAQ
+        'notes': 'Tracks Nasdaq 100'
+    },
+    'DJI': {
+        'name': 'Dow Jones Industrial',
+        'type': 'index',
+        'birth_date': '1896-05-26',  # DJIA inception
+        'birth_price': 40.94,
+        'first_trade_date': '1896-05-26',
+        'first_trade_price': 40.94,
+        'ath_price': 45073,
+        'ath_date': '2024-12-04',
+        'atl_price': 28.48,
+        'atl_date': '1896-08-08',
+        'exchange_longitude': -74.006,  # NYSE
+        'notes': 'Oldest US index'
+    },
+
+    # Precious Metals
+    'GOLD': {
+        'name': 'Gold',
+        'type': 'metal',
+        'birth_date': '1971-08-15',  # Nixon ends gold standard
+        'birth_price': 35.00,  # Fixed price before
+        'first_trade_date': '1975-01-01',  # US citizens allowed
+        'first_trade_price': 175.00,
+        'ath_price': 2790,
+        'ath_date': '2024-10-30',
+        'atl_price': 35.00,
+        'atl_date': '1971-08-15',
+        'exchange_longitude': -74.006,  # COMEX NYC
+        'notes': 'Free float after Nixon shock'
+    },
+    'SILVER': {
+        'name': 'Silver',
+        'type': 'metal',
+        'birth_date': '1971-08-15',
+        'birth_price': 1.29,
+        'first_trade_date': '1975-01-01',
+        'first_trade_price': 4.50,
+        'ath_price': 49.82,
+        'ath_date': '2011-04-28',
+        'atl_price': 1.29,
+        'atl_date': '1971-08-15',
+        'exchange_longitude': -74.006,
+        'notes': 'Hunt Brothers squeeze in 1980'
+    },
+
+    # Major Stocks (Jenkins recommends 20-30 stocks for life)
+    'AAPL': {
+        'name': 'Apple Inc',
+        'type': 'stock',
+        'birth_date': '1980-12-12',  # IPO
+        'birth_price': 22.00,  # IPO price
+        'first_trade_date': '1980-12-12',
+        'first_trade_price': 29.00,  # First trade
+        'ath_price': 260.10,
+        'ath_date': '2024-12-26',
+        'atl_price': 0.10,  # Split adjusted
+        'atl_date': '1982-07-01',
+        'exchange_longitude': -74.006,  # NASDAQ
+        'notes': 'Split adjusted prices'
+    },
+    'MSFT': {
+        'name': 'Microsoft',
+        'type': 'stock',
+        'birth_date': '1986-03-13',
+        'birth_price': 21.00,
+        'first_trade_date': '1986-03-13',
+        'first_trade_price': 28.00,
+        'ath_price': 468.35,
+        'ath_date': '2024-07-05',
+        'atl_price': 0.07,  # Split adjusted
+        'atl_date': '1986-03-13',
+        'exchange_longitude': -74.006,
+        'notes': 'Split adjusted'
+    },
+    'NVDA': {
+        'name': 'NVIDIA',
+        'type': 'stock',
+        'birth_date': '1999-01-22',
+        'birth_price': 12.00,
+        'first_trade_date': '1999-01-22',
+        'first_trade_price': 12.00,
+        'ath_price': 152.89,
+        'ath_date': '2024-11-21',
+        'atl_price': 0.03,  # Split adjusted
+        'atl_date': '2002-10-08',
+        'exchange_longitude': -74.006,
+        'notes': 'AI chip leader'
+    },
+    'TSLA': {
+        'name': 'Tesla',
+        'type': 'stock',
+        'birth_date': '2010-06-29',
+        'birth_price': 17.00,
+        'first_trade_date': '2010-06-29',
+        'first_trade_price': 19.00,
+        'ath_price': 488.54,
+        'ath_date': '2024-12-18',
+        'atl_price': 1.00,  # Split adjusted
+        'atl_date': '2010-07-01',
+        'exchange_longitude': -74.006,
+        'notes': 'EV pioneer'
+    }
+}
+
+# Exchange longitudes for market offset calculations
+EXCHANGE_LONGITUDES = {
+    'NYSE': -74.006,      # New York
+    'NASDAQ': -74.006,    # New York
+    'CME': -87.630,       # Chicago
+    'LSE': -0.076,        # London
+    'TSE': 139.691,       # Tokyo
+    'HKEX': 114.158,      # Hong Kong
+    'ASX': 151.209,       # Sydney
+    'FSE': 8.682,         # Frankfurt
+    'SGX': 103.851,       # Singapore
+    'BSE': 72.835,        # Mumbai
+}
+
+
+def get_asset_profile(symbol: str) -> Optional[Dict]:
+    """Get predefined asset profile by symbol."""
+    return ASSET_PROFILES.get(symbol.upper())
+
+
+def calculate_birth_cycles(profile: Dict, current_date: datetime = None) -> Dict:
+    """
+    Calculate Jenkins cycles from asset birth date.
+
+    Jenkins: "from the date of birth of the stock it could be determined
+    for once and for all time what time factor would be used"
+
+    Args:
+        profile: Asset profile dict with birth_date, birth_price, etc.
+        current_date: Date to calculate cycles to (default: today)
+
+    Returns:
+        Dict with birth-based cycle calculations
+    """
+    if current_date is None:
+        current_date = datetime.now()
+
+    birth_date = datetime.strptime(profile['birth_date'], '%Y-%m-%d')
+    birth_price = profile.get('birth_price', 0) or profile.get('first_trade_price', 0)
+
+    # Days since birth
+    days_since_birth = (current_date - birth_date).days
+
+    # Calculate various cycle measurements
+    cycles = {
+        'symbol': profile.get('name', 'Unknown'),
+        'type': profile.get('type', 'unknown'),
+        'birth_date': profile['birth_date'],
+        'birth_price': birth_price,
+        'days_since_birth': days_since_birth,
+        'weeks_since_birth': round(days_since_birth / 7, 1),
+        'months_since_birth': round(days_since_birth / 30.4375, 1),
+        'years_since_birth': round(days_since_birth / 365.25, 2),
+
+        # Birth price cycles
+        'birth_price_as_days': round(birth_price, 0),
+        'birth_price_as_weeks': round(birth_price / 7, 1),
+        'birth_price_sqrt': round(math.sqrt(birth_price) if birth_price > 0 else 0, 2),
+        'birth_price_as_degrees': round(birth_price % 360, 2),
+
+        # Time = Birth Price square-outs
+        'time_squares_birth_price': abs(days_since_birth - birth_price) < 5 if birth_price > 0 else False,
+
+        # Degree-based cycles from birth
+        'degrees_traveled': round((days_since_birth % 360), 2),
+        'full_rotations': days_since_birth // 360,
+
+        # Key anniversary dates
+        'anniversaries': []
+    }
+
+    # Calculate upcoming anniversaries
+    for years in range(1, 6):
+        anniversary = birth_date + timedelta(days=years * 365.25)
+        if anniversary > current_date:
+            days_until = (anniversary - current_date).days
+            cycles['anniversaries'].append({
+                'years': years,
+                'date': anniversary.strftime('%Y-%m-%d'),
+                'days_until': days_until
+            })
+
+    # ATH/ATL cycles if available
+    if profile.get('ath_date'):
+        ath_date = datetime.strptime(profile['ath_date'], '%Y-%m-%d')
+        days_from_ath = (current_date - ath_date).days
+        cycles['ath'] = {
+            'price': profile['ath_price'],
+            'date': profile['ath_date'],
+            'days_ago': days_from_ath,
+            'ath_as_degrees': round(profile['ath_price'] % 360, 2),
+            'time_squares_ath': abs(days_from_ath - (profile['ath_price'] % 1000)) < 5
+        }
+
+    if profile.get('atl_date'):
+        atl_date = datetime.strptime(profile['atl_date'], '%Y-%m-%d')
+        days_from_atl = (current_date - atl_date).days
+        cycles['atl'] = {
+            'price': profile['atl_price'],
+            'date': profile['atl_date'],
+            'days_ago': days_from_atl,
+            'atl_as_degrees': round(profile['atl_price'] % 360, 2)
+        }
+
+    # Planetary cycles from birth (if ephem available)
+    if EPHEM_AVAILABLE:
+        cycles['planetary_from_birth'] = calculate_planetary_movement_from_date(
+            profile['birth_date'], current_date.strftime('%Y-%m-%d')
+        )
+
+    return cycles
+
+
+def calculate_planetary_movement_from_date(start_date: str, end_date: str) -> Dict:
+    """
+    Calculate how much each planet has moved since a start date.
+
+    Jenkins uses this to find when planet movement = price or time.
+    Example from his book: "IPO @96, Jupiter moved 96 by 8/14/04"
+
+    Args:
+        start_date: Birth/IPO date string 'YYYY-MM-DD'
+        end_date: Current/target date string 'YYYY-MM-DD'
+
+    Returns:
+        Dict with degrees moved for each planet
+    """
+    if not EPHEM_AVAILABLE:
+        return {'error': 'ephem not available'}
+
+    start = ephem.Date(start_date)
+    end = ephem.Date(end_date)
+
+    planets = {
+        'Sun': ephem.Sun,
+        'Moon': ephem.Moon,
+        'Mercury': ephem.Mercury,
+        'Venus': ephem.Venus,
+        'Mars': ephem.Mars,
+        'Jupiter': ephem.Jupiter,
+        'Saturn': ephem.Saturn,
+        'Uranus': ephem.Uranus,
+        'Neptune': ephem.Neptune
+    }
+
+    movements = {}
+    for name, planet_class in planets.items():
+        planet = planet_class()
+
+        # Position at start
+        planet.compute(start)
+        start_lon = math.degrees(float(planet.hlon))  # Heliocentric
+
+        # Position at end
+        planet.compute(end)
+        end_lon = math.degrees(float(planet.hlon))
+
+        # Calculate movement (accounting for 360° wrap)
+        movement = end_lon - start_lon
+        if movement < 0:
+            movement += 360
+
+        # For slow planets, calculate total degrees including full rotations
+        days_elapsed = end - start
+        if name == 'Jupiter':
+            # Jupiter: ~12 years per orbit
+            full_orbits = int(days_elapsed / (12 * 365.25))
+            movement += full_orbits * 360
+        elif name == 'Saturn':
+            # Saturn: ~29.5 years per orbit
+            full_orbits = int(days_elapsed / (29.5 * 365.25))
+            movement += full_orbits * 360
+        elif name == 'Mars':
+            # Mars: ~1.88 years per orbit
+            full_orbits = int(days_elapsed / (1.88 * 365.25))
+            movement += full_orbits * 360
+
+        movements[name] = {
+            'degrees_moved': round(movement, 2),
+            'current_longitude': round(end_lon, 2)
+        }
+
+    return movements
+
+
+def get_all_asset_profiles() -> Dict:
+    """Return all predefined asset profiles."""
+    return ASSET_PROFILES
+
+
+def get_assets_by_type(asset_type: str) -> Dict:
+    """Get all assets of a specific type (crypto, stock, index, metal)."""
+    return {k: v for k, v in ASSET_PROFILES.items() if v.get('type') == asset_type}
 
 
 def calculate_square_root_levels(price: float, increments: int = 4) -> Dict[str, List[float]]:
