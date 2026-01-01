@@ -1476,6 +1476,175 @@ export default function ZeroAriesPage() {
                   These are Gann's most powerful seasonal turn dates - always watch for reversals near these dates
                 </p>
               </div>
+
+              {/* April 2025 Complete Example */}
+              <div className="p-4 bg-gradient-to-r from-accent-red/20 to-yellow-500/20 border border-accent-red/30 rounded-lg">
+                <h4 className="font-bold text-accent-red mb-3">📅 Complete Example: April 2025 Turn Windows</h4>
+                <p className="text-sm mb-4">
+                  This example shows how multiple windows connect - from chaos to settling to the next turn.
+                </p>
+
+                {/* Timeline */}
+                <div className="mb-4 p-3 bg-bg-secondary rounded-lg overflow-x-auto">
+                  <div className="text-xs text-text-muted mb-2">APRIL 2025 TIMELINE:</div>
+                  <div className="flex items-center gap-2 text-xs min-w-max">
+                    <div className="text-center p-2 bg-yellow-500/20 rounded">
+                      <div className="font-bold">Apr 7</div>
+                      <div>☿ Direct</div>
+                    </div>
+                    <div className="text-text-muted">→</div>
+                    <div className="text-center p-2 bg-accent-red/30 rounded ring-2 ring-accent-red">
+                      <div className="font-bold">Apr 13</div>
+                      <div>🌕 Eclipse</div>
+                    </div>
+                    <div className="text-text-muted">→</div>
+                    <div className="text-center p-2 bg-bg-hover rounded">
+                      <div className="font-bold">Apr 20</div>
+                      <div>♉ Taurus</div>
+                    </div>
+                    <div className="text-text-muted">→</div>
+                    <div className="text-center p-2 bg-accent-blue/20 rounded">
+                      <div className="font-bold">Apr 27</div>
+                      <div>🌑 New Moon</div>
+                    </div>
+                    <div className="text-text-muted">→</div>
+                    <div className="text-center p-2 bg-accent-purple/20 rounded ring-2 ring-accent-purple">
+                      <div className="font-bold">May 4-5</div>
+                      <div>✧ Fixed Cross</div>
+                    </div>
+                    <div className="text-text-muted">→</div>
+                    <div className="text-center p-2 bg-accent-green/20 rounded">
+                      <div className="font-bold">May 6-7</div>
+                      <div>Confirm Entry</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Three Windows Comparison */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Window 1: Apr 8-22 */}
+                  <div className="p-3 bg-accent-red/10 border border-accent-red/30 rounded">
+                    <div className="font-semibold text-accent-red mb-2">Window 1: Apr 8-22 (CHAOS)</div>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span>🌕 Total Lunar Eclipse</span>
+                        <span className="text-accent-red">Apr 13</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>☿ Mercury stations direct</span>
+                        <span>Apr 7</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Eclipse window ±7 days</span>
+                        <span>Apr 6-20</span>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-accent-red/30">
+                        <div className="flex justify-between font-bold">
+                          <span>Confluence Score</span>
+                          <span className="text-accent-red">89% CRITICAL</span>
+                        </div>
+                        <div className="text-xs text-text-muted mt-1">Action: OBSERVE, don't fight the moves</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Window 2: Apr 22 - May 1 */}
+                  <div className="p-3 bg-accent-blue/10 border border-accent-blue/30 rounded">
+                    <div className="font-semibold text-accent-blue mb-2">Window 2: Apr 22 - May 1 (TRANSITION)</div>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span>🌑 New Moon (Taurus)</span>
+                        <span className="text-accent-blue">Apr 27</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>✧ Approaching Fixed Cross</span>
+                        <span>May 5</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Post-eclipse settling</span>
+                        <span>Clarity returns</span>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-accent-blue/30">
+                        <div className="flex justify-between font-bold">
+                          <span>Confluence Score</span>
+                          <span className="text-accent-blue">64% MODERATE</span>
+                        </div>
+                        <div className="text-xs text-text-muted mt-1">Action: CONFIRM trend, prepare for May 5</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Window 3: May 1-7 */}
+                  <div className="p-3 bg-accent-purple/10 border border-accent-purple/30 rounded">
+                    <div className="font-semibold text-accent-purple mb-2">Window 3: May 1-7 (FIXED CROSS)</div>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span>✧ Fixed Cross (45°)</span>
+                        <span className="text-accent-purple">May 4-5</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>15° Taurus = 45°</span>
+                        <span>Major turn</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>One of 4 strongest dates</span>
+                        <span>of the year</span>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-accent-purple/30">
+                        <div className="flex justify-between font-bold">
+                          <span>Confluence Score</span>
+                          <span className="text-accent-purple">82% CRITICAL</span>
+                        </div>
+                        <div className="text-xs text-text-muted mt-1">Action: REVERSAL watch, enter on confirm</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Strategy Flow */}
+                <div className="p-3 bg-accent-green/10 border border-accent-green/30 rounded">
+                  <div className="font-semibold text-accent-green mb-2">Trading Strategy Flow:</div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                    <div className="p-2 bg-bg-secondary rounded text-center">
+                      <div className="font-bold">Apr 8-13</div>
+                      <div>Pre-eclipse</div>
+                      <div className="text-accent-red">REDUCE SIZE</div>
+                    </div>
+                    <div className="p-2 bg-bg-secondary rounded text-center">
+                      <div className="font-bold">Apr 13-20</div>
+                      <div>Eclipse window</div>
+                      <div className="text-yellow-500">OBSERVE</div>
+                    </div>
+                    <div className="p-2 bg-bg-secondary rounded text-center">
+                      <div className="font-bold">Apr 22-27</div>
+                      <div>Post-eclipse</div>
+                      <div className="text-accent-blue">CONFIRM</div>
+                    </div>
+                    <div className="p-2 bg-bg-secondary rounded text-center">
+                      <div className="font-bold">May 1-4</div>
+                      <div>Pre-Fixed Cross</div>
+                      <div className="text-accent-purple">TIGHTEN STOPS</div>
+                    </div>
+                    <div className="p-2 bg-bg-secondary rounded text-center">
+                      <div className="font-bold">May 5-7</div>
+                      <div>Fixed Cross turn</div>
+                      <div className="text-accent-green">REVERSAL ENTRY</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Special Notes */}
+                <div className="space-y-2 mt-3">
+                  <div className="p-2 bg-yellow-500/20 rounded text-sm">
+                    <strong>🥇 Gold Note:</strong> The Apr 27 New Moon is in <strong>Taurus</strong>, which rules Gold.
+                    This is particularly significant for precious metals trading.
+                  </div>
+                  <div className="p-2 bg-accent-purple/20 rounded text-sm">
+                    <strong>✧ Fixed Cross Principle:</strong> Markets often turn <em>1-2 days BEFORE</em> the exact date.
+                    May 3-4 may see early reversal signs. <em>"The market often turns before the exact date"</em> - W.D. Gann
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
         )}
