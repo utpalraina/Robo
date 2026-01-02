@@ -1645,6 +1645,109 @@ export default function ZeroAriesPage() {
                   </div>
                 </div>
               </div>
+
+              {/* May 1-7 Detailed Analysis */}
+              <div className="p-4 bg-gradient-to-r from-accent-purple/20 to-accent-green/20 border border-accent-purple/30 rounded-lg">
+                <h4 className="font-bold text-accent-purple mb-3">✧ Deep Dive: May 1-7, 2025 (Fixed Cross Window)</h4>
+
+                {/* Day-by-Day Sun Position */}
+                <div className="mb-4">
+                  <div className="text-sm font-semibold mb-2">Sun Position Day-by-Day:</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border-color">
+                          <th className="text-left py-1 px-2">Date</th>
+                          <th className="text-left py-1 px-2">Sun°</th>
+                          <th className="text-left py-1 px-2">Position</th>
+                          <th className="text-left py-1 px-2">Significance</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-text-secondary">
+                        <tr><td className="py-1 px-2">May 1</td><td>42°</td><td>12° Taurus</td><td>3° from Fixed Cross</td></tr>
+                        <tr><td className="py-1 px-2">May 2</td><td>43°</td><td>13° Taurus</td><td>2° from Fixed Cross</td></tr>
+                        <tr><td className="py-1 px-2">May 3</td><td>44°</td><td>14° Taurus</td><td className="text-yellow-500">1° from Fixed Cross - Watch for early turn</td></tr>
+                        <tr className="bg-accent-purple/20"><td className="py-1 px-2 font-bold">May 4</td><td className="font-bold">45°</td><td className="font-bold">15° Taurus</td><td className="text-accent-purple font-bold">FIXED CROSS - MAJOR TURN DATE</td></tr>
+                        <tr><td className="py-1 px-2">May 5</td><td>46°</td><td>16° Taurus</td><td>1° past - Confirm direction</td></tr>
+                        <tr><td className="py-1 px-2">May 6</td><td>47°</td><td>17° Taurus</td><td>2° past - Enter on confirmation</td></tr>
+                        <tr><td className="py-1 px-2">May 7</td><td>48°</td><td>18° Taurus</td><td>Direction established</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* What is Fixed Cross */}
+                <div className="mb-4 p-3 bg-bg-secondary rounded">
+                  <div className="text-sm font-semibold mb-2">What is the Fixed Cross?</div>
+                  <p className="text-xs text-text-secondary mb-2">
+                    The Fixed Cross divides the zodiac into 8 equal parts (every 45°). These occur at 15° of each Fixed sign:
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div className="p-2 bg-accent-purple/10 rounded text-center">
+                      <div className="font-bold">45°</div>
+                      <div>15° Taurus</div>
+                      <div className="text-text-muted">~May 5</div>
+                    </div>
+                    <div className="p-2 bg-bg-hover rounded text-center">
+                      <div className="font-bold">135°</div>
+                      <div>15° Leo</div>
+                      <div className="text-text-muted">~Aug 7</div>
+                    </div>
+                    <div className="p-2 bg-bg-hover rounded text-center">
+                      <div className="font-bold">225°</div>
+                      <div>15° Scorpio</div>
+                      <div className="text-text-muted">~Nov 7</div>
+                    </div>
+                    <div className="p-2 bg-bg-hover rounded text-center">
+                      <div className="font-bold">315°</div>
+                      <div>15° Aquarius</div>
+                      <div className="text-text-muted">~Feb 4</div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-text-muted mt-2">
+                    These are Gann's 4 MOST POWERFUL turn dates after the Cardinal points (equinoxes/solstices).
+                  </p>
+                </div>
+
+                {/* Trading Strategy */}
+                <div className="p-3 bg-accent-green/10 border border-accent-green/30 rounded">
+                  <div className="text-sm font-semibold text-accent-green mb-2">Trading Strategy for May 1-7:</div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <div className="font-bold text-yellow-500 mb-1">May 1-4 (Approach)</div>
+                      <ul className="list-disc list-inside text-text-secondary space-y-1">
+                        <li>Watch for early reversal signs May 3-4</li>
+                        <li>If in position: tighten stops</li>
+                        <li>If flat: wait for confirmation</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-bold text-accent-purple mb-1">May 4-5 (Fixed Cross)</div>
+                      <ul className="list-disc list-inside text-text-secondary space-y-1">
+                        <li>DO NOT initiate new positions</li>
+                        <li>Mark high and low of the day</li>
+                        <li>This is OBSERVATION day</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-bold text-accent-green mb-1">May 6-7 (Confirmation)</div>
+                      <ul className="list-disc list-inside text-text-secondary space-y-1">
+                        <li>If May 5 HIGH breaks → Bullish</li>
+                        <li>If May 5 LOW breaks → Bearish</li>
+                        <li>Enter with stop at May 5 extreme</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* What to Expect */}
+                <div className="mt-3 p-2 bg-bg-secondary rounded text-xs">
+                  <strong>What to Expect from Fixed Cross Turns:</strong>
+                  <span className="text-text-secondary ml-2">
+                    Multi-week reversals (not just 1-day) • Sharp decisive moves • Start of new trend legs • Higher volume
+                  </span>
+                </div>
+              </div>
             </div>
           </Card>
         )}
