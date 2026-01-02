@@ -1484,39 +1484,72 @@ export default function ZeroAriesPage() {
                   This example shows how multiple windows connect - from chaos to settling to the next turn.
                 </p>
 
-                {/* Timeline */}
+                {/* Complete Timeline Apr-Jun with Verified Prices */}
                 <div className="mb-4 p-3 bg-bg-secondary rounded-lg overflow-x-auto">
-                  <div className="text-xs text-text-muted mb-2">APRIL 2025 TIMELINE:</div>
-                  <div className="flex items-center gap-2 text-xs min-w-max">
-                    <div className="text-center p-2 bg-yellow-500/20 rounded">
+                  <div className="text-xs text-text-muted mb-2">COMPLETE TIMELINE: April 7 - June 21, 2025 (with verified Gold prices)</div>
+                  <div className="flex items-center gap-1 text-xs min-w-max">
+                    <div className="text-center p-2 bg-accent-blue/30 rounded ring-2 ring-accent-blue">
                       <div className="font-bold">Apr 7</div>
                       <div>☿ Direct</div>
+                      <div className="text-accent-blue font-bold">$2,951</div>
+                      <div className="text-[10px] text-accent-blue">LOW</div>
                     </div>
                     <div className="text-text-muted">→</div>
                     <div className="text-center p-2 bg-accent-red/30 rounded ring-2 ring-accent-red">
                       <div className="font-bold">Apr 13</div>
                       <div>🌕 Eclipse</div>
+                      <div className="text-text-muted">$3,204</div>
                     </div>
                     <div className="text-text-muted">→</div>
-                    <div className="text-center p-2 bg-bg-hover rounded">
-                      <div className="font-bold">Apr 20</div>
+                    <div className="text-center p-2 bg-accent-red/30 rounded ring-2 ring-accent-red">
+                      <div className="font-bold">Apr 21</div>
                       <div>♉ Taurus</div>
+                      <div className="text-accent-red font-bold">$3,406</div>
+                      <div className="text-[10px] text-accent-red">HIGH</div>
                     </div>
                     <div className="text-text-muted">→</div>
                     <div className="text-center p-2 bg-accent-blue/20 rounded">
                       <div className="font-bold">Apr 27</div>
                       <div>🌑 New Moon</div>
+                      <div className="text-text-muted">$3,299</div>
                     </div>
                     <div className="text-text-muted">→</div>
                     <div className="text-center p-2 bg-accent-purple/20 rounded ring-2 ring-accent-purple">
-                      <div className="font-bold">May 4-5</div>
-                      <div>✧ Fixed Cross</div>
+                      <div className="font-bold">May 5</div>
+                      <div>✧ Fixed</div>
+                      <div className="text-text-muted">$3,381</div>
                     </div>
                     <div className="text-text-muted">→</div>
-                    <div className="text-center p-2 bg-accent-green/20 rounded">
-                      <div className="font-bold">May 6-7</div>
-                      <div>Confirm Entry</div>
+                    <div className="text-center p-2 bg-accent-blue/20 rounded">
+                      <div className="font-bold">May 16</div>
+                      <div>📉 Swing</div>
+                      <div className="text-accent-blue font-bold">$3,182</div>
+                      <div className="text-[10px] text-accent-blue">LOW</div>
                     </div>
+                    <div className="text-text-muted">→</div>
+                    <div className="text-center p-2 bg-bg-hover rounded">
+                      <div className="font-bold">May 21</div>
+                      <div>♊ Gemini</div>
+                      <div className="text-text-muted">$3,309</div>
+                    </div>
+                    <div className="text-text-muted">→</div>
+                    <div className="text-center p-2 bg-accent-green/30 rounded ring-2 ring-accent-green">
+                      <div className="font-bold">Jun 18</div>
+                      <div>☀️ Pre-Sol</div>
+                      <div className="text-accent-green font-bold">$3,389</div>
+                      <div className="text-[10px] text-accent-green">HIGH</div>
+                    </div>
+                    <div className="text-text-muted">→</div>
+                    <div className="text-center p-2 bg-yellow-500/20 rounded ring-2 ring-yellow-500">
+                      <div className="font-bold">Jun 21</div>
+                      <div>☀️ Solstice</div>
+                      <div className="text-text-muted">90°</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-[10px] text-text-muted">
+                    <span className="text-accent-blue">● LOW</span> = Verified bottoms |
+                    <span className="text-accent-red ml-2">● HIGH</span> = Verified tops |
+                    <span className="ml-2">Prices from actual Gold trades</span>
                   </div>
                 </div>
 
