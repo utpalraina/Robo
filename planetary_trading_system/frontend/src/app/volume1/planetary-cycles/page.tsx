@@ -953,31 +953,114 @@ export default function PlanetaryCyclesPage() {
                     </div>
                   </div>
 
-                  {/* 2026-2027 Specific Months */}
+                  {/* August Peak → October Crash Pattern */}
+                  <div className="mt-4 p-3 bg-accent-purple/10 border border-accent-purple rounded-lg">
+                    <div className="font-bold text-accent-purple mb-3">📈 The August Peak → October Crash Pattern</div>
+                    <p className="text-sm text-text-secondary mb-3">
+                      Markets often peak in <strong className="text-yellow-500">August</strong>, then crash in <strong className="text-accent-red">October</strong> (~2 month lag):
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border-color">
+                            <th className="text-left py-2 px-2 text-text-muted">Cycle</th>
+                            <th className="text-left py-2 px-2 text-text-muted">Peak</th>
+                            <th className="text-left py-2 px-2 text-text-muted">Level</th>
+                            <th className="text-left py-2 px-2 text-text-muted">Crash</th>
+                            <th className="text-left py-2 px-2 text-text-muted">Decline</th>
+                            <th className="text-center py-2 px-2 text-text-muted">Lag</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b border-border-color/50 bg-accent-purple/5">
+                            <td className="py-2 px-2 font-mono">1987</td>
+                            <td className="py-2 px-2 font-bold text-yellow-500">Aug 25, 1987</td>
+                            <td className="py-2 px-2 font-mono text-xs">Dow 2,722</td>
+                            <td className="py-2 px-2 font-bold text-accent-red">Oct 19, 1987</td>
+                            <td className="py-2 px-2 font-mono text-accent-red">-22%</td>
+                            <td className="py-2 px-2 text-center font-mono">~2 mo</td>
+                          </tr>
+                          <tr className="border-b border-border-color/50 bg-accent-purple/5">
+                            <td className="py-2 px-2 font-mono">2007</td>
+                            <td className="py-2 px-2 font-bold text-yellow-500">Oct 9, 2007</td>
+                            <td className="py-2 px-2 font-mono text-xs">Dow 14,164</td>
+                            <td className="py-2 px-2 font-bold text-accent-red">Sep-Oct 2008</td>
+                            <td className="py-2 px-2 font-mono text-accent-red">-54%</td>
+                            <td className="py-2 px-2 text-center font-mono">~12 mo</td>
+                          </tr>
+                          <tr className="border-b border-border-color/50 bg-yellow-500/10">
+                            <td className="py-2 px-2 font-mono font-bold">2027?</td>
+                            <td className="py-2 px-2 font-bold text-yellow-500">Aug 2027?</td>
+                            <td className="py-2 px-2 font-mono text-xs text-text-muted">???</td>
+                            <td className="py-2 px-2 font-bold text-accent-red">Oct 2027?</td>
+                            <td className="py-2 px-2 font-mono text-accent-red">???</td>
+                            <td className="py-2 px-2 text-center font-mono">~2 mo</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="mt-3 p-2 bg-bg-secondary rounded text-sm">
+                      <strong className="text-accent-purple">1987 Timeline:</strong>
+                      <span className="text-text-secondary"> 1985 Square → Aug 25, 1987 Peak (2yr) → Oct 19, 1987 Crash (55 days later)</span>
+                    </div>
+                  </div>
+
+                  {/* 2026-2027 Projected Timeline */}
                   <div className="mt-4 p-3 bg-accent-red/10 border border-accent-red rounded-lg">
-                    <div className="font-bold text-accent-red mb-2">🎯 Highest Risk Months for 2026-2027:</div>
+                    <div className="font-bold text-accent-red mb-2">🎯 Projected Timeline for 2025-2027:</div>
+
+                    {/* Visual Timeline */}
+                    <div className="flex flex-wrap items-center justify-center gap-2 mb-4 text-xs font-mono">
+                      <div className="px-3 py-2 bg-accent-green text-white rounded">
+                        <div className="font-bold">Aug 2025</div>
+                        <div>Square ✓</div>
+                      </div>
+                      <span className="text-text-muted">→</span>
+                      <div className="px-3 py-2 bg-accent-green text-white rounded">
+                        <div className="font-bold">Late 2025</div>
+                        <div>ATH ✓</div>
+                      </div>
+                      <span className="text-text-muted">→</span>
+                      <div className="px-3 py-2 bg-yellow-500/20 text-yellow-500 rounded border border-yellow-500">
+                        <div className="font-bold">2026</div>
+                        <div>Volatility</div>
+                      </div>
+                      <span className="text-text-muted">→</span>
+                      <div className="px-3 py-2 bg-yellow-500 text-white rounded">
+                        <div className="font-bold">Aug 2027</div>
+                        <div>PEAK?</div>
+                      </div>
+                      <span className="text-text-muted">→</span>
+                      <div className="px-3 py-2 bg-accent-red text-white rounded font-bold">
+                        <div className="font-bold">Oct 2027</div>
+                        <div>CRASH?</div>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="p-3 bg-bg-secondary rounded-lg">
-                        <div className="font-bold text-orange-500">Sep-Oct 2026</div>
+                        <div className="font-bold text-orange-500">Scenario A: Fast (1965→1966)</div>
                         <div className="text-sm text-text-secondary">
-                          • October Effect + 60-year cycle (1966+60)
-                          <br />• Matches 1965→1966 faster pattern
-                          <br />• 1966 top was Feb, but Oct always volatile
+                          • Peak: Early-Mid 2026
+                          <br />• Crash: Sep-Oct 2026
+                          <br />• 60-year cycle alignment (1966+60)
                         </div>
                       </div>
-                      <div className="p-3 bg-bg-secondary rounded-lg">
-                        <div className="font-bold text-accent-red">Sep-Oct 2027</div>
+                      <div className="p-3 bg-bg-secondary rounded-lg border-2 border-accent-red">
+                        <div className="font-bold text-accent-red">Scenario B: Slow (1985→1987) ⭐</div>
                         <div className="text-sm text-text-secondary">
-                          • October Effect + 2yr post-square pattern
-                          <br />• Matches Oct 1987, Oct 2007 exactly
-                          <br />• <strong className="text-accent-red">HIGHEST probability month</strong>
+                          • Peak: <strong className="text-yellow-500">August 2027</strong>
+                          <br />• Crash: <strong className="text-accent-red">October 2027</strong>
+                          <br />• Exact 1987 pattern repeat
                         </div>
                       </div>
                     </div>
-                    <div className="mt-3 text-center text-sm">
-                      <span className="text-text-muted">If pattern follows 1985→1987: </span>
-                      <span className="font-bold text-accent-red">October 2027</span>
-                      <span className="text-text-muted"> is the most likely crash month</span>
+                    <div className="mt-3 text-center text-sm p-2 bg-gray-900 rounded">
+                      <span className="text-text-muted">Most likely: </span>
+                      <span className="font-bold text-yellow-500">Aug 2027 Peak</span>
+                      <span className="text-text-muted"> → </span>
+                      <span className="font-bold text-accent-red">Oct 2027 Crash</span>
+                      <span className="text-text-muted"> (55-day lag like 1987)</span>
                     </div>
                   </div>
                 </div>
