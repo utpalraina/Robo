@@ -1340,6 +1340,273 @@ export default function ZeroAriesPage() {
                 </div>
               </div>
 
+              {/* 2026 KEY DATES TO WATCH */}
+              <div className="p-4 bg-gradient-to-r from-accent-blue/20 to-purple-500/20 border border-accent-blue/30 rounded-lg">
+                <h4 className="font-bold text-accent-blue text-lg mb-3">📅 2026 KEY DATES TO WATCH</h4>
+                <p className="text-sm text-text-secondary mb-4">
+                  Based on the Zero Aries methodology, here are the <strong>most important Gann dates for 2026</strong>.
+                  Cardinal and Fixed Cross dates had 100% accuracy in 2025.
+                </p>
+
+                {/* 2026 Calendar Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* Cardinal Points 2026 */}
+                  <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-lg">🔴</span>
+                      <span className="font-bold text-red-400">CARDINAL POINTS 2026</span>
+                      <span className="text-xs bg-red-500/30 px-2 py-0.5 rounded">⭐⭐⭐⭐ Highest</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center p-2 bg-bg-primary rounded">
+                        <div>
+                          <span className="font-bold text-red-400">Mar 20</span>
+                          <span className="text-text-muted ml-2">0° Vernal Equinox</span>
+                        </div>
+                        <span className="text-xs text-text-muted">Fri</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-bg-primary rounded">
+                        <div>
+                          <span className="font-bold text-red-400">Jun 21</span>
+                          <span className="text-text-muted ml-2">90° Summer Solstice</span>
+                        </div>
+                        <span className="text-xs text-text-muted">Sun</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-bg-primary rounded">
+                        <div>
+                          <span className="font-bold text-red-400">Sep 22</span>
+                          <span className="text-text-muted ml-2">180° Autumnal Equinox</span>
+                        </div>
+                        <span className="text-xs text-text-muted">Tue</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-bg-primary rounded">
+                        <div>
+                          <span className="font-bold text-red-400">Dec 21</span>
+                          <span className="text-text-muted ml-2">270° Winter Solstice</span>
+                        </div>
+                        <span className="text-xs text-text-muted">Mon</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fixed Cross 2026 */}
+                  <div className="p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-lg">🟡</span>
+                      <span className="font-bold text-yellow-500">FIXED CROSS 2026</span>
+                      <span className="text-xs bg-yellow-500/30 px-2 py-0.5 rounded">⭐⭐⭐ High</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center p-2 bg-bg-primary rounded">
+                        <div>
+                          <span className="font-bold text-yellow-500">Jan 29</span>
+                          <span className="text-text-muted ml-2">315° (15° Aquarius)</span>
+                        </div>
+                        <span className="text-xs text-text-muted">Thu</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-bg-primary rounded">
+                        <div>
+                          <span className="font-bold text-yellow-500">May 4</span>
+                          <span className="text-text-muted ml-2">45° (15° Taurus)</span>
+                        </div>
+                        <span className="text-xs text-text-muted">Mon</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-bg-primary rounded">
+                        <div>
+                          <span className="font-bold text-yellow-500">Aug 6</span>
+                          <span className="text-text-muted ml-2">135° (15° Leo)</span>
+                        </div>
+                        <span className="text-xs text-text-muted">Thu</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-bg-primary rounded">
+                        <div>
+                          <span className="font-bold text-yellow-500">Nov 5</span>
+                          <span className="text-text-muted ml-2">225° (15° Scorpio)</span>
+                        </div>
+                        <span className="text-xs text-text-muted">Thu</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Eclipses 2026 */}
+                <div className="p-3 bg-purple-500/20 border border-purple-500/30 rounded-lg mb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">🌑</span>
+                    <span className="font-bold text-purple-400">ECLIPSES 2026</span>
+                    <span className="text-xs bg-purple-500/30 px-2 py-0.5 rounded">⭐⭐⭐ Watch Windows</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    <div className="p-2 bg-bg-primary rounded text-center">
+                      <div className="font-bold text-purple-400">Feb 17</div>
+                      <div className="text-xs text-text-muted">Annular Solar</div>
+                      <div className="text-xs text-text-muted">Window: Feb 10-24</div>
+                    </div>
+                    <div className="p-2 bg-bg-primary rounded text-center">
+                      <div className="font-bold text-purple-400">Mar 3</div>
+                      <div className="text-xs text-text-muted">Total Lunar</div>
+                      <div className="text-xs text-text-muted">Window: Feb 24-Mar 10</div>
+                    </div>
+                    <div className="p-2 bg-bg-primary rounded text-center">
+                      <div className="font-bold text-purple-400">Aug 12</div>
+                      <div className="text-xs text-text-muted">Partial Lunar</div>
+                      <div className="text-xs text-text-muted">Window: Aug 5-19</div>
+                    </div>
+                    <div className="p-2 bg-bg-primary rounded text-center">
+                      <div className="font-bold text-purple-400">Aug 28</div>
+                      <div className="text-xs text-text-muted">Annular Solar</div>
+                      <div className="text-xs text-text-muted">Window: Aug 21-Sep 4</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2026 Timeline Visual */}
+                <div className="mb-4 p-3 bg-bg-primary rounded-lg overflow-x-auto">
+                  <div className="text-xs text-text-muted mb-2">2026 KEY DATES TIMELINE</div>
+                  <pre className="text-[10px] font-mono text-text-secondary whitespace-pre leading-tight">
+{`    JAN       FEB       MAR       APR       MAY       JUN       JUL       AUG       SEP       OCT       NOV       DEC
+     │         │         │         │         │         │         │         │         │         │         │         │
+     ▼         ▼         ▼         ▼         ▼         ▼         ▼         ▼         ▼         ▼         ▼         ▼
+    29        17  3     20                  4        21                 6  12 28    22                  5        21
+    ║         ║  ║      ║                   ║         ║                  ║  ║  ║     ║                   ║         ║
+    ║         ║  ║      ║                   ║         ║                  ║  ║  ║     ║                   ║         ║
+   315°      🌑 🌕     0°                  45°       90°               135° 🌕 🌑   180°               225°      270°
+  FIXED    ECLIPSES  CARDINAL            FIXED    CARDINAL            FIXED ECLIPSES CARDINAL          FIXED   CARDINAL
+   ⭐⭐⭐      ⭐⭐⭐     ⭐⭐⭐⭐              ⭐⭐⭐      ⭐⭐⭐⭐              ⭐⭐⭐   ⭐⭐⭐    ⭐⭐⭐⭐            ⭐⭐⭐     ⭐⭐⭐⭐
+
+HIGHEST CONFLUENCE WINDOWS:
+├─ Feb 17-Mar 3: Eclipse Season (2 eclipses in 2 weeks!) + Near Equinox
+├─ Aug 6-28: Fixed Cross + Double Eclipse (3 events!)
+└─ Nov 5: Fixed Cross (standalone)`}
+                  </pre>
+                </div>
+
+                {/* High Confluence Alerts */}
+                <div className="p-3 bg-accent-red/20 border border-accent-red/30 rounded">
+                  <div className="font-semibold text-accent-red mb-2">⚠️ HIGHEST CONFLUENCE WINDOWS 2026</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="p-2 bg-bg-primary rounded">
+                      <div className="font-bold text-accent-red">Feb 17 - Mar 20</div>
+                      <div className="text-xs text-text-secondary">
+                        Double Eclipse (Feb 17 + Mar 3) leading into Vernal Equinox (Mar 20).
+                        <strong className="text-accent-red"> Expect major volatility!</strong>
+                      </div>
+                    </div>
+                    <div className="p-2 bg-bg-primary rounded">
+                      <div className="font-bold text-accent-red">Aug 6 - Aug 28</div>
+                      <div className="text-xs text-text-secondary">
+                        Fixed Cross (Aug 6) + Lunar Eclipse (Aug 12) + Solar Eclipse (Aug 28).
+                        <strong className="text-accent-red"> Triple confluence!</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary Table */}
+                <div className="mt-4">
+                  <div className="text-sm font-semibold mb-2">📋 Complete 2026 Calendar:</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border-color">
+                          <th className="text-left py-1 px-2">Date</th>
+                          <th className="text-left py-1 px-2">Event</th>
+                          <th className="text-center py-1 px-2">Type</th>
+                          <th className="text-center py-1 px-2">Importance</th>
+                          <th className="text-left py-1 px-2">Watch Window</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-text-secondary">
+                        <tr className="bg-yellow-500/10">
+                          <td className="py-1 px-2 font-semibold">Jan 29</td>
+                          <td>315° (15° Aquarius)</td>
+                          <td className="text-center">Fixed</td>
+                          <td className="text-center">⭐⭐⭐</td>
+                          <td>Jan 26-Feb 1</td>
+                        </tr>
+                        <tr className="bg-purple-500/10">
+                          <td className="py-1 px-2 font-semibold">Feb 17</td>
+                          <td>Annular Solar Eclipse</td>
+                          <td className="text-center">Eclipse</td>
+                          <td className="text-center">⭐⭐⭐</td>
+                          <td>Feb 10-24</td>
+                        </tr>
+                        <tr className="bg-purple-500/10">
+                          <td className="py-1 px-2 font-semibold">Mar 3</td>
+                          <td>Total Lunar Eclipse</td>
+                          <td className="text-center">Eclipse</td>
+                          <td className="text-center">⭐⭐⭐</td>
+                          <td>Feb 24-Mar 10</td>
+                        </tr>
+                        <tr className="bg-red-500/20">
+                          <td className="py-1 px-2 font-bold text-red-400">Mar 20</td>
+                          <td className="font-bold">0° Vernal Equinox</td>
+                          <td className="text-center font-bold">Cardinal</td>
+                          <td className="text-center">⭐⭐⭐⭐</td>
+                          <td className="font-bold">Mar 17-23</td>
+                        </tr>
+                        <tr className="bg-yellow-500/10">
+                          <td className="py-1 px-2 font-semibold">May 4</td>
+                          <td>45° (15° Taurus)</td>
+                          <td className="text-center">Fixed</td>
+                          <td className="text-center">⭐⭐⭐</td>
+                          <td>May 1-7</td>
+                        </tr>
+                        <tr className="bg-red-500/20">
+                          <td className="py-1 px-2 font-bold text-red-400">Jun 21</td>
+                          <td className="font-bold">90° Summer Solstice</td>
+                          <td className="text-center font-bold">Cardinal</td>
+                          <td className="text-center">⭐⭐⭐⭐</td>
+                          <td className="font-bold">Jun 18-24</td>
+                        </tr>
+                        <tr className="bg-yellow-500/10">
+                          <td className="py-1 px-2 font-semibold">Aug 6</td>
+                          <td>135° (15° Leo)</td>
+                          <td className="text-center">Fixed</td>
+                          <td className="text-center">⭐⭐⭐</td>
+                          <td>Aug 3-9</td>
+                        </tr>
+                        <tr className="bg-purple-500/10">
+                          <td className="py-1 px-2 font-semibold">Aug 12</td>
+                          <td>Partial Lunar Eclipse</td>
+                          <td className="text-center">Eclipse</td>
+                          <td className="text-center">⭐⭐</td>
+                          <td>Aug 5-19</td>
+                        </tr>
+                        <tr className="bg-purple-500/10">
+                          <td className="py-1 px-2 font-semibold">Aug 28</td>
+                          <td>Annular Solar Eclipse</td>
+                          <td className="text-center">Eclipse</td>
+                          <td className="text-center">⭐⭐⭐</td>
+                          <td>Aug 21-Sep 4</td>
+                        </tr>
+                        <tr className="bg-red-500/20">
+                          <td className="py-1 px-2 font-bold text-red-400">Sep 22</td>
+                          <td className="font-bold">180° Autumnal Equinox</td>
+                          <td className="text-center font-bold">Cardinal</td>
+                          <td className="text-center">⭐⭐⭐⭐</td>
+                          <td className="font-bold">Sep 19-25</td>
+                        </tr>
+                        <tr className="bg-yellow-500/10">
+                          <td className="py-1 px-2 font-semibold">Nov 5</td>
+                          <td>225° (15° Scorpio)</td>
+                          <td className="text-center">Fixed</td>
+                          <td className="text-center">⭐⭐⭐</td>
+                          <td>Nov 2-8</td>
+                        </tr>
+                        <tr className="bg-red-500/20">
+                          <td className="py-1 px-2 font-bold text-red-400">Dec 21</td>
+                          <td className="font-bold">270° Winter Solstice</td>
+                          <td className="text-center font-bold">Cardinal</td>
+                          <td className="text-center">⭐⭐⭐⭐</td>
+                          <td className="font-bold">Dec 18-24</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
               {/* Real Example: Gold $4,341 */}
               <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                 <h4 className="font-bold text-yellow-500 mb-4">Real Example: Gold at $4,341</h4>
