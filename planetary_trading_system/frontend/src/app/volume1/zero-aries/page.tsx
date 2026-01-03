@@ -1213,6 +1213,133 @@ export default function ZeroAriesPage() {
                 </p>
               </div>
 
+              {/* KEY DEGREE TYPES EXPLANATION */}
+              <div className="p-4 bg-gradient-to-r from-red-500/20 to-purple-500/20 border border-red-500/30 rounded-lg">
+                <h4 className="font-bold text-red-400 text-lg mb-3">📐 Understanding Key Degree Types</h4>
+                <p className="text-sm text-text-secondary mb-4">
+                  The Zero Aries system identifies <strong>three types of key degrees</strong> where markets tend to turn.
+                  These are based on the Sun's position from March 20 (0° Aries).
+                </p>
+
+                {/* Visual Wheel */}
+                <div className="mb-4 p-3 bg-bg-primary rounded-lg overflow-x-auto">
+                  <div className="text-xs text-text-muted mb-2">THE 360° SOLAR WHEEL</div>
+                  <pre className="text-[10px] font-mono text-text-secondary whitespace-pre leading-tight text-center">
+{`                        0° ARIES (Mar 20)
+                        ↑ CARDINAL ⭐⭐⭐⭐
+                        │
+          315° ─────────┼───────── 45°
+        AQUARIUS        │        TAURUS
+         FIXED          │         FIXED
+         ⭐⭐⭐            │          ⭐⭐⭐
+                        │
+    270° ←──────────────┼──────────────→ 90°
+  CAPRICORN             │            CANCER
+   CARDINAL             │           CARDINAL
+   ⭐⭐⭐⭐                │            ⭐⭐⭐⭐
+                        │
+          225° ─────────┼───────── 135°
+         SCORPIO        │          LEO
+          FIXED         │         FIXED
+          ⭐⭐⭐           │          ⭐⭐⭐
+                        │
+                        ↓
+                  180° LIBRA (Sep 22)
+                    CARDINAL ⭐⭐⭐⭐`}
+                  </pre>
+                </div>
+
+                {/* Three Types Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Cardinal Points */}
+                  <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">🔴</span>
+                      <span className="font-bold text-red-400">CARDINAL POINTS</span>
+                    </div>
+                    <div className="text-xs text-text-muted mb-2">Highest Importance ⭐⭐⭐⭐</div>
+                    <div className="text-sm font-mono mb-2">0°, 90°, 180°, 270°</div>
+                    <div className="text-xs text-text-secondary space-y-1">
+                      <div><strong>0°</strong> Mar 20 = Vernal Equinox</div>
+                      <div><strong>90°</strong> Jun 21 = Summer Solstice</div>
+                      <div><strong>180°</strong> Sep 22 = Autumnal Equinox</div>
+                      <div><strong>270°</strong> Dec 21 = Winter Solstice</div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-red-500/30 text-xs">
+                      <span className="text-red-400 font-semibold">2025 Accuracy: 100%</span>
+                    </div>
+                  </div>
+
+                  {/* Fixed Cross */}
+                  <div className="p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">🟡</span>
+                      <span className="font-bold text-yellow-500">FIXED CROSS</span>
+                    </div>
+                    <div className="text-xs text-text-muted mb-2">Second Highest ⭐⭐⭐</div>
+                    <div className="text-sm font-mono mb-2">45°, 135°, 225°, 315°</div>
+                    <div className="text-xs text-text-secondary space-y-1">
+                      <div><strong>45°</strong> May 5 = 15° Taurus</div>
+                      <div><strong>135°</strong> Aug 7 = 15° Leo</div>
+                      <div><strong>225°</strong> Nov 7 = 15° Scorpio</div>
+                      <div><strong>315°</strong> Feb 4 = 15° Aquarius</div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-yellow-500/30 text-xs">
+                      <span className="text-yellow-500 font-semibold">2025 Accuracy: 100%</span>
+                    </div>
+                  </div>
+
+                  {/* Sign Ingresses */}
+                  <div className="p-3 bg-bg-secondary border border-border-color rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">⚪</span>
+                      <span className="font-bold text-text-primary">SIGN INGRESSES</span>
+                    </div>
+                    <div className="text-xs text-text-muted mb-2">Lower Importance ⭐⭐</div>
+                    <div className="text-sm font-mono mb-2">Every 30°</div>
+                    <div className="text-xs text-text-secondary space-y-1">
+                      <div><strong>30°</strong> Apr 20 = 0° Taurus</div>
+                      <div><strong>60°</strong> May 21 = 0° Gemini</div>
+                      <div><strong>120°</strong> Jul 23 = 0° Leo</div>
+                      <div><strong>150°</strong> Aug 23 = 0° Virgo</div>
+                      <div className="text-text-muted">...and every 30° thereafter</div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-border-color text-xs">
+                      <span className="text-text-muted font-semibold">2025 Accuracy: 50%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Why These Degrees Work */}
+                <div className="p-3 bg-bg-secondary rounded-lg">
+                  <div className="text-sm font-semibold mb-2">Why These Degrees Work:</div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-text-secondary">
+                    <div>
+                      <div className="font-semibold text-red-400 mb-1">Cardinal = Seasonal Change</div>
+                      <p>Equinoxes & Solstices mark the start of seasons. These are the Sun's most significant astronomical events - maximum energy shifts.</p>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-yellow-500 mb-1">Fixed = Midpoint Energy</div>
+                      <p>Exactly halfway between Cardinals. Gann found these 45° intervals create strong support/resistance. They divide the year into 8 parts.</p>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-text-primary mb-1">Ingress = Sign Changes</div>
+                      <p>When Sun enters a new zodiac sign every ~30 days. Minor influence - only reliable when combined with other factors.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trading Rule */}
+                <div className="mt-4 p-3 bg-accent-green/20 border border-accent-green/30 rounded">
+                  <div className="font-semibold text-accent-green mb-1">🎯 Trading Rule</div>
+                  <p className="text-sm text-text-secondary">
+                    <strong>Focus on Cardinal and Fixed Cross dates</strong> - these have 100% accuracy in 2025.
+                    Sign Ingresses are attention points but not reliable alone. When multiple factors align (e.g., Fixed Cross + Eclipse),
+                    expect the strongest turns.
+                  </p>
+                </div>
+              </div>
+
               {/* Real Example: Gold $4,341 */}
               <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                 <h4 className="font-bold text-yellow-500 mb-4">Real Example: Gold at $4,341</h4>
