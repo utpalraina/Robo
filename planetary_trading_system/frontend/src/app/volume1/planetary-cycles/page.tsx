@@ -717,16 +717,22 @@ export default function PlanetaryCyclesPage() {
                           <td className="py-2 px-2">COVID Crash/Recovery</td>
                           <td className="py-2 px-2 text-center"><span className="px-2 py-0.5 bg-accent-green text-white rounded text-xs">✓ DONE</span></td>
                         </tr>
-                        <tr className="border-b border-border-color/50 bg-yellow-500/10">
+                        <tr className="border-b border-border-color/50 bg-accent-green/10">
                           <td className="py-2 px-2 font-mono font-bold">Aug 2025</td>
                           <td className="py-2 px-2"><span className="px-2 py-0.5 bg-yellow-500 text-white rounded text-xs font-bold">90° SQUARE</span></td>
-                          <td className="py-2 px-2 font-bold text-yellow-500">CRISIS POINT</td>
+                          <td className="py-2 px-2 font-bold text-yellow-500">TRIGGER (clock starts)</td>
+                          <td className="py-2 px-2 text-center"><span className="px-2 py-0.5 bg-accent-green text-white rounded text-xs font-bold">✓ DONE</span></td>
+                        </tr>
+                        <tr className="border-b border-border-color/50 bg-accent-green/10">
+                          <td className="py-2 px-2 font-mono font-bold">Late 2025</td>
+                          <td className="py-2 px-2"><span className="px-2 py-0.5 bg-accent-green/20 text-accent-green rounded text-xs">Post-Square Rally</span></td>
+                          <td className="py-2 px-2 font-bold text-accent-green">ATH - Blow-off Top</td>
                           <td className="py-2 px-2 text-center"><span className="px-2 py-0.5 bg-yellow-500 text-white rounded text-xs font-bold">NOW!</span></td>
                         </tr>
                         <tr className="border-b border-border-color/50 bg-accent-red/10">
-                          <td className="py-2 px-2 font-mono font-bold">2026</td>
-                          <td className="py-2 px-2"><span className="px-2 py-0.5 bg-accent-red/20 text-accent-red rounded text-xs">Post-Square</span></td>
-                          <td className="py-2 px-2 font-bold text-accent-red">FALLOUT ZONE</td>
+                          <td className="py-2 px-2 font-mono font-bold">2026-2027</td>
+                          <td className="py-2 px-2"><span className="px-2 py-0.5 bg-accent-red text-white rounded text-xs font-bold">CRASH WINDOW</span></td>
+                          <td className="py-2 px-2 font-bold text-accent-red">1-2yr after square</td>
                           <td className="py-2 px-2 text-center"><span className="px-2 py-0.5 bg-accent-red text-white rounded text-xs font-bold">HIGH RISK</span></td>
                         </tr>
                         <tr className="border-b border-border-color/50">
@@ -752,17 +758,80 @@ export default function PlanetaryCyclesPage() {
                   </div>
                 </div>
 
+                {/* CRITICAL PATTERN: Square → ATH → Crash */}
+                <div className="p-4 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg">
+                  <div className="font-bold text-yellow-500 text-lg mb-3">📊 CRITICAL PATTERN: Square Marks TOP, Not Immediate Crash</div>
+                  <p className="text-sm text-text-secondary mb-4">
+                    Historical pattern shows the Jupiter/Saturn square doesn't cause an immediate crash.
+                    Instead, markets typically <strong className="text-accent-green">rally to ATH after the square</strong>,
+                    then the crash comes <strong className="text-accent-red">1-2 years later</strong>.
+                  </p>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border-color">
+                          <th className="text-left py-2 px-2 text-text-muted">Square Date</th>
+                          <th className="text-left py-2 px-2 text-text-muted">Post-Square Action</th>
+                          <th className="text-left py-2 px-2 text-text-muted">Actual Crash</th>
+                          <th className="text-center py-2 px-2 text-text-muted">Delay</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-border-color/50">
+                          <td className="py-2 px-2 font-mono">1965</td>
+                          <td className="py-2 px-2 text-accent-green">Rallied into 1966</td>
+                          <td className="py-2 px-2 font-bold text-accent-red">Feb 1966 Secular TOP</td>
+                          <td className="py-2 px-2 text-center font-mono">~6-12 mo</td>
+                        </tr>
+                        <tr className="border-b border-border-color/50">
+                          <td className="py-2 px-2 font-mono">1985</td>
+                          <td className="py-2 px-2 text-accent-green">Rallied to ATH in 1986-87</td>
+                          <td className="py-2 px-2 font-bold text-accent-red">Oct 1987 Black Monday</td>
+                          <td className="py-2 px-2 text-center font-mono">~2 years</td>
+                        </tr>
+                        <tr className="border-b border-border-color/50">
+                          <td className="py-2 px-2 font-mono">2005</td>
+                          <td className="py-2 px-2 text-accent-green">Rallied to ATH in 2006-07</td>
+                          <td className="py-2 px-2 font-bold text-accent-red">Oct 2007 TOP → 2008 GFC</td>
+                          <td className="py-2 px-2 text-center font-mono">~2 years</td>
+                        </tr>
+                        <tr className="border-b border-border-color/50 bg-yellow-500/10">
+                          <td className="py-2 px-2 font-mono font-bold">Aug 2025</td>
+                          <td className="py-2 px-2 text-accent-green font-bold">Late 2025 ATH ✓</td>
+                          <td className="py-2 px-2 font-bold text-accent-red">2026-2027 ???</td>
+                          <td className="py-2 px-2 text-center font-mono font-bold">1-2 years</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-bg-secondary rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <span className="text-yellow-500 text-lg">💡</span>
+                      <div className="text-sm">
+                        <strong className="text-yellow-500">Current Status (Late 2025):</strong>{' '}
+                        <span className="text-text-secondary">
+                          Markets at ATH after Aug 2025 square - this <strong className="text-accent-green">CONFIRMS</strong> the pattern!
+                          The square marks when the "clock starts ticking" not when the crash happens.
+                          Watch for <strong className="text-accent-red">2026-2027</strong> for the actual correction/crash.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 2025-2026 CONFLUENCE WARNING */}
                 <div className="p-4 bg-accent-red/20 border-2 border-accent-red rounded-lg">
-                  <div className="font-bold text-accent-red text-lg mb-3">⚠️ 2025-2026: DOUBLE CYCLE CONFLUENCE</div>
+                  <div className="font-bold text-accent-red text-lg mb-3">⚠️ 2026-2027: PROJECTED CRASH WINDOW</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-3 bg-bg-secondary rounded-lg">
-                      <div className="font-bold text-yellow-500 mb-2">Jupiter/Saturn Square (Aug 2025)</div>
+                      <div className="font-bold text-yellow-500 mb-2">Jupiter/Saturn Post-Square Pattern</div>
                       <div className="text-sm text-text-secondary space-y-1">
-                        <div>• 92% accuracy for crashes/corrections</div>
-                        <div>• 1965 Square → 1966 Secular Top</div>
-                        <div>• 1985 Square → 1987 Black Monday</div>
-                        <div>• 2005 Square → 2007 GFC preceded</div>
+                        <div>• Aug 2025: Square (90°) - TRIGGER ✓</div>
+                        <div>• Late 2025: Rally to ATH - YOU ARE HERE ✓</div>
+                        <div className="text-accent-red font-bold">• 2026-2027: Crash window (1-2yr delay)</div>
+                        <div>• Pattern matches 1985→1987, 2005→2007</div>
                       </div>
                     </div>
                     <div className="p-3 bg-bg-secondary rounded-lg">
@@ -776,17 +845,18 @@ export default function PlanetaryCyclesPage() {
                     </div>
                   </div>
                   <div className="mt-4 p-3 bg-bg-primary rounded-lg text-center">
-                    <div className="text-sm text-text-muted mb-1">Combined Risk Level</div>
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="w-4 h-4 bg-accent-red rounded"></div>
-                      <div className="w-4 h-4 bg-accent-red rounded"></div>
-                      <div className="w-4 h-4 bg-accent-red rounded"></div>
-                      <div className="w-4 h-4 bg-accent-red rounded"></div>
-                      <div className="w-4 h-4 bg-accent-red rounded"></div>
-                      <span className="ml-2 font-bold text-accent-red">EXTREME</span>
+                    <div className="text-sm text-text-muted mb-1">Crash Probability Timeline</div>
+                    <div className="flex items-center justify-center gap-2 text-xs font-mono">
+                      <div className="px-2 py-1 bg-accent-green/20 text-accent-green rounded">Late 2025: LOW</div>
+                      <span className="text-text-muted">→</span>
+                      <div className="px-2 py-1 bg-yellow-500/20 text-yellow-500 rounded">Early 2026: MED</div>
+                      <span className="text-text-muted">→</span>
+                      <div className="px-2 py-1 bg-accent-red/20 text-accent-red rounded font-bold">Mid-Late 2026: HIGH</div>
+                      <span className="text-text-muted">→</span>
+                      <div className="px-2 py-1 bg-accent-red text-white rounded font-bold">2027: EXTREME</div>
                     </div>
                     <div className="text-xs text-text-muted mt-2">
-                      Both the 20-year and 60-year cycles converge on 2025-2026 as a major turning point
+                      Both the 20-year and 60-year cycles converge on 2026-2027 as the actual crash window
                     </div>
                   </div>
                 </div>
