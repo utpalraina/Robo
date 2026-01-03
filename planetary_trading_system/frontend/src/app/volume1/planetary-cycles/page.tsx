@@ -860,6 +860,127 @@ export default function PlanetaryCyclesPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* OCTOBER EFFECT - Monthly Crash Analysis */}
+                <div className="p-4 bg-orange-500/20 border-2 border-orange-500 rounded-lg">
+                  <div className="font-bold text-orange-500 text-lg mb-3">🎃 The "October Effect": Which Month Has Most Crashes?</div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="p-3 bg-accent-red/20 border border-accent-red rounded-lg text-center">
+                      <div className="text-3xl font-bold text-accent-red">October</div>
+                      <div className="text-sm font-medium text-text-secondary">#1 Crash Month</div>
+                      <div className="text-xs text-text-muted mt-1">5 major crashes</div>
+                    </div>
+                    <div className="p-3 bg-orange-500/20 border border-orange-500 rounded-lg text-center">
+                      <div className="text-3xl font-bold text-orange-500">September</div>
+                      <div className="text-sm font-medium text-text-secondary">#2 Crash Month</div>
+                      <div className="text-xs text-text-muted mt-1">Worst avg returns</div>
+                    </div>
+                    <div className="p-3 bg-yellow-500/20 border border-yellow-500 rounded-lg text-center">
+                      <div className="text-3xl font-bold text-yellow-500">August</div>
+                      <div className="text-sm font-medium text-text-secondary">#3 Crash Month</div>
+                      <div className="text-xs text-text-muted mt-1">Summer selloffs</div>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border-color">
+                          <th className="text-left py-2 px-2 text-text-muted">Month</th>
+                          <th className="text-left py-2 px-2 text-text-muted">Major Crashes</th>
+                          <th className="text-left py-2 px-2 text-text-muted">Events</th>
+                          <th className="text-center py-2 px-2 text-text-muted">Risk</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-border-color/50 bg-accent-red/10">
+                          <td className="py-2 px-2 font-bold text-accent-red">October</td>
+                          <td className="py-2 px-2 font-mono">1929, 1987, 1989, 1997, 2008</td>
+                          <td className="py-2 px-2 text-xs">Black Thursday, Black Monday, Mini-crashes</td>
+                          <td className="py-2 px-2 text-center"><span className="px-2 py-0.5 bg-accent-red text-white rounded text-xs font-bold">EXTREME</span></td>
+                        </tr>
+                        <tr className="border-b border-border-color/50 bg-orange-500/10">
+                          <td className="py-2 px-2 font-bold text-orange-500">September</td>
+                          <td className="py-2 px-2 font-mono">2001, 2008</td>
+                          <td className="py-2 px-2 text-xs">9/11, Lehman (Sep 15)</td>
+                          <td className="py-2 px-2 text-center"><span className="px-2 py-0.5 bg-orange-500 text-white rounded text-xs font-bold">HIGH</span></td>
+                        </tr>
+                        <tr className="border-b border-border-color/50 bg-yellow-500/10">
+                          <td className="py-2 px-2 font-bold text-yellow-500">August</td>
+                          <td className="py-2 px-2 font-mono">1998, 2011, 2015</td>
+                          <td className="py-2 px-2 text-xs">LTCM, US Downgrade, China Deval</td>
+                          <td className="py-2 px-2 text-center"><span className="px-2 py-0.5 bg-yellow-500 text-white rounded text-xs font-bold">MED-HIGH</span></td>
+                        </tr>
+                        <tr className="border-b border-border-color/50">
+                          <td className="py-2 px-2 text-text-muted">March</td>
+                          <td className="py-2 px-2 font-mono">2000, 2020</td>
+                          <td className="py-2 px-2 text-xs">Dot-com top, COVID crash</td>
+                          <td className="py-2 px-2 text-center"><span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 rounded text-xs">MED</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* October Crashes Detail */}
+                  <div className="mt-4 p-3 bg-bg-secondary rounded-lg">
+                    <div className="font-bold text-accent-red mb-2">October Crash Hall of Fame:</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                      <div className="p-2 bg-gray-900 rounded">
+                        <div className="font-mono text-accent-red">Oct 1929</div>
+                        <div className="text-xs text-text-muted">Black Thursday/Tuesday -25% in 2 days</div>
+                      </div>
+                      <div className="p-2 bg-gray-900 rounded">
+                        <div className="font-mono text-accent-red">Oct 19, 1987</div>
+                        <div className="text-xs text-text-muted">Black Monday -22% in 1 day</div>
+                      </div>
+                      <div className="p-2 bg-gray-900 rounded">
+                        <div className="font-mono text-accent-red">Oct 13, 1989</div>
+                        <div className="text-xs text-text-muted">Friday 13th mini-crash -7%</div>
+                      </div>
+                      <div className="p-2 bg-gray-900 rounded">
+                        <div className="font-mono text-accent-red">Oct 27, 1997</div>
+                        <div className="text-xs text-text-muted">Asian Crisis mini-crash -7%</div>
+                      </div>
+                      <div className="p-2 bg-gray-900 rounded">
+                        <div className="font-mono text-accent-red">Oct 2007</div>
+                        <div className="text-xs text-text-muted">Market TOP before GFC</div>
+                      </div>
+                      <div className="p-2 bg-gray-900 rounded">
+                        <div className="font-mono text-accent-red">Oct 2008</div>
+                        <div className="text-xs text-text-muted">Post-Lehman panic -17%</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2026-2027 Specific Months */}
+                  <div className="mt-4 p-3 bg-accent-red/10 border border-accent-red rounded-lg">
+                    <div className="font-bold text-accent-red mb-2">🎯 Highest Risk Months for 2026-2027:</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="p-3 bg-bg-secondary rounded-lg">
+                        <div className="font-bold text-orange-500">Sep-Oct 2026</div>
+                        <div className="text-sm text-text-secondary">
+                          • October Effect + 60-year cycle (1966+60)
+                          <br />• Matches 1965→1966 faster pattern
+                          <br />• 1966 top was Feb, but Oct always volatile
+                        </div>
+                      </div>
+                      <div className="p-3 bg-bg-secondary rounded-lg">
+                        <div className="font-bold text-accent-red">Sep-Oct 2027</div>
+                        <div className="text-sm text-text-secondary">
+                          • October Effect + 2yr post-square pattern
+                          <br />• Matches Oct 1987, Oct 2007 exactly
+                          <br />• <strong className="text-accent-red">HIGHEST probability month</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-center text-sm">
+                      <span className="text-text-muted">If pattern follows 1985→1987: </span>
+                      <span className="font-bold text-accent-red">October 2027</span>
+                      <span className="text-text-muted"> is the most likely crash month</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </Card>
 
